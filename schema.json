@@ -51,17 +51,22 @@
             {
               "name": "list",
               "value": "list"
+            },
+            {
+              "name": "checkbox",
+              "value": "checkbox"
             }
           ]
         },
         {
           "name": "is_array",
-          "type": "boolean"
+          "type": "boolean",
+          "depends": "this.type != 'string' && this.type != 'number' && this.type != 'boolean'"
         },
         {
           "name": "default",
           "type": "string",
-          "depends": "this.type == 'string' || this.type == 'number' || this.type == 'number'"
+          "depends": "this.type == 'string' || this.type == 'number' || this.type == 'boolean'"
         },
         {
           "name": "properties",
@@ -77,7 +82,7 @@
           "name": "choices",
           "type": "object",
           "is_array": true,
-          "depends": "this.type == 'list'",
+          "depends": "this.type == 'list' || this.type == 'checkbox'",
           "properties": [
             {
               "name": "name",
@@ -91,7 +96,8 @@
         },
         {
           "name": "$ref",
-          "type": "string"
+          "type": "string",
+          "depends": "this.type == 'object'"
         }
       ]
     },

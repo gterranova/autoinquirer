@@ -85,7 +85,10 @@ export class PromptBuilder {
                 
                 return action==='add'?defaultValue:this.dataSource.getItemByPath(state.path);
             },
-            type: propertySchema.type==='boolean'?'confirm': (propertySchema.type==='list'?'list':'input'),
+            type: propertySchema.type==='boolean'? 'confirm': 
+                (propertySchema.type==='list'? 'list':
+                    (propertySchema.type==='checkbox'? 'checkbox':
+                        'input')),
             choices: propertySchema && propertySchema.choices
         };
     }
@@ -121,7 +124,8 @@ export class PromptBuilder {
 
                 // evaluate dependency
                 const disabled = property.depends && !evalExpr(property.depends, this.dataSource.parseRef(this.dataSource.getItemByPath(state.path)));  
-    
+                if (disabled) { return null; }
+
                 const itemPath = `${state.path}/${property.name}`;
                 const item = this.dataSource.getItemByPath(itemPath);
                 const label = item ? (
@@ -141,7 +145,7 @@ export class PromptBuilder {
                         type: action,
                         path: itemPath}
                 };
-            }), separatorChoice,
+            }).filter( (a: any) => a !== null), separatorChoice,
             {
                 name: `Remove ${propertySchema.name}`, 
                 value: {...state, type: 'remove'}
@@ -240,7 +244,7 @@ export class PromptBuilder {
             //console.log("_evaluate", initialState.path, "is object");
             return this.evaluate_object(state);
         }
-    
+        
         return this.evaluate_primitive(state);
     
     }
