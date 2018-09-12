@@ -99,14 +99,24 @@ export class PromptBuilder {
     
     private evaluate_object(initialState: any) {
         const { path } = initialState;
-        const propertySchema = this.dataSource.getSchemaByPath(path);        
-        const properties = propertySchema.properties||[];
+        const propertySchema = this.dataSource.getSchemaByPath(path);
+        let properties;
+        if (!propertySchema.properties) {
+            properties = [];
+        } else if (Array.isArray(propertySchema.properties)) {
+            properties = propertySchema.properties;
+        } else {
+            properties = Object.keys(propertySchema.properties).map( (k: string) => {
+                return { ...propertySchema.properties[k], name: k };
+            });
+        }
     
         const choices = (answers: any) => {
             const { state } = answers;
             
-            return [...properties.map( (property: any) => {
+            return [...properties.map( (pair: any) => {
                 // tslint:disable-next-line:no-parameter-reassignment
+                let property = { ...pair, ...pair.value };
                 property = this.dataSource.parseRef(property);
 
                 // evaluate dependency
@@ -115,7 +125,7 @@ export class PromptBuilder {
                 const itemPath = `${state.path}/${property.name}`;
                 const item = this.dataSource.getItemByPath(itemPath);
                 const label = item ? (
-                    property.is_array ? `(${item.length})` 
+                    (property.is_array && Array.isArray(item)) ? `(${item.length})` 
                         : ((property.type === 'object') ? '' 
                             : ` ${item.name || JSON.stringify(item)}`)
                     ) : '';
@@ -165,15 +175,16 @@ export class PromptBuilder {
                 console.log("ERR:", state.path, itemValue);
                 //makeItemArray(state.path, state);
                 //itemValue = [itemValue];
+                itemValue = Object.keys(itemValue).map( (key: any) => {
+                    return { ...itemValue[key], name: key };
+                });
             }
     
             const tmp = itemValue.map( (item: any, idx: number) => {
                 const isRefToProcess = item.$ref && /^#\//.test(item.$ref) && !/^#\/definitions/.test(item.$ref);
                 const newItem = isRefToProcess ? this.dataSource.parseRef({ $ref: item.$ref }) : item;
                 const name = newItem.name || JSON.stringify(newItem);
-                const newPath =  isRefToProcess ? 
-                    `${state.path}${item.$ref.replace(/^#\//, '§')}` : 
-                    state.path ? `${state.path}/${item._id || idx}` : item.name;
+                const newPath =  isRefToProcess ? `${state.path}/${item._id || idx}${item.$ref.replace(/^#\//, '§')}` : state.path ? `${state.path}/${item._id || idx}` : item.name;
 
                 return {
                     name: `${name} ${newPath}`, 

@@ -34,60 +34,56 @@ export class DataSource {
     }
 
     public getCollections() {
-        return this.schemaDefinitions.filter( { $ref: '#/definitions/Collection', enabled: true });
-
+        return this.schemaDefinitions.filter( { is_array: true });
         //return this.schemaDefinitions.filter( { type: 'Collection' });
     }
 
     public save() {
         const data: any = { schema: this.schemaInfo };
-        this.getCollections().map( (c: any) => data[c.name] = this[c.name].value());
+        this.schemaDefinitions.all().map( (c: any) => data[c.name] = this[c.name].value());
         fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
         //this.setupCollections();
     }
 
     public parseRef(schema: any, count: number = 0) {
-        let refSchema;
-        if (schema && schema.type && this[schema.type]) {
+        if (!schema) { return }
+        let refSchema = schema;
+        if (schema.type && this[schema.type]) {
             if (refCache[`#/definitions/${schema.type}`]) { 
                 refSchema = refCache[`#/definitions/${schema.type}`]; 
             } else {
                 refSchema = this.parseRef({ $ref: `#/definitions/${schema.type}`}, count+1);
             }
 
-            return {...refSchema, ...schema, type: refSchema.type };
-        }
-        if (!schema || !schema.$ref) { return schema; }
-        const uri = url.parse(schema.$ref);
-        if (refCache[schema.$ref]) { refSchema = refCache[schema.$ref]; }
-        else {
-            if (uri.protocol === 'file:') {
-                const refFile = path.join(process.cwd(), uri.path);
-                const refDataSource = new DataSource(refFile);
-                refSchema = refCache[schema.$ref] = refDataSource.parseRef({ $ref: uri.hash});
-                //console.log("LOADED:", schema.$ref, schema, refSchema);
+            refSchema = {...refSchema, ...schema, type: refSchema.type };
+        } 
+
+        if (!refSchema.$ref) { return refSchema; }
+
+        const uri = url.parse(refSchema.$ref);
+        if (refCache[refSchema.$ref]) { return refCache[refSchema.$ref]; }
+
+        if (uri.protocol === 'file:') {
+            const refFile = path.join(process.cwd(), uri.path);
+            const refDataSource = new DataSource(refFile);
+            
+            return refCache[refSchema.$ref] = refDataSource.parseRef({ $ref: uri.hash});
+            //console.log("LOADED:", refSchema.$ref, refSchema, refSchema);
+        } 
+        const refPath = uri.hash.replace(/^#\//, '').split('/');
+        //console.log(refSchema);
+
+        if (refPath.length && count < 5) {
+            if (refPath[0]==='definitions') {
+                refSchema = this.getSchemaByPath(refPath.slice(1));
+                //console.log("FOUND:", uri.hash, refSchema);
             } else {
-                const refPath = uri.hash.replace(/^#\//, '').split('/');
-                //console.log(refSchema);
-                if (refPath.length>1 && count < 5) {
-                    const collectionName = refPath.shift();
-                    if (collectionName==='definitions') {
-                        refSchema = this.getSchemaByPath(refPath);
-                        //console.log("FOUND:", uri.hash, refSchema);
-                    } else if (this[collectionName]) {
-                        refSchema = this[collectionName].get(refPath.shift());
-                        if (refPath.length) {
-                            refSchema = objectPath.get(refSchema, refPath);
-                        }
-                    }
-                }    
+                refSchema = this.getItemByPath(refPath);
+                refSchema = refSchema.data || refSchema;
             }
-        }
-        if (refSchema) {
-            return {...refSchema, ...schema }; 
-        }
+        }    
         
-        return schema;
+        return refSchema;
     }
 
     public getSchemaByPath(schemaPath: string | string[] = []) {
@@ -115,21 +111,25 @@ export class DataSource {
         do {
             const key = parts.shift(); 
             if (!key) { break; } 
-            
-            currSchema = properties ? this.parseRef(properties.find((x: any) => x && x.name === key), count): {};
+            if (properties && properties[key]) {
+                currSchema = this.parseRef({...properties[key], name: key }, count);
+            } else if (properties && Array.isArray(properties)){
+                currSchema = this.parseRef(properties.find((x: any) => x && x.name === key), count);
+            }
             properties = currSchema && currSchema.properties;
             count += 1;
             //console.log("---", key, currSchema);        
         } while (currSchema);
-        schemaCache[schemaPath.toString()] = currSchema || {};
+        currSchema = currSchema || {};
+        schemaCache[schemaPath.toString()] = currSchema;
 
         //console.log("schemaLookup", schemaPath, currSchema);
-        return currSchema || {};
+        return currSchema;
     };
 
     public getItemByPath(itemPath: string | string[] = []) {
         const itemParts = actualPath(itemPath);
-        if (!itemPath.length) { return this.getCollections().map( (c: any) => { return {name: c.name}; }) }
+        if (!itemPath.length) { return this.schemaDefinitions.all().map( (c: any) => { return {name: c.name}; }) }
         const collection = this[itemParts.shift()];
         if (!itemParts.length) { return collection; }
         const item = collection.get(itemParts.shift());
@@ -207,7 +207,7 @@ export class DataSource {
     }
 
     private setupCollections(data: any) {
-        for (const schema of this.getCollections()) {
+        for (const schema of this.schemaDefinitions.all()) {
             this[schema.name] = new Collection(schema.name, data[schema.name]);
             //this.addCollection(schema.name, data[schema.name] || []);
             
