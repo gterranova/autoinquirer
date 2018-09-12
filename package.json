@@ -1,0 +1,47 @@
+{
+  "name": "autoinquirer",
+  "version": "1.0.0",
+  "description": "",
+  "engineStrict": true,
+  "engines": {
+    "node": ">= 8.9.0"
+  },
+  "main": "main.js",
+  "scripts": {
+    "start": "npm run build && node main.js schema.json",
+    "clean": "rimraf coverage build tmp dist",
+    "build": "tsc -p tsconfig.release.json && webpack --mode production",
+    "watch": "tsc -w -p tsconfig.release.json",
+    "lint": "tslint -t stylish --project \"tsconfig.json\"",
+    "pretest": "npm run lint",
+    "test": "npm run test-only",
+    "test-only": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "author": "Gianpaolo Terranova",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^23.3.1",
+    "@types/node": "^10.9.4",
+    "commander": "^2.18.0",
+    "inquirer": "^6.2.0",
+    "jest": "^23.5.0",
+    "prettier": "^1.14.2",
+    "rimraf": "^2.6.2",
+    "ts-jest": "^23.1.4",
+    "ts-loader": "^5.0.0",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "tslint-microsoft-contrib": "^5.2.1",
+    "tsutils": "^3.0.0",
+    "typescript": "^3.0.3",
+    "uglifyjs-webpack-plugin": "^1.3.0",
+    "webpack": "^4.17.2",
+    "webpack-command": "^0.4.1"
+  },
+  "dependencies": {
+    "object-path": "^0.11.4",
+    "rxjs": "^6.3.2",
+    "tslib": "^1.9.3"
+  }
+}

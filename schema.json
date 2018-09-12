@@ -1,0 +1,77 @@
+{
+  "schema": [
+    {
+      "uri": "schema.json",
+      "_id": "8ca7169d-2833-45b4-81c0-c4b6fab96ce1"
+    }
+  ],
+  "definitions": [
+    {
+      "_id": "5aec849f-aee8-41f0-a719-e3174b0a5af2",
+      "name": "Collection",
+      "type": "object",
+      "is_array": true
+    },
+    {
+      "_id": "5aec849f-aee8-41f0-a719-e3174b0a5af3",
+      "name": "schema",
+      "$ref": "#/definitions/Collection",
+      "properties": [
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "_id": "dc4ea243-bb65-4e38-96fc-6cb6a1b4fcdf",
+      "name": "definitions",
+      "$ref": "#/definitions/Collection",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "list",
+          "choices": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "list"
+          ]
+        },
+        {
+          "name": "is_array",
+          "type": "boolean"
+        },
+        {
+          "name": "default",
+          "type": "string",
+          "depends": "this.type == 'string' || this.type == 'number' || this.type == 'number'"
+        },
+        {
+          "name": "properties",
+          "type": "definitions",
+          "depends": "this.type == 'object'"
+        },
+        {
+          "name": "depends",
+          "type": "string"
+        },
+        {
+          "name": "choices",
+          "type": "string",
+          "is_array": true,
+          "depends": "this.type == 'list'"
+        },
+        {
+          "name": "$ref",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+}
