@@ -71,7 +71,6 @@ export class DataSource {
             //console.log("LOADED:", refSchema.$ref, refSchema, refSchema);
         } 
         const refPath = uri.hash.replace(/^#\//, '').split('/');
-        //console.log(refSchema);
 
         if (refPath.length && count < 5) {
             if (refPath[0]==='definitions') {
@@ -153,6 +152,11 @@ export class DataSource {
         }
         const item = objectPath(collection.get(itemParts.shift()));
         const propertySchema = this.getSchemaByPath(itemPath);
+        if (propertySchema.reference) {
+            // tslint:disable-next-line:no-parameter-reassignment
+            value = value[propertySchema.name];
+            //console.log(itemParts, propertySchema, value);
+        }
         if (propertySchema.is_array) {
             item.push(itemParts, value);
         } else {
@@ -171,6 +175,11 @@ export class DataSource {
         } // collection;
         const collectionId = itemParts.shift();
         if (!itemParts.length && !value) {
+            // if the item is a reference, remove the reference
+            const segments = Array.isArray(itemPath) ? [itemPath] : itemPath.split('§');
+            if (segments.length>1) {
+                return this.updateItemByPath(segments[segments.length-2], value);            
+            }
             collection.remove(collectionId);
             
             return this.save();

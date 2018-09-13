@@ -90,7 +90,8 @@ export class PromptBuilder {
             type: propertySchema.type==='boolean'? 'confirm': 
                 (propertySchema.type==='list'? 'list':
                     (propertySchema.type==='checkbox'? 'checkbox':
-                        'input')),
+                        (propertySchema.type==='collection'? 'list':
+                            'input'))),
             choices: propertySchema && propertySchema.choices
         };
     }
@@ -127,7 +128,8 @@ export class PromptBuilder {
 
                 if (!this.checkAllowed(itemPath, property)) { return null; }
 
-                const item = this.dataSource.getItemByPath(itemPath);
+                // parseRef required to parse $refs to related fields
+                const item = this.dataSource.parseRef(this.dataSource.getItemByPath(itemPath));
 
                 const label = item ? (
                     (property.is_array && Array.isArray(item)) ? `(${item.length})` 
@@ -183,7 +185,7 @@ export class PromptBuilder {
                 const isRefToProcess = item.$ref && /^#\//.test(item.$ref) && !/^#\/definitions/.test(item.$ref);
                 const newItem = isRefToProcess ? this.dataSource.parseRef({ $ref: item.$ref }) : item;
                 const name = newItem.name || JSON.stringify(newItem);
-                const newPath =  isRefToProcess ? `${state.path}${item.$ref.replace(/^#\//, '§')}` : state.path ? `${state.path}/${item._id || idx}` : item.name;
+                const newPath =  isRefToProcess ? `${state.path}/${item._id || idx}${item.$ref.replace(/^#\//, '§')}` : state.path ? `${state.path}/${item._id || idx}` : item.name;
 
                 return {
                     name: `${name} ${newPath}`, 
@@ -222,7 +224,7 @@ export class PromptBuilder {
             }), separatorChoice, cancelChoice];
 
             return [this.makeMenu('select', { path:'', choices }, propertySchema),
-        ...collections.map( (c: any) => this.evaluate({ path: c.name }) )]; 
+                ...collections.map( (c: any) => this.evaluate({ path: c.name }) )]; 
         }
 
         if (!!propertySchema.is_array && !skipArray) {
@@ -233,6 +235,20 @@ export class PromptBuilder {
         switch (propertySchema.type) {
             case 'object':
                 return this.evaluate_object(initialState, propertySchema);
+            case 'collection':
+                const collection = this.dataSource[propertySchema.reference];
+                const choices = () => [...collection.all().map( (c: any) => { 
+                    return { 
+                        name: c.name||JSON.stringify(c), 
+                        value: { $ref: `#/${propertySchema.reference}/${c._id}` }
+                    }; 
+                }), separatorChoice, cancelChoice];
+    
+                return [
+                    this.makePrompt('add', initialState, {...propertySchema, choices }),     
+                    this.makePrompt('edit', initialState, {...propertySchema, choices })
+                ];
+
             default:
                 return this.evaluate_primitive(initialState, propertySchema);
         }

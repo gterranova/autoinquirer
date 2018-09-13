@@ -55,6 +55,10 @@
             {
               "name": "checkbox",
               "value": "checkbox"
+            },
+            {
+              "name": "collection",
+              "value": "collection"
             }
           ]
         },
@@ -97,7 +101,12 @@
         {
           "name": "$ref",
           "type": "string",
-          "depends": "this.type == 'object'"
+          "depends": "this.type == 'object' || this.type == 'collection'"
+        },
+        {
+          "name": "reference",
+          "type": "string",
+          "depends": "this.type == 'collection'"
         }
       ]
     },

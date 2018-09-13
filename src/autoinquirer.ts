@@ -44,7 +44,7 @@ export class AutoInquirer {
         const { state } = this.answers;
         if (state && state.type !== 'none') {
             //console.log("NO QUESTION", state);
-            this.answers.state = { ...state, type: state.type === 'select' ? 'reload' : 'back' };
+            this.answers.state = { ...state, type: state.type === 'reload' ? 'reload' : 'back' };
             this.performActions(this.answers);
             
             return this.next();
@@ -73,7 +73,7 @@ export class AutoInquirer {
             switch (state.type) {
                 case 'add':
                     if (input) {
-                        //console.log("this.dataSource.addItemByPath", state.path, input);     
+                        console.log("this.dataSource.addItemByPath", state.path, input);     
                         this.dataSource.addItemByPath(state.path, input);     
                     }
                     break;
@@ -95,7 +95,7 @@ export class AutoInquirer {
         }
         if (input || (state && state.type && ['remove', 'back', 'reload'].indexOf(state.type) !== -1)) {
             const newPath = state.type === 'add' || state.type === 'reload' ? state.path : backPath(state.path);
-            //console.log(state.type, state.path, newPath);
+            console.log(state.type, state.path, newPath);
             this.answers = { state: { path: newPath, type: 'select' } };
             this.questions = this.promptBuilder.generatePrompts(this.answers.state);    
         }
