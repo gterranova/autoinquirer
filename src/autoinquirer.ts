@@ -20,7 +20,7 @@ export class AutoInquirer {
         this.dataSource = dataSource;
         this.promptBuilder = new PromptBuilder(dataSource);
         this.answers = initialState;
-        this.questions = this.promptBuilder.generatePrompts(initialState);
+        this.questions = this.promptBuilder.generatePrompts(initialState.state);
     }
 
     public next() {
@@ -44,7 +44,7 @@ export class AutoInquirer {
         const { state } = this.answers;
         if (state && state.type !== 'none') {
             //console.log("NO QUESTION", state);
-            this.answers.state = { ...state, type: state.type === 'reload' ? 'reload' : 'back' };
+            this.answers.state = { ...state, type: state.type === 'select' ? 'reload' : 'back' };
             this.performActions(this.answers);
             
             return this.next();
@@ -97,7 +97,7 @@ export class AutoInquirer {
             const newPath = state.type === 'add' || state.type === 'reload' ? state.path : backPath(state.path);
             //console.log(state.type, state.path, newPath);
             this.answers = { state: { path: newPath, type: 'select' } };
-            this.questions = this.promptBuilder.generatePrompts(this.answers);    
+            this.questions = this.promptBuilder.generatePrompts(this.answers.state);    
         }
     };
 
@@ -105,7 +105,7 @@ export class AutoInquirer {
         // tslint:disable-next-line:promise-must-complete
         return new Promise( (resolve: any) => {
             this.answers = answers;
-            ask(this.promptBuilder.generatePrompts(answers)).then((res: any) => { 
+            ask(this.promptBuilder.generatePrompts(answers.state)).then((res: any) => { 
                 const { state } = res;
                 if (res.state.type !== 'none') {
                     this.performActions(res);

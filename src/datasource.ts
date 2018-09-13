@@ -99,7 +99,7 @@ export class DataSource {
         const schemaCollection: any = this.parseRef(this.schemaDefinitions.find({name: collectionName}));
         if (!schemaParts.length) { return schemaCollection; }
         
-        const parts: any[] = schemaParts.filter( (p: string) => !/^[a-f0-9-]{36}$/.test(p) && !/^\d+$/.test(p) && !/^#$/.test(p) );
+        const parts: any[] = schemaParts;
         // tslint:disable-next-line:one-variable-per-declaration
         
         let properties: any = schemaCollection.properties;
@@ -108,9 +108,12 @@ export class DataSource {
         //parts.splice(1,1);
         //console.log(parts);
         let count = 0;
+
         do {
             const key = parts.shift(); 
             if (!key) { break; } 
+            if (/^[a-f0-9-]{36}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) { continue; }
+
             if (properties && properties[key]) {
                 currSchema = this.parseRef({...properties[key], name: key }, count);
             } else if (properties && Array.isArray(properties)){
