@@ -20,13 +20,13 @@ export class AutoInquirer {
         this.dataSource = dataSource;
         this.promptBuilder = new PromptBuilder(dataSource);
         this.answers = initialState;
-        this.questions = this.promptBuilder.generatePrompts(initialState.state);
     }
 
     public next() {
+        this.questions = this.promptBuilder.generatePrompts(this.answers.state);
         while (this.questions.length!==0) {
             const prompt = { ...this.questions.shift() };
-            if (prompt.when({ ...this.answers})) {
+            if (!prompt.when || prompt.when({ ...this.answers})) {
                 prompt.when = true;
                 if (prompt.default && typeof(prompt.default) === 'function') {
                     prompt.default = prompt.default(this.answers);
@@ -36,15 +36,12 @@ export class AutoInquirer {
                 }
 
                 return prompt;
-            } /*
-            else {
-                console.log("SKIP:", {...prompt})
-            }*/
+            }
         }
         const { state } = this.answers;
         if (state && state.type !== 'none') {
             //console.log("NO QUESTION", state);
-            this.answers.state = { ...state, type: state.type === 'reload' ? 'reload' : 'back' };
+            this.answers.state = { ...state, type: 'back' };
             this.performActions(this.answers);
             
             return this.next();
@@ -65,20 +62,25 @@ export class AutoInquirer {
     }
 
     public performActions(answers: any) {
-        const { state, input } = answers;
+        const { state } = answers;
+        let input = answers.input;
+        const propertySchema = this.dataSource.getSchemaByPath(state.path);
     
-        //console.log("ACTION:", answers);
+        //console.log("ACTION:", answers, propertySchema.type);
         if (state && state.type) {
             switch (state.type) {
                 case 'add':
                     if (input) {
-                        //console.log("this.dataSource.addItemByPath", state.path, input);     
-                        this.dataSource.addItemByPath(state.path, input);     
-                    }
+                        this.dataSource.addItemByPath(state.path, input.value);     
+                    } else if (propertySchema.type === 'array' && propertySchema.items.type !== 'collection') {
+                        //console.log("this.dataSource.addItemByPath", state.path);     
+                        input = {};
+                        this.dataSource.addItemByPath(state.path, input);
+                    } 
                     break;
                 case 'edit':
                     if (input) {
-                        this.dataSource.updateItemByPath(state.path, input); 
+                        this.dataSource.updateItemByPath(state.path, input.value); 
                     }
                     break;
                 case 'remove':
@@ -92,11 +94,10 @@ export class AutoInquirer {
                 default:
             }
         }
-        if (input || (state && state.type && ['remove', 'back', 'reload'].indexOf(state.type) !== -1)) {
-            const newPath = state.type === 'add' || state.type === 'reload' ? state.path : backPath(state.path);
-            //console.log(state.type, state.path, newPath);
+        if (input || (state && state.type && ['remove', 'back'].indexOf(state.type) !== -1)) {
+            const newPath = state.type === 'add' ? state.path : backPath(state.path);
+            //console.log(state.type, state.path, newPath,);
             this.answers = { state: { path: newPath, type: 'select' } };
-            this.questions = this.promptBuilder.generatePrompts(this.answers.state);    
         }
     };
 
@@ -108,7 +109,7 @@ export class AutoInquirer {
                 const { state } = res;
                 if (res.state.type !== 'none') {
                     this.performActions(res);
-                    const newPath = state.type === 'add' || state.type === 'reload' ? state.path : backPath(state.path);
+                    const newPath = state.type === 'add' ? state.path : backPath(state.path);
                     this.inquire(ask, { state: { path: newPath, type: 'select' } }).then(resolve); 
                 } else {
                     resolve();

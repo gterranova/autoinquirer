@@ -10,14 +10,16 @@
     {
       "_id": "5aec849f-aee8-41f0-a719-e3174b0a5af3",
       "name": "schema",
-      "type": "object",
-      "is_array": true,
-      "properties": [
-        {
-          "name": "uri",
-          "type": "string"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": [
+          {
+            "name": "uri",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "_id": "dc4ea243-bb65-4e38-96fc-6cb6a1b4fcdf",
@@ -59,24 +61,25 @@
             {
               "name": "collection",
               "value": "collection"
+            },
+            {
+              "name": "array",
+              "value": "array"
             }
           ]
         },
         {
-          "name": "is_array",
-          "type": "boolean",
-          "depends": "this.type != 'string' && this.type != 'number' && this.type != 'boolean'"
-        },
-        {
           "name": "default",
           "type": "string",
-          "depends": "this.type == 'string' || this.type == 'number' || this.type == 'boolean'"
+          "depends": "this.type && this.type == 'string' || this.type == 'number' || this.type == 'boolean'"
         },
         {
           "name": "properties",
-          "type": "property",
-          "is_array": true,
-          "depends": "this.type == 'object'"
+          "type": "array",
+          "items": {
+            "type": "property"
+          },
+          "depends": "this.type && this.type == 'object'"
         },
         {
           "name": "depends",
@@ -84,37 +87,46 @@
         },
         {
           "name": "choices",
-          "type": "object",
-          "is_array": true,
-          "depends": "this.type == 'list' || this.type == 'checkbox'",
-          "properties": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "value",
-              "type": "string"
-            }
-          ]
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "value",
+                "type": "string"
+              }
+            ]
+          },
+          "depends": "this.type && this.type == 'list' || this.type == 'checkbox'"
         },
         {
           "name": "$ref",
           "type": "string",
-          "depends": "this.type == 'object' || this.type == 'collection'"
+          "depends": "this.type && this.type == 'object' || this.type == 'collection'"
         },
         {
           "name": "reference",
           "type": "string",
-          "depends": "this.type == 'collection'"
+          "depends": "this.type && this.type == 'collection'"
+        },
+        {
+          "name": "items",
+          "type": "property",
+          "depends": "this.type && this.type == 'array'"
         }
       ]
     },
     {
       "name": "definitions",
       "_id": "6f8cd07c-40cc-4acc-b243-2972e943cd22",
-      "type": "property",
-      "is_array": true
+      "type": "array",
+      "items": {
+        "type": "property"
+      }
     }
   ]
 }

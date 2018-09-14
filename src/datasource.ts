@@ -34,7 +34,7 @@ export class DataSource {
     }
 
     public getCollections() {
-        return this.schemaDefinitions.filter( { is_array: true });
+        return this.schemaDefinitions.filter({ type: 'array' });
         //return this.schemaDefinitions.filter( { type: 'Collection' });
     }
 
@@ -53,15 +53,22 @@ export class DataSource {
                 refSchema = refCache[`#/definitions/${schema.type}`]; 
             } else {
                 refSchema = this.parseRef({ $ref: `#/definitions/${schema.type}`}, count+1);
+                if (refSchema.items) {
+                    refSchema.items = this.parseRef(refSchema.items, count+1);
+                }
+                refCache[`#/definitions/${schema.type}`] = refSchema;
             }
 
-            refSchema = {...refSchema, ...schema, type: refSchema.type };
+            return refCache[`#/definitions/${schema.type}`] = {...refSchema, ...schema, type: refSchema.type };
         } 
+        if (refSchema.items) {
+            refSchema.items = this.parseRef(refSchema.items, count+1);
+        }
 
         if (!refSchema.$ref) { return refSchema; }
 
         const uri = url.parse(refSchema.$ref);
-        if (refCache[refSchema.$ref]) { return refCache[refSchema.$ref]; }
+        if (refCache[refSchema.$ref]) { return {...refCache[refSchema.$ref], ...refSchema}; }
 
         if (uri.protocol === 'file:') {
             const refFile = path.join(process.cwd(), uri.path);
@@ -74,7 +81,12 @@ export class DataSource {
 
         if (refPath.length && count < 5) {
             if (refPath[0]==='definitions') {
-                refSchema = this.getSchemaByPath(refPath.slice(1));
+                refCache[refSchema.$ref] = this.getSchemaByPath(refPath.slice(1));
+                //if (refCache[refSchema.$ref].items) {
+                //    refCache[refSchema.$ref].items = this.parseRef(refCache[refSchema.$ref].items, count+1);
+                //}
+                
+                return {...refCache[refSchema.$ref], ...refSchema};
                 //console.log("FOUND:", uri.hash, refSchema);
             } else {
                 refSchema = this.getItemByPath(refPath);
@@ -101,7 +113,12 @@ export class DataSource {
         const parts: any[] = schemaParts;
         // tslint:disable-next-line:one-variable-per-declaration
         
-        let properties: any = schemaCollection.properties;
+        let properties: any;
+        if (schemaCollection.type === 'object') {
+            properties = schemaCollection.properties;
+        } else if (schemaCollection.type === 'array') {
+            properties = schemaCollection.items.properties;
+        }
         
         let currSchema: any = schemaCollection;
         //parts.splice(1,1);
@@ -111,14 +128,16 @@ export class DataSource {
         do {
             const key = parts.shift(); 
             if (!key) { break; } 
-            if (/^[a-f0-9-]{36}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) { continue; }
-
-            if (properties && properties[key]) {
+            if (/^[a-f0-9-]{36}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) { 
+                currSchema = currSchema.items;
+                properties = currSchema.properties;
+            } else if (properties && properties[key]) {
                 currSchema = this.parseRef({...properties[key], name: key }, count);
+                properties = currSchema.properties;
             } else if (properties && Array.isArray(properties)){
                 currSchema = this.parseRef(properties.find((x: any) => x && x.name === key), count);
+                properties = currSchema.properties;
             }
-            properties = currSchema && currSchema.properties;
             count += 1;
             //console.log("---", key, currSchema);        
         } while (currSchema);
@@ -152,12 +171,8 @@ export class DataSource {
         }
         const item = objectPath(collection.get(itemParts.shift()));
         const propertySchema = this.getSchemaByPath(itemPath);
-        if (propertySchema.reference) {
-            // tslint:disable-next-line:no-parameter-reassignment
-            value = value[propertySchema.name];
-            //console.log(itemParts, propertySchema, value);
-        }
-        if (propertySchema.is_array) {
+
+        if (propertySchema.type === 'array') {
             item.push(itemParts, value);
         } else {
             item.set(itemParts, value);
@@ -184,12 +199,17 @@ export class DataSource {
             
             return this.save();
         }
-        const item = objectPath(collection.get(collectionId));
-        const idx = itemParts[itemParts.length-1];
-        if (value !== undefined) {
-            item.set(itemParts, value[idx]);
+        const item = collection.get(collectionId);
+        if (!item && value) {
+            collection.data.splice(collectionId, 1);
+            collection.create(value)
         } else {
-            item.del(itemParts);
+            if (value !== undefined) {
+                //console.log("update set", itemParts, value);
+                objectPath.set(item, itemParts, value);
+            } else if (item) {
+                objectPath.del(item, itemParts);
+            }    
         }
         this.save();
     };
@@ -221,16 +241,6 @@ export class DataSource {
     private setupCollections(data: any) {
         for (const schema of this.schemaDefinitions.all()) {
             this[schema.name] = new Collection(schema.name, data[schema.name]);
-            //this.addCollection(schema.name, data[schema.name] || []);
-            
-            //const properties = schema.properties;
-            //for (let property of properties) {
-            //    if (property.reference) {
-            //        let collection = this.addCollection(property.reference, this.config[property.reference] || []);
-            //        this[schema.name].addRelated(property.name, collection, property.is_array);
-            //    }
-            //}
-            
         }
     }
 };

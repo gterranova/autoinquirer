@@ -14,23 +14,16 @@ export const actualPath = (itemPath: string | string[]) => {
     return parts[parts.length-1].split('/');
 };
 
-export const generalizedPath = (itemPath: string) => {
-    return itemPath.replace(/\/[a-f0-9-]{36}/g, '/#').replace(/\/\d+/g, '/#');
-};
-
 export const backPath = (itemPath: string) => {
     const parent = itemPath.lastIndexOf('/') !== -1 ? itemPath.slice(0, itemPath.lastIndexOf('/')) : '';
     const isComplexPath = parent.lastIndexOf('§') !== -1;
     if (isComplexPath && parent.slice(parent.lastIndexOf('§')).split('/').length === 1) {
-        return itemPath.slice(0, itemPath.lastIndexOf('§'));
+        return backPath(parent);
     }
 
     return parent;
 };
 
-export const schemaPath = (itemPath: string) => {
-    return itemPath.slice().replace(/\/[a-f0-9-]{36}/g, '').replace(/\/\d+/g, '');
-};
 
 export function evalExpr(expression: string, context: any) {
     try {
