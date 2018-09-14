@@ -14,7 +14,7 @@ program
   .arguments('<jsonfile>')
   .parse(process.argv);
 
-if (!process.argv.length == 1) {
+if (program.args.length !== 1) {
     program.outputHelp();
 } else {
     const dataSource = new DataSource(program.args[0]);
@@ -24,7 +24,7 @@ if (!process.argv.length == 1) {
     
     const prompts = new Subject();
     const inq = inquirer.prompt(prompts);
-    inq.ui.process.subscribe( data => autoInquirer.onAnswer(data));
+    inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data); autoInquirer.run(); });
     autoInquirer.onQuestion.subscribe( prompt => prompts.next(prompt) );
     autoInquirer.onComplete.subscribe(() => prompts.complete() );
     inq.then( () => console.log('') );

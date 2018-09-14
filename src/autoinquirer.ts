@@ -62,7 +62,6 @@ export class AutoInquirer {
             this.answers[data.name] = data.answer;
         }
         this.performActions(this.answers);
-        this.run();
     }
 
     public performActions(answers: any) {
@@ -73,7 +72,7 @@ export class AutoInquirer {
             switch (state.type) {
                 case 'add':
                     if (input) {
-                        console.log("this.dataSource.addItemByPath", state.path, input);     
+                        //console.log("this.dataSource.addItemByPath", state.path, input);     
                         this.dataSource.addItemByPath(state.path, input);     
                     }
                     break;
@@ -95,7 +94,7 @@ export class AutoInquirer {
         }
         if (input || (state && state.type && ['remove', 'back', 'reload'].indexOf(state.type) !== -1)) {
             const newPath = state.type === 'add' || state.type === 'reload' ? state.path : backPath(state.path);
-            console.log(state.type, state.path, newPath);
+            //console.log(state.type, state.path, newPath);
             this.answers = { state: { path: newPath, type: 'select' } };
             this.questions = this.promptBuilder.generatePrompts(this.answers.state);    
         }

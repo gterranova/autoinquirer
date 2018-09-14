@@ -149,7 +149,7 @@ export class PromptBuilder {
                 };
             }).filter( (a: any) => a !== null), separatorChoice,
             {
-                name: `Remove ${propertySchema.name}`, 
+                name: `Remove`, 
                 value: {...state, type: 'remove'}
             },{
                 name: `Back`, 
@@ -188,7 +188,7 @@ export class PromptBuilder {
                 const newPath =  isRefToProcess ? `${state.path}/${item._id || idx}${item.$ref.replace(/^#\//, '§')}` : state.path ? `${state.path}/${item._id || idx}` : item.name;
 
                 return {
-                    name: `${name} ${newPath}`, 
+                    name: name, 
                     value: {...state, 
                         path: newPath,
                         type: isRefToProcess ? 'reload' : 'select'
