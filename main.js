@@ -1,12 +1,13 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
+require('source-map-support').install();
 
 var program = require('commander');
 const inquirer = require('inquirer');
 const path = require("path");
 
 const Subject = require('rxjs').Subject;
-const { DataSource, AutoInquirer } = require('./dist/autoinquirer');
+const { DataSource, AutoInquirer } = require('./build/src');
 
 program
   .version('1.0.0')
