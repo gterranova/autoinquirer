@@ -5,67 +5,71 @@ import fs from "fs";
 import objectPath from 'object-path';
 import path from "path";
 import url from 'url';
-import { Collection } from './collection';
-import { actualPath } from './utils';
+import { Collection, Definition } from './collection';
+import { IDocument, IProperties, IProperty, ISchema } from './interfaces';
+import { actualPath, ifArrayToObject, ifObjectToArray } from './utils';
 
 const refCache = {};
 const schemaCache = {};
 
 export class DataSource {
-    // tslint:disable-next-line:variable-name
-    public schemaDefinitions: Collection;
+    public schemaDefinitions: Definition;
     private dataFile: string;
-    private schemaInfo: any;
+    private schemaInfo: ISchema[];
 
     constructor(dataFile: string) {
         this.dataFile = dataFile;
-
-        const schema: any = [{ uri: 'schema.json' }];
-        let data: any = { schema };
-
-        if (fs.existsSync(dataFile)) {
-            const buffer: Buffer = fs.readFileSync(dataFile);
-            data = JSON.parse(buffer.toString());
-            this.schemaInfo = data.schema = data.schema || schema;
-        } 
-        this.setupDefinitions(data);
-        this.setupCollections(data);
+        this.load();
         this.save();    
     }
 
     public getCollections() {
-        return this.schemaDefinitions.filter({ type: 'array' });
+        return Object.keys(this.schemaDefinitions.value()).map( (c: string) => this[c] );
         //return this.schemaDefinitions.filter( { type: 'Collection' });
     }
 
-    public save() {
-        const data: any = { schema: this.schemaInfo };
-        this.schemaDefinitions.all().map( (c: any) => data[c.name] = this[c.name].value());
-        fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
-        //this.setupCollections();
+    public load() {
+        const schema: ISchema[] = [{ uri: 'schema.json' }];
+        let data: IDocument = { schema, definitions: {} };
+
+        if (fs.existsSync(this.dataFile)) {
+            const buffer: Buffer = fs.readFileSync(this.dataFile);
+            data = JSON.parse(buffer.toString());
+            this.schemaInfo = data.schema = data.schema || schema;
+        } 
+        this.setupDefinitions(data);
     }
 
-    public parseRef(schema: any, count: number = 0) {
-        if (!schema) { return }
-        let refSchema = schema;
-        if (schema.type && this[schema.type]) {
-            if (refCache[`#/definitions/${schema.type}`]) { 
-                refSchema = refCache[`#/definitions/${schema.type}`]; 
+    public save() {
+        const data: IDocument = { schema: this.schemaInfo, definitions: {} };
+        this.getCollections().map( (c: Definition | Collection) => data[c.$name] = this[c.$name].value());
+        data.definitions = ifArrayToObject(data.definitions);
+        fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
+        this.load();
+    }
+
+    public parseRef(propertySchema: IProperty, count: number = 0) {
+        if (!propertySchema) { return }
+        let refSchema = propertySchema;
+        if (propertySchema.type && this[propertySchema.type]) {
+            if (refCache[`#/definitions/${propertySchema.type}`]) { 
+                refSchema = refCache[`#/definitions/${propertySchema.type}`]; 
             } else {
-                refSchema = this.parseRef({ $ref: `#/definitions/${schema.type}`}, count+1);
+                refSchema = this.parseRef({ $ref: `#/definitions/${propertySchema.type}`}, count+1);
                 if (refSchema.items) {
                     refSchema.items = this.parseRef(refSchema.items, count+1);
                 }
-                refCache[`#/definitions/${schema.type}`] = refSchema;
+                refCache[`#/definitions/${propertySchema.type}`] = refSchema;
             }
 
-            return refCache[`#/definitions/${schema.type}`] = {...refSchema, ...schema, type: refSchema.type };
+            return {...refSchema, ...propertySchema, type: refSchema.type };
         } 
         if (refSchema.items) {
             refSchema.items = this.parseRef(refSchema.items, count+1);
         }
-
-        if (!refSchema.$ref) { return refSchema; }
+        // tslint:disable-next-line:no-suspicious-comment
+        // TODO: check if line below is needed
+        if (!refSchema.$ref || typeof refSchema.$ref !== 'string') { return refSchema; }
 
         const uri = url.parse(refSchema.$ref);
         if (refCache[refSchema.$ref]) { return {...refCache[refSchema.$ref], ...refSchema}; }
@@ -90,37 +94,40 @@ export class DataSource {
                 //console.log("FOUND:", uri.hash, refSchema);
             } else {
                 refSchema = this.getItemByPath(refPath);
-                refSchema = refSchema.data || refSchema;
+                // tslint:disable-next-line:no-suspicious-comment
+                // TODO: check if line below is needed
+                // refSchema = refSchema.value? refSchema.value() : refSchema;
             }
         }    
         
         return refSchema;
     }
 
-    public getSchemaByPath(schemaPath: string | string[] = []) {
+    public getSchemaByPath(schemaPath: string | string[] = []): IDocument | IProperty {
         if (schemaCache[schemaPath.toString()]) { return schemaCache[schemaPath.toString()]; }
         
         const schemaParts = actualPath(schemaPath);
 
         if (!schemaPath.length) { 
-            return { definitions: this.schemaDefinitions };
+            return { schema: [], definitions: this.schemaDefinitions.value() };
         }
         const collectionName = schemaParts.shift();
         
-        const schemaCollection: any = this.parseRef(this.schemaDefinitions.find({name: collectionName}));
+        const schemaCollection: IProperty = this.parseRef(this.schemaDefinitions.get(collectionName));
         if (!schemaParts.length) { return schemaCollection; }
         
-        const parts: any[] = schemaParts;
+        const parts: string[] = schemaParts;
         // tslint:disable-next-line:one-variable-per-declaration
         
-        let properties: any;
+        let properties: IProperties;
         if (schemaCollection.type === 'object') {
             properties = schemaCollection.properties;
         } else if (schemaCollection.type === 'array') {
             properties = schemaCollection.items.properties;
         }
-        
-        let currSchema: any = schemaCollection;
+        properties = ifArrayToObject(properties);
+
+        let currSchema: IProperty = schemaCollection;
         //parts.splice(1,1);
         //console.log(parts);
         let count = 0;
@@ -132,12 +139,10 @@ export class DataSource {
                 currSchema = currSchema.items;
                 properties = currSchema.properties;
             } else if (properties && properties[key]) {
-                currSchema = this.parseRef({...properties[key], name: key }, count);
-                properties = currSchema.properties;
-            } else if (properties && Array.isArray(properties)){
-                currSchema = this.parseRef(properties.find((x: any) => x && x.name === key), count);
+                currSchema = this.parseRef(properties[key], count);
                 properties = currSchema.properties;
             }
+            properties = ifArrayToObject(properties);
             count += 1;
             //console.log("---", key, currSchema);        
         } while (currSchema);
@@ -150,13 +155,12 @@ export class DataSource {
 
     public getItemByPath(itemPath: string | string[] = []) {
         const itemParts = actualPath(itemPath);
-        if (!itemPath.length) { return this.schemaDefinitions.all().map( (c: any) => { return {name: c.name}; }) }
-        const collection = this[itemParts.shift()];
-        if (!itemParts.length) { return collection; }
-        const item = collection.get(itemParts.shift());
-        if (!itemParts.length) { return item; }
+        if (!itemPath.length) { return this.getCollections().map( (c: Definition | Collection) => { return {name: c.$name}; }) }
+        const collectionName = itemParts.shift();
+        let collection;
+        collection = this[collectionName];
                 
-        return objectPath(item).get(itemParts);
+        return collection.get(itemParts);
     };
 
     public addItemByPath(itemPath: string | string[], value: any) {
@@ -205,6 +209,7 @@ export class DataSource {
             collection.create(value)
         } else {
             if (value !== undefined) {
+                //console.log('updateItemByPath', item, collectionId, itemParts, value);
                 //console.log("update set", itemParts, value);
                 objectPath.set(item, itemParts, value);
             } else if (item) {
@@ -218,29 +223,29 @@ export class DataSource {
         this.updateItemByPath(itemPath);
     };
 
-    private setupDefinitions(data: any) {
+    private setupDefinitions(data: IDocument) {
         this.schemaInfo = data.schema = data.schema || [{ uri: 'schema.json' }];
 
-        const numberOfSchemas = this.schemaInfo.length; 
-        const definitions = data.schema.reduce( (acc: any[], curr: any, idx: number) => {
+        const definitions: IProperties = data.schema.reduce( (acc: IDocument, curr: ISchema) => {
             if (curr.uri && fs.existsSync(curr.uri)) {
-                const currSchema: any = JSON.parse(fs.readFileSync(curr.uri).toString());
-                for (const def of currSchema.definitions) {
-                    def.enabled = idx === numberOfSchemas-1;
-                    acc[def.name] = acc[def.name] ? { ...acc[def.name], ...def } : def;
+                const currSchema: IDocument = JSON.parse(fs.readFileSync(curr.uri).toString());
+                for (const def of ifObjectToArray(currSchema.definitions)) {
+                    acc[def.$name] = acc[def.$name] ? { ...acc[def.$name], ...def } : def;
                 }
             }   
 
             return acc;
         },{});
         
-        const schemaData = Object.keys(definitions).map( (key: string ) => definitions[key] );
-        this.schemaDefinitions = new Collection('definitions', schemaData);
-    }
-
-    private setupCollections(data: any) {
-        for (const schema of this.schemaDefinitions.all()) {
-            this[schema.name] = new Collection(schema.name, data[schema.name]);
+        definitions.definitions.type = 'array';
+        definitions.definitions.items = { type: 'property'};
+        definitions.property.properties.properties.type = 'array';
+        definitions.property.properties.properties.items = { type: 'property'};
+        
+        this.schemaDefinitions = new Definition('definitions', '#/definitions', ifArrayToObject(definitions));
+        for (const schemaName of Object.keys(this.schemaDefinitions.value())) {
+            this[schemaName] = this.schemaDefinitions.fromData(schemaName, data[schemaName]);
         }
     }
+
 };

@@ -15,6 +15,7 @@ export const actualPath = (itemPath: string | string[]) => {
 };
 
 export const backPath = (itemPath: string) => {
+    if (!itemPath) { return ''; }
     const parent = itemPath.lastIndexOf('/') !== -1 ? itemPath.slice(0, itemPath.lastIndexOf('/')) : '';
     const isComplexPath = parent.lastIndexOf('§') !== -1;
     if (isComplexPath && parent.slice(parent.lastIndexOf('§')).split('/').length === 1) {
@@ -51,4 +52,25 @@ export const dummyPrompt = (cb?: any) => {
         type: 'confirm',
         name: 'confirm'
     }    
+}
+
+export const ifObjectToArray = (obj: any, namedKey: string = '$name') => {
+    if (Array.isArray(obj)) { return obj || []; }
+
+    return Object.keys(obj).map( (key:string) => {
+        // tslint:disable-next-line:no-string-literal
+        const pair = {}; pair['$name'] = pair[namedKey] = obj[key][namedKey] || key;
+        
+        return {...obj[key], ...pair};
+    });
+}
+
+export const ifArrayToObject = (arr: any, namedKey: string = '$name') => {
+    if (!Array.isArray(arr)) { return arr || {}; }
+
+    return arr.reduce( (acc: any, curr: any) => {
+        acc[curr[namedKey]] = curr;
+
+        return acc;
+    },{});
 }

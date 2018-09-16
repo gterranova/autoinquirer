@@ -3,6 +3,7 @@
 
 import { Subject } from 'rxjs';
 import { DataSource } from './datasource';
+import { IAnswer, IFeedBack, IPrompt } from './interfaces';
 import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
@@ -13,36 +14,36 @@ export class AutoInquirer {
 
     private dataSource: DataSource;
     private promptBuilder: PromptBuilder;
-    private questions: any[];
-    private answers: any = {};
+    private questions: IPrompt[];
+    private answer: IAnswer;
 
-    constructor(dataSource: DataSource, initialState: any = {}) {
+    constructor(dataSource: DataSource, initialAnswer: IAnswer = { state: { path: '', type: 'select'}}) {
         this.dataSource = dataSource;
         this.promptBuilder = new PromptBuilder(dataSource);
-        this.answers = initialState;
+        this.answer = initialAnswer;
     }
 
     public next() {
-        this.questions = this.promptBuilder.generatePrompts(this.answers.state);
+        const { state } = this.answer;
+        this.questions = this.promptBuilder.generatePrompts(state);
         while (this.questions.length!==0) {
             const prompt = { ...this.questions.shift() };
-            if (!prompt.when || prompt.when({ ...this.answers})) {
+            if (!prompt.when || prompt.when(this.answer)) {
                 prompt.when = true;
                 if (prompt.default && typeof(prompt.default) === 'function') {
-                    prompt.default = prompt.default(this.answers);
+                    prompt.default = prompt.default(this.answer);
                 }
                 if (prompt.choices && typeof(prompt.choices) === 'function') {
-                    prompt.choices = prompt.choices(this.answers);
+                    prompt.choices = prompt.choices(this.answer);
                 }
 
                 return prompt;
             }
         }
-        const { state } = this.answers;
         if (state && state.type !== 'none') {
             //console.log("NO QUESTION", state);
-            this.answers.state = { ...state, type: 'back' };
-            this.performActions(this.answers);
+            state.type = 'back';
+            this.performActions(this.answer);
             
             return this.next();
         } else {
@@ -50,23 +51,22 @@ export class AutoInquirer {
         }
     }
 
-    public onAnswer(data: any) {
+    public onAnswer(data: IFeedBack) {
         if (/^input\./.test(data.name)) {
             const pair = {}; pair[data.name.split('.').pop()] = data.answer;
-            this.answers.input = this.answers.input || {};
-            Object.assign(this.answers.input, pair);
+            this.updateAnswer({input: pair});
         } else {
-            this.answers[data.name] = data.answer;
+            this.updateAnswer({[data.name]: data.answer});
         }
-        this.performActions(this.answers);
+        this.performActions(this.answer);
     }
 
-    public performActions(answers: any) {
-        const { state } = answers;
-        let input = answers.input;
+    public performActions(answer: IAnswer) {
+        const { state } = answer;
+        let input = answer.input;
         const propertySchema = this.dataSource.getSchemaByPath(state.path);
     
-        //console.log("ACTION:", answers, propertySchema.type);
+        //console.log("ACTION:", answer, propertySchema.type);
         if (state && state.type) {
             switch (state.type) {
                 case 'add':
@@ -97,17 +97,17 @@ export class AutoInquirer {
         if (input || (state && state.type && ['remove', 'back'].indexOf(state.type) !== -1)) {
             const newPath = state.type === 'add' ? state.path : backPath(state.path);
             //console.log(state.type, state.path, newPath,);
-            this.answers = { state: { path: newPath, type: 'select' } };
+            this.updateAnswer({ state: { path: newPath, type: 'select' } });
         }
     };
 
-    public inquire(ask: any, answers: any = {}) {
+    public inquire(ask: any, answer: IAnswer) {
         // tslint:disable-next-line:promise-must-complete
         return new Promise( (resolve: any) => {
-            this.answers = answers;
-            ask(this.promptBuilder.generatePrompts(answers.state)).then((res: any) => { 
+            this.answer = answer;
+            ask(this.promptBuilder.generatePrompts(answer.state)).then((res: IAnswer) => { 
                 const { state } = res;
-                if (res.state.type !== 'none') {
+                if (state.type !== 'none') {
                     this.performActions(res);
                     const newPath = state.type === 'add' ? state.path : backPath(state.path);
                     this.inquire(ask, { state: { path: newPath, type: 'select' } }).then(resolve); 
@@ -122,4 +122,7 @@ export class AutoInquirer {
         this.onQuestion.next(this.next());
     };
 
+    private updateAnswer(answer: any) {
+        this.answer = {...this.answer, ...answer};
+    }
 }

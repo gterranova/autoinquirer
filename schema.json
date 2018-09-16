@@ -2,36 +2,32 @@
   "schema": [
     {
       "uri": "schema.json",
-      "_id": "8ca7169d-2833-45b4-81c0-c4b6fab96ce1"
+      "_id": "8ca7169d-2833-45b4-81c0-c4b6fab96ce1",
+      "$name": "8ca7169d-2833-45b4-81c0-c4b6fab96ce1"
     }
   ],
-  "property": [],
-  "definitions": [
-    {
-      "_id": "5aec849f-aee8-41f0-a719-e3174b0a5af3",
-      "name": "schema",
+  "definitions": {
+    "schema": {
+      "_id": "schema",
       "type": "array",
       "items": {
         "type": "object",
-        "properties": [
-          {
-            "name": "uri",
+        "properties": {
+          "uri": {
             "type": "string"
           }
-        ]
-      }
+        }
+      },
+      "$name": "schema"
     },
-    {
-      "_id": "dc4ea243-bb65-4e38-96fc-6cb6a1b4fcdf",
-      "name": "property",
+    "property": {
+      "_id": "property",
       "type": "object",
-      "properties": [
-        {
-          "name": "name",
+      "properties": {
+        "$name": {
           "type": "string"
         },
-        {
-          "name": "type",
+        "type": {
           "type": "list",
           "choices": [
             {
@@ -68,65 +64,54 @@
             }
           ]
         },
-        {
-          "name": "default",
+        "default": {
           "type": "string",
           "depends": "this.type && this.type == 'string' || this.type == 'number' || this.type == 'boolean'"
         },
-        {
-          "name": "properties",
-          "type": "array",
-          "items": {
-            "type": "property"
-          },
+        "properties": {
+          "type": "property",
           "depends": "this.type && this.type == 'object'"
         },
-        {
-          "name": "depends",
+        "depends": {
           "type": "string"
         },
-        {
-          "name": "choices",
+        "choices": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": [
               {
-                "name": "name",
+                "$name": "name",
                 "type": "string"
               },
               {
-                "name": "value",
+                "$name": "value",
                 "type": "string"
               }
             ]
           },
           "depends": "this.type && this.type == 'list' || this.type == 'checkbox'"
         },
-        {
-          "name": "$ref",
+        "$ref": {
           "type": "string",
           "depends": "this.type && this.type == 'object' || this.type == 'collection'"
         },
-        {
-          "name": "reference",
+        "reference": {
           "type": "string",
           "depends": "this.type && this.type == 'collection'"
         },
-        {
-          "name": "items",
+        "items": {
           "type": "property",
           "depends": "this.type && this.type == 'array'"
         }
-      ]
+      },
+      "$name": "property"
     },
-    {
-      "name": "definitions",
-      "_id": "6f8cd07c-40cc-4acc-b243-2972e943cd22",
-      "type": "array",
-      "items": {
-        "type": "property"
-      }
+    "definitions": {
+      "_id": "definitions",
+      "type": "property",
+      "$name": "definitions"
     }
-  ]
+  },
+  "property": {}
 }

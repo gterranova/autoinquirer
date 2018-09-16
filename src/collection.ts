@@ -1,5 +1,8 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
+import objectPath from 'object-path';
+import { IDocument, IPropertyClass } from './interfaces';
+import { ifArrayToObject, ifObjectToArray } from './utils';
 
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c: string) => {
@@ -12,65 +15,104 @@ function uuidv4() {
     });
 }
 
-export class Collection {
-    public name: string;
-    protected data: any[];
-    private relatedFields: any[];
+export class Definition implements IPropertyClass {
+    public $name: string;
 
-    constructor(collectionName: string, data: any) {
-        this.data = data || [];
-        this.name = collectionName;
-        this.relatedFields = [];
-        this.setupRelated();
-    }
+    private $id: string;
+    private data: IDocument;
 
-    public all() {
-        return this.data || [];
-    }
-
-    public empty() {
-        return this.data.length === 0;
+    constructor($name: string, $id: string, data: IDocument) {
+        this.$name = $name;
+        this.$id = $id;
+        this.$name = this.$name;
+        this.data = ifArrayToObject(data) || {};
     }
 
     public create(value: any) {
-        value._id = uuidv4();
-        this.setupRelated(value);
-        this.data.push(value);
+        Object.assign(this.data, value);
+
+        return value;
+    };
+
+    public value() {
+        return this.data;
+    }
+
+    // tslint:disable-next-line:no-reserved-keywords
+    public get(id: string | string[]) {
+        if (!id) { return this.value(); }
+
+        return objectPath.get(this.data, id);
+    };
+
+    public update(id: string | null, value: any) {
+        if (id === null) {
+            this.data = value;
+        } else {
+            this.data[id] = value;    
+        }
+    };
+
+    public remove(id?: string) {
+        if (id) {
+            delete this.data[id];
+        } else {
+            this.data = {};
+        }
+    };
+
+    public fromData($name: string, data: IDocument) {
+        if (this.get($name).type === 'array') {
+            return new Collection($name, data || []);
+        }
+
+        return new Definition($name, `${this.$id}/${$name}`, data || {})
+    }
+
+}
+export class Collection implements IPropertyClass {
+    public $name: string;
+
+    private $id: string;
+    private data: IDocument;
+
+    constructor($id: string, data?: IDocument) {
+        this.$name = this.$id = $id;
+        this.$name = this.$name;
+        this.data = ifArrayToObject(data, '_id') || {};
+    }
+
+    public create(value: any) {
+        this.data[uuidv4()] = value;    
         
         return value;
     };
 
-    // tslint:disable-next-line:no-reserved-keywords
-    public get(id: string) {
-        const entry = this.data.find((item: any) => item._id === id);
-        for (const related of this.relatedFields) {
-            if (entry[related.name] && entry[related.name].value) {
-                entry[related.name] = entry[related.name].value();
-            }
-        }
+    public value() {
+        return ifObjectToArray(this.data, '_id');
+    }
 
-        return entry;
+    // tslint:disable-next-line:no-reserved-keywords
+    public get(id: string | string[]) {
+        if (!id) { return this.value(); }
+
+        return objectPath.get(this.data, id);
     };
 
     public find(filter: any) {
-        const entry = this.data.find((item: any) => {
+        // tslint:disable-next-line:no-suspicious-comment
+        // TODO: Fix
+        return Object.keys(this.data).map( (key: string) => this.data[key]).find((item: any) => {
             const keys = Object.keys(filter);
             const test = keys.map( (k: string) => (item[k] === filter[k])?1:0)
                 .reduce((prev: number, curr: number) => prev+curr, 0);
-           
+            
             return test === keys.length;
         });
-        for (const related of this.relatedFields) {
-            if (entry[related.name] && entry[related.name].value) {
-                entry[related.name] = entry[related.name].value();
-            }
-        }
-
-        return entry;
     };
 
     public filter(filter: any) {
-        return this.data.filter((item: any) => {
+        return Object.keys(this.data).map( (key: string) => this.data[key]).filter((item: any) => {
             const keys = Object.keys(filter);
             const test = keys.map( (k: string) => (item[k] === filter[k])?1:0)
                 .reduce((prev: number, curr: number) => prev+curr, 0);
@@ -83,81 +125,15 @@ export class Collection {
         if (id === null) {
             this.data = value;
         } else {
-            const idx = this.data.indexOf(this.get(id));
-            this.setupRelated(value);
-            this.data[idx] = value;    
+            this.data[id] = value;    
         }
     };
 
     public remove(id?: string) {
         if (id) {
-            const idx = this.data.indexOf(this.get(id));
-            this.data.splice(idx, 1);    
+            delete this.data[id];
         } else {
             this.data = [];
         }
     };
-
-    public value() {
-        const data: any[] = Array.from(this.data);
-        for (const entry of data) {
-            for (const related of this.relatedFields) {
-                if (entry[related.name] && entry[related.name].value) {
-                    entry[related.name] = entry[related.name].value();
-                }
-            }  
-        }
-
-        return data;
-    };
-
-    // private addRelated(name: string, collection: Collection, isArray: boolean) {
-    //     this.relatedFields.push({ name, collection, isArray });
-    // };
-
-    private setupRelated(entry?: any) {
-        if (!entry) {
-            for (const e of this.data) {
-                this.setupRelated(e);
-            }    
-        } else {
-            for (const related of this.relatedFields) {
-                entry[related.name] = new CollectionArrayField(related.name, related.collection, entry[related.name] || []);
-            }
-        }
-    }
 };
-
-export class CollectionArrayField extends Collection {
-    private collection: Collection;
-
-    constructor(name: string, collection: Collection, data: any) {
-        //Object.assign(this, new Collection(name, data));
-        super(name, data);
-        this.collection = collection;
-    }
-
-    public all() {
-        return this.data.map( (id: string) => this.collection.get(id)) || [];
-    };
-
-    public create(value: any) {
-        const item = this.collection.create(value);
-        this.data.push(item._id);
-        
-        return item;
-    };
-
-    // tslint:disable-next-line:no-reserved-keywords
-    public get(id: string) {
-        if (this.data.indexOf(id) === -1) { return null; }
-        
-        return this.collection.get(id);
-    };
-
-    public update(id: string, values: any[]) {
-        if (this.data.indexOf(id) === -1) { return null; }
-        this.collection.update(id, values);
-    };
-};
-
