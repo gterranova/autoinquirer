@@ -3,7 +3,7 @@
 
 import { Subject } from 'rxjs';
 import { DataSource } from './datasource';
-import { IAnswer, IFeedBack, IPrompt } from './interfaces';
+import { BlockType, IAnswer, IFeedBack, IPrompt } from './interfaces';
 import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
@@ -54,28 +54,47 @@ export class AutoInquirer {
     public onAnswer(data: IFeedBack) {
         if (/^input\./.test(data.name)) {
             const pair = {}; pair[data.name.split('.').pop()] = data.answer;
-            this.updateAnswer({input: pair});
+            this.answer = {...this.answer, input: pair};
         } else {
-            this.updateAnswer({[data.name]: data.answer});
+            this.answer = {...this.answer, [data.name]: data.answer};
         }
         this.performActions(this.answer);
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     public performActions(answer: IAnswer) {
         const { state } = answer;
         let input = answer.input;
-        const propertySchema = this.dataSource.getSchemaByPath(state.path);
+        const propertySchema = this.dataSource.getDefinition(state.path);
     
-        //console.log("ACTION:", answer, propertySchema.type);
+        //console.log("ACTION:", answer, propertySchema);
         if (state && state.type) {
             switch (state.type) {
                 case 'add':
                     if (input) {
                         this.dataSource.addItemByPath(state.path, input.value);     
-                    } else if (propertySchema.type === 'array' && propertySchema.items.type !== 'collection') {
-                        //console.log("this.dataSource.addItemByPath", state.path);     
+                    } else if (propertySchema.$discriminator === BlockType.PROPERTY && propertySchema.type === 'array' && propertySchema.items.type !== 'collection') {
+                        //console.log("this.dataSource.addItemByPath", state.path, propertySchema.items.type);     
+                        const arrayItemSchema: any = this.dataSource.getDefinition(`${state.path}/#`);
+                        const arrayItemType = arrayItemSchema && (arrayItemSchema.$discriminator === BlockType.PROPERTY || arrayItemSchema.$discriminator === 'properties') && arrayItemSchema.type;
                         input = {};
-                        this.dataSource.addItemByPath(state.path, input);
+                        switch (arrayItemType) {
+                            case 'object':
+                                input.value = {};
+                                break;
+                            case 'array':
+                                input.value = [];
+                                break;
+
+                            case 'string':
+                                input.value = '???'
+                                break;
+
+                            default:
+                                input.value = {};
+                        }
+                
+                        this.dataSource.addItemByPath(state.path, input.value);
                     } 
                     break;
                 case 'edit':
@@ -97,7 +116,7 @@ export class AutoInquirer {
         if (input || (state && state.type && ['remove', 'back'].indexOf(state.type) !== -1)) {
             const newPath = state.type === 'add' ? state.path : backPath(state.path);
             //console.log(state.type, state.path, newPath,);
-            this.updateAnswer({ state: { path: newPath, type: 'select' } });
+            this.answer = { state: { path: newPath, type: 'select' } };
         }
     };
 
@@ -121,8 +140,4 @@ export class AutoInquirer {
     public run() {
         this.onQuestion.next(this.next());
     };
-
-    private updateAnswer(answer: any) {
-        this.answer = {...this.answer, ...answer};
-    }
 }

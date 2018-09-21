@@ -1,14 +1,7 @@
 {
-  "schema": [
-    {
-      "uri": "schema.json",
-      "_id": "8ca7169d-2833-45b4-81c0-c4b6fab96ce1",
-      "$name": "8ca7169d-2833-45b4-81c0-c4b6fab96ce1"
-    }
-  ],
+  "schema": [],
   "definitions": {
     "schema": {
-      "_id": "schema",
       "type": "array",
       "items": {
         "type": "object",
@@ -17,60 +10,22 @@
             "type": "string"
           }
         }
-      },
-      "$name": "schema"
+      }
     },
     "property": {
-      "_id": "property",
       "type": "object",
       "properties": {
-        "$name": {
-          "type": "string"
-        },
         "type": {
-          "type": "list",
-          "choices": [
-            {
-              "name": "string",
-              "value": "string"
-            },
-            {
-              "name": "number",
-              "value": "number"
-            },
-            {
-              "name": "boolean",
-              "value": "boolean"
-            },
-            {
-              "name": "object",
-              "value": "object"
-            },
-            {
-              "name": "list",
-              "value": "list"
-            },
-            {
-              "name": "checkbox",
-              "value": "checkbox"
-            },
-            {
-              "name": "collection",
-              "value": "collection"
-            },
-            {
-              "name": "array",
-              "value": "array"
-            }
-          ]
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "checkbox", "collection", "array"]
         },
         "default": {
           "type": "string",
           "depends": "this.type && this.type == 'string' || this.type == 'number' || this.type == 'boolean'"
         },
         "properties": {
-          "type": "property",
-          "depends": "this.type && this.type == 'object'"
+          "$ref": "#/definitions/property",
+          "depends": "this.type && this.type == 'object' || this.type=='property'"
         },
         "depends": {
           "type": "string"
@@ -79,38 +34,33 @@
           "type": "array",
           "items": {
             "type": "object",
-            "properties": [
-              {
-                "$name": "name",
+            "properties": {
+              "name": {
                 "type": "string"
               },
-              {
-                "$name": "value",
+              "value": {
                 "type": "string"
               }
-            ]
+            }
           },
           "depends": "this.type && this.type == 'list' || this.type == 'checkbox'"
         },
         "$ref": {
           "type": "string",
-          "depends": "this.type && this.type == 'object' || this.type == 'collection'"
+          "depends": "this.type && this.type == 'object' || this.type=='property' || this.type == 'collection'"
         },
         "reference": {
           "type": "string",
           "depends": "this.type && this.type == 'collection'"
         },
         "items": {
-          "type": "property",
+          "$ref": "#/definitions/property",
           "depends": "this.type && this.type == 'array'"
         }
-      },
-      "$name": "property"
+      }
     },
     "definitions": {
-      "_id": "definitions",
-      "type": "property",
-      "$name": "definitions"
+      "$ref": "#/definitions/property"
     }
   },
   "property": {}
