@@ -14,7 +14,7 @@ export class AutoInquirer {
 
     private dataSource: BaseDataSource;
     private promptBuilder: PromptBuilder;
-    private questions: IPrompt[];
+    private question: IPrompt;
     private answer: IAnswer;
 
     constructor(dataSource: BaseDataSource, initialAnswer: IAnswer = { state: { path: '' }}) {
@@ -23,12 +23,12 @@ export class AutoInquirer {
         this.answer = initialAnswer;
     }
 
-    public next() {
+    public async next() {
         const { state } = this.answer;
         const propertySchema = this.dataSource.getDefinition(state.path);
-        this.questions = this.promptBuilder.generatePrompts(state, propertySchema);
-        while (this.questions.length!==0) {
-            const prompt = { ...this.questions.shift() };
+        this.question = await this.promptBuilder.generatePrompts(state, propertySchema);
+        if (this.question!==null) {
+            const prompt = this.question;
             if (!prompt.when || prompt.when(this.answer)) {
                 prompt.when = true;
                 if (prompt.default && typeof(prompt.default) === 'function') {
@@ -41,101 +41,50 @@ export class AutoInquirer {
                 return prompt;
             }
         }
-        if (state && state.type !== Action.EXIT) {
-            //console.log("NO QUESTION", state);
-            this.answer = { state: { path: backPath(state.path) } };
-            this.performActions(this.answer);
-            
-            return this.next();
-        } else {
-            this.onComplete.next();
-        }
+        this.onComplete.next();
+        
+        return null;
     }
 
-    public onAnswer(data: IFeedBack) {
+    public async onAnswer(data: IFeedBack) {
         if (/^input\./.test(data.name)) {
             const pair = {}; pair[data.name.split('.').pop()] = data.answer;
             this.answer = {...this.answer, input: pair};
         } else {
             this.answer = {...this.answer, [data.name]: data.answer};
         }
-        this.performActions(this.answer);
+        await this.performActions(this.answer);
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
-    public performActions(answer: IAnswer) {
-        const { state } = answer;
-        let input = answer.input;
-        const propertySchema = this.dataSource.getDefinition(state.path);
+    public async performActions(answer: IAnswer) {
+        const { state, input } = answer;
     
         //console.log("ACTION:", answer, propertySchema);
         if (state && state.type) {
             switch (state.type) {
                 case Action.ADD:
-                    if (input) {
-                        this.dataSource.push(state.path, input.value);     
-                    } else if (propertySchema.type === 'array') {
-                        //console.log("this.dataSource.addItemByPath", state.path, propertySchema.items.type);     
-                        const arrayItemSchema: any = propertySchema.items;
-                        const arrayItemType = arrayItemSchema && arrayItemSchema.type;
-                        input = {};
-                        switch (arrayItemType) {
-                            case 'object':
-                                input.value = {};
-                                break;
-                            case 'array':
-                                input.value = [];
-                                break;
-
-                            case 'string':
-                                input.value = '???'
-                                break;
-
-                            default:
-                                input.value = {};
-                        }
-                
-                        this.dataSource.push(state.path, input.value);
-                    } 
+                    await this.dataSource.push(state.path, input && input.value);
                     break;
                 case Action.EDIT:
                     if (input) {
-                        this.dataSource.set(state.path, input.value); 
+                        await this.dataSource.set(state.path, input.value); 
                         this.answer = { state: { path: backPath(state.path) } };
                     }
                     break;
                 case Action.REMOVE:
-                    this.dataSource.del(state.path);
+                    await this.dataSource.del(state.path);
                     this.answer = { state: { path: backPath(state.path) } };
                     break;
                 case Action.EXIT:
-                    this.questions = [];
+                    this.question = null;
                     break;
                 default:
             }
         }
     }
 
-    public inquire(ask: any, answer: IAnswer) {
-        // tslint:disable-next-line:promise-must-complete
-        return new Promise( (resolve: any) => {
-            this.answer = answer;
-            const propertySchema = this.dataSource.getDefinition(answer.state.path);
-
-            ask(this.promptBuilder.generatePrompts(answer.state, propertySchema)).then((res: IAnswer) => { 
-                const { state } = res;
-                if (state.type !== Action.EXIT) {
-                    this.performActions(res);
-                    const newPath = state.type === Action.ADD ? state.path : backPath(state.path);
-                    this.inquire(ask, { state: { path: newPath } }).then(resolve); 
-                } else {
-                    resolve();
-                }
-            });    
-        });
-    }
-
-    public run() {
-        this.onQuestion.next(this.next());
+    public async run() {
+        this.onQuestion.next(await this.next());
     }
 }

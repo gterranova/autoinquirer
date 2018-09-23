@@ -2,9 +2,9 @@
 // tslint:disable:no-console
 
 import { BaseDataSource } from './datasource';
-import { Action, IAnswer, IPrompt, IProperty, IState } from './interfaces';
+import { Action, IPrompt, IProperty, IState } from './interfaces';
 
-import { backPath, dummyPrompt, evalExpr, flattenDeep } from './utils';
+import { backPath, evalExpr } from './utils';
 
 // tslint:disable-next-line:one-variable-per-declaration
 const separatorChoice = {type: 'separator'}, cancelChoice= {name: 'Cancel', value: { type: Action.EXIT } };
@@ -16,23 +16,18 @@ export class PromptBuilder {
         this.dataSource = dataSource;
     }
 
-    public generatePrompts(initialState: IState, propertySchema: IProperty): IPrompt[] {
-        if (initialState.type === Action.EXIT) { return []; }
+    public async generatePrompts(initialState: IState, propertySchema: IProperty): Promise<IPrompt> {
+        if (initialState.type === Action.EXIT) { return null; }
 
-        return flattenDeep([
-            dummyPrompt((answers: IAnswer) => { Object.assign(answers, { state: initialState });}),
-            // the line below won't let to jump between different trees
-            this.evaluate(initialState, propertySchema)
-            //this.evaluate()
-        ]);
+        return this.evaluate(initialState, propertySchema);
     }
     
-    private checkAllowed(path: string, propertySchema: any) {
+    private async checkAllowed(path: string, propertySchema: any): Promise<boolean> {
         if (!propertySchema || !propertySchema.depends) { return true; }
         const parentPath = backPath(path);
-        if (parentPath.indexOf('/') === -1) { return true; }
+        //if (path.indexOf('/') === -1) { return true; }
         
-        const parentPropertyValue = this.dataSource.get(parentPath);
+        const parentPropertyValue = await this.dataSource.get(parentPath);
         
         return parentPropertyValue? !!evalExpr(propertySchema.depends, parentPropertyValue): true;
         //console.log(propertySchema.depends, path, parentPropertyValue, allowed);
@@ -51,16 +46,14 @@ export class PromptBuilder {
         };
     }
     
-    private makePrompt(_: IState, propertySchema: any): IPrompt {        
+    private async makePrompt(initialState: IState, propertySchema: any): Promise<IPrompt> {        
+        const currentValue = await this.dataSource.get(initialState.path);
+        const defaultValue = currentValue!==undefined ? currentValue : propertySchema.default;
+        
         return {
             name: `input.value`,
             message: `Enter ${propertySchema.type ? propertySchema.type.toLowerCase(): 'value'}:`,
-            default: (answers: IAnswer) => {
-                const { state } = answers;
-                const currentValue = this.dataSource.get(state.path);
-
-                return currentValue!==undefined ? currentValue : propertySchema.default;
-            },
+            default: defaultValue,
             type: propertySchema.type==='boolean'? 'confirm': 
                 (propertySchema.type==='checkbox'? 'checkbox':
                     (propertySchema.type==='collection' || propertySchema.enum? 'list':
@@ -69,10 +62,9 @@ export class PromptBuilder {
         };
     }
 
-    // tslint:disable-next-line:cyclomatic-complexity
-    private getChoices(initialState: IState, propertySchema: any) {
+    private async getChoices(initialState: IState, propertySchema: any): Promise<any[]> {
         const schemaPath = initialState.path;
-        const value =  this.dataSource.get(schemaPath);
+        const value =  await this.dataSource.get(schemaPath);
 
         const basePath = schemaPath.length ? `${schemaPath}/`: '';
         if (propertySchema) {
@@ -83,25 +75,25 @@ export class PromptBuilder {
                 case 'boolean':
                     return null; //value && { name: value, path: `${basePath}${value?Action.EDIT:Action.ADD}` };
                 case 'object':
-                    return propertySchema.properties && Object.keys(propertySchema.properties).map( (key: string) => {
+                    return propertySchema.properties && await Promise.all(Object.keys(propertySchema.properties).map( (key: string) => {
                         const property: any = propertySchema.properties[key];
                         if (!property) {
                             throw new Error(`${schemaPath}/${key} not found`);
                         }
-                        const disabled = !this.checkAllowed(`${schemaPath}/${key}`, property)
-
-                        const item = { 
-                            name: key, 
-                            value: {  
-                                path: `${basePath}${key}`
-                            },
-                            disabled
-                        };
-                        // tslint:disable-next-line:no-string-literal
-                        if (['array','object'].indexOf(property.type) === -1) { item.value['type'] = Action.EDIT; }
                         
-                        return item;
-                    }) || [];
+                        return this.checkAllowed(`${schemaPath}/${key}`, property).then( (allowed: boolean) => {
+                            const item = { 
+                                name: key, 
+                                value: { path: `${basePath}${key}` },
+                                disabled: !allowed
+                            };
+                            // tslint:disable-next-line:no-string-literal
+                            if (['array','object'].indexOf(property.type) === -1) { item.value['type'] = Action.EDIT; }
+                            
+                            return item;    
+                        });
+
+                    })) || [];
                 case 'array':
                     const arrayItemSchema: any = propertySchema.items;
                     const arrayItemType = arrayItemSchema && arrayItemSchema.type;
@@ -132,10 +124,13 @@ export class PromptBuilder {
                     }) || [];        
             }    
         }
+        
+        return [];
     }
     
-    private evaluate_object(initialState: IState, propertySchema: any) {
-        const choices = [...this.getChoices(initialState, propertySchema), separatorChoice,
+    private async evaluate_object(initialState: IState, propertySchema: any): Promise<IPrompt> {
+        const baseChoices = await this.getChoices(initialState, propertySchema);
+        const choices = [...baseChoices, separatorChoice,
             {
                 name: `Remove`, 
                 value: {...initialState, type: Action.REMOVE }
@@ -147,26 +142,24 @@ export class PromptBuilder {
         return this.makeMenu(initialState, choices);
     }
 
-    private evaluate_array(initialState: IState, propertySchema: any) {
+    private async evaluate_array(initialState: IState, propertySchema: any): Promise<IPrompt> {
         // select item
         const arrayItemSchema: any = propertySchema.items;
         const arrayItemType = arrayItemSchema && arrayItemSchema.type;
-        const choices = (answers: IAnswer) => {
-            const { state } = answers;
+        const baseChoices = await this.getChoices(initialState, propertySchema);
 
-            return [...this.getChoices(state, propertySchema), separatorChoice, {
+        const choices = [...baseChoices, separatorChoice, {
                 name: `Add ${arrayItemType || '?'}`, 
-                value: {...state, type: Action.ADD}
+                value: {...initialState, type: Action.ADD}
             },{
                 name: `Back`, 
-                value: { path: backPath(state.path) }
+                value: { path: backPath(initialState.path) }
             }, cancelChoice];
-        };
     
         return this.makeMenu(initialState, choices);
     }
     
-    private evaluate(initialState: IState, propertySchema: IProperty) {
+    private evaluate(initialState: IState, propertySchema: IProperty): Promise<IPrompt> {
         switch (propertySchema.type) {
             case 'object':
                 return this.evaluate_object(initialState, propertySchema);

@@ -26,7 +26,7 @@ if (program.args.length !== 2) {
         
         const prompts = new Subject();
         const inq = inquirer.prompt(prompts);
-        inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data); autoInquirer.run(); });
+        inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data).then(() => autoInquirer.run()); });
         autoInquirer.onQuestion.subscribe( prompt => prompts.next(prompt) );
         autoInquirer.onComplete.subscribe(() => prompts.complete() );
         inq.then( () => console.log('') );

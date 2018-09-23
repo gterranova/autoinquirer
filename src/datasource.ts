@@ -7,6 +7,14 @@ import { IProperty } from './interfaces';
 import { Document } from './types';
 import { actualPath, loadJSON } from './utils';
 
+const defaultTypeValue = {
+    'object': Object,
+    'array': Array,
+    'string': String,
+    'number': Number,
+    'boolean': Boolean
+};
+
 export abstract class BaseDataSource {
     private schemaFile: string;
     private schemaDocument: Document;
@@ -26,12 +34,12 @@ export abstract class BaseDataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public abstract get(itemPath?: string): any;
+    public async abstract get(itemPath?: string);
     // tslint:disable-next-line:no-reserved-keywords
-    public abstract set(itemPath: string, value: any)
-    public abstract push(itemPath: string, value: any);
-    public abstract del(itemPath: string);
-    public abstract save();
+    public async abstract set(itemPath: string, value: any)
+    public async abstract push(itemPath: string, value: any);
+    public async abstract del(itemPath: string);
+    public async abstract save();
 }
 
 export class FileSystemDataSource extends BaseDataSource {
@@ -44,12 +52,12 @@ export class FileSystemDataSource extends BaseDataSource {
         this.jsonDocument = loadJSON(this.dataFile) || {};
     }
 
-    public save() {
+    public async save() {
         fs.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2));
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public get(itemPath?: string): any {
+    public async get(itemPath?: string) {
         if (!itemPath) { return this.jsonDocument; }
 
         const schemaParts = actualPath(itemPath);
@@ -57,12 +65,20 @@ export class FileSystemDataSource extends BaseDataSource {
         return objectPath.get(this.jsonDocument, schemaParts.split('/'));
     }
 
-    public push(itemPath: string, value: any) {
+    public async push(itemPath: string, value: any) {
         const schemaPath = actualPath(itemPath);
         const schema = this.getDefinition(schemaPath);
-
-        console.log('addItemByPath', schemaPath.split('/'), schema.type, value);
+    
+        //console.log('addItemByPath', schemaPath.split('/'), schema.type, value);
         if (schema.type === 'array') {
+            const arrayItemSchema: any = schema.items;
+            const arrayItemType = arrayItemSchema && arrayItemSchema.type;
+    
+            if (value === undefined) {
+                // tslint:disable-next-line:no-parameter-reassignment
+                value = typeof defaultTypeValue[arrayItemType] === 'function' ? defaultTypeValue[arrayItemType]() : defaultTypeValue[arrayItemType];
+            }
+
             if (!schemaPath) { 
                 this.jsonDocument.push(value); 
             } else {
@@ -75,13 +91,13 @@ export class FileSystemDataSource extends BaseDataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public set(itemPath: string, value: any) {
+    public async set(itemPath: string, value: any) {
         const schemaPath = actualPath(itemPath);
         objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
         this.save();
     }
 
-    public del(itemPath: string) {
+    public async del(itemPath: string) {
         const schemaPath = actualPath(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
         this.save();
