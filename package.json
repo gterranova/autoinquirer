@@ -41,6 +41,7 @@
     "webpack-command": "^0.4.1"
   },
   "dependencies": {
+    "json-schema-ref-parser": "^5.1.3",
     "object-path": "^0.11.4",
     "rxjs": "^6.3.2",
     "tslib": "^1.9.3"

@@ -5,14 +5,14 @@ export function flattenDeep(arr1: any[]) {
     return arr1.reduce((acc: any[], val: any) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
 }
 
-export const actualPath = (itemPath: string | string[]): string[] => {
-    if (Array.isArray(itemPath)) { return itemPath; }
+export const actualPath = (itemPath: string): string => {
+    if (!itemPath) { return ''; }
     const parts = itemPath.split('§');
     if (parts.length > 1 && parts[parts.length-1].indexOf('/') === -1) {
         return actualPath(itemPath.slice(0, itemPath.lastIndexOf('§')-1));
     }
 
-    return parts[parts.length-1].split('/');
+    return parts[parts.length-1];
 };
 
 export const backPath = (itemPath: string) => {

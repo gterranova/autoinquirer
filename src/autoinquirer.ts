@@ -2,8 +2,8 @@
 // tslint:disable:no-console
 
 import { Subject } from 'rxjs';
-import { DataSource } from './datasource';
-import { BlockType, IAnswer, IFeedBack, IPrompt } from './interfaces';
+import { BaseDataSource } from './datasource';
+import { Action, IAnswer, IFeedBack, IPrompt } from './interfaces';
 import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
@@ -12,12 +12,12 @@ export class AutoInquirer {
     public onQuestion: Subject<any> = new Subject();
     public onComplete: Subject<any> = new Subject();
 
-    private dataSource: DataSource;
+    private dataSource: BaseDataSource;
     private promptBuilder: PromptBuilder;
     private questions: IPrompt[];
     private answer: IAnswer;
 
-    constructor(dataSource: DataSource, initialAnswer: IAnswer = { state: { path: '', type: 'select'}}) {
+    constructor(dataSource: BaseDataSource, initialAnswer: IAnswer = { state: { path: '' }}) {
         this.dataSource = dataSource;
         this.promptBuilder = new PromptBuilder(dataSource);
         this.answer = initialAnswer;
@@ -25,7 +25,8 @@ export class AutoInquirer {
 
     public next() {
         const { state } = this.answer;
-        this.questions = this.promptBuilder.generatePrompts(state);
+        const propertySchema = this.dataSource.getDefinition(state.path);
+        this.questions = this.promptBuilder.generatePrompts(state, propertySchema);
         while (this.questions.length!==0) {
             const prompt = { ...this.questions.shift() };
             if (!prompt.when || prompt.when(this.answer)) {
@@ -40,9 +41,9 @@ export class AutoInquirer {
                 return prompt;
             }
         }
-        if (state && state.type !== 'none') {
+        if (state && state.type !== Action.EXIT) {
             //console.log("NO QUESTION", state);
-            state.type = 'back';
+            this.answer = { state: { path: backPath(state.path) } };
             this.performActions(this.answer);
             
             return this.next();
@@ -70,13 +71,13 @@ export class AutoInquirer {
         //console.log("ACTION:", answer, propertySchema);
         if (state && state.type) {
             switch (state.type) {
-                case 'add':
+                case Action.ADD:
                     if (input) {
-                        this.dataSource.addItemByPath(state.path, input.value);     
-                    } else if (propertySchema.$discriminator === BlockType.PROPERTY && propertySchema.type === 'array' && propertySchema.items.type !== 'collection') {
+                        this.dataSource.push(state.path, input.value);     
+                    } else if (propertySchema.type === 'array') {
                         //console.log("this.dataSource.addItemByPath", state.path, propertySchema.items.type);     
-                        const arrayItemSchema: any = this.dataSource.getDefinition(`${state.path}/#`);
-                        const arrayItemType = arrayItemSchema && (arrayItemSchema.$discriminator === BlockType.PROPERTY || arrayItemSchema.$discriminator === 'properties') && arrayItemSchema.type;
+                        const arrayItemSchema: any = propertySchema.items;
+                        const arrayItemType = arrayItemSchema && arrayItemSchema.type;
                         input = {};
                         switch (arrayItemType) {
                             case 'object':
@@ -94,50 +95,47 @@ export class AutoInquirer {
                                 input.value = {};
                         }
                 
-                        this.dataSource.addItemByPath(state.path, input.value);
+                        this.dataSource.push(state.path, input.value);
                     } 
                     break;
-                case 'edit':
+                case Action.EDIT:
                     if (input) {
-                        this.dataSource.updateItemByPath(state.path, input.value); 
+                        this.dataSource.set(state.path, input.value); 
+                        this.answer = { state: { path: backPath(state.path) } };
                     }
                     break;
-                case 'remove':
-                    this.dataSource.removeItemByPath(state.path);
+                case Action.REMOVE:
+                    this.dataSource.del(state.path);
+                    this.answer = { state: { path: backPath(state.path) } };
                     break;
-                case 'back':
-                    break;
-                case 'none':
+                case Action.EXIT:
                     this.questions = [];
                     break;
                 default:
             }
         }
-        if (input || (state && state.type && ['remove', 'back'].indexOf(state.type) !== -1)) {
-            const newPath = state.type === 'add' ? state.path : backPath(state.path);
-            //console.log(state.type, state.path, newPath,);
-            this.answer = { state: { path: newPath, type: 'select' } };
-        }
-    };
+    }
 
     public inquire(ask: any, answer: IAnswer) {
         // tslint:disable-next-line:promise-must-complete
         return new Promise( (resolve: any) => {
             this.answer = answer;
-            ask(this.promptBuilder.generatePrompts(answer.state)).then((res: IAnswer) => { 
+            const propertySchema = this.dataSource.getDefinition(answer.state.path);
+
+            ask(this.promptBuilder.generatePrompts(answer.state, propertySchema)).then((res: IAnswer) => { 
                 const { state } = res;
-                if (state.type !== 'none') {
+                if (state.type !== Action.EXIT) {
                     this.performActions(res);
-                    const newPath = state.type === 'add' ? state.path : backPath(state.path);
-                    this.inquire(ask, { state: { path: newPath, type: 'select' } }).then(resolve); 
+                    const newPath = state.type === Action.ADD ? state.path : backPath(state.path);
+                    this.inquire(ask, { state: { path: newPath } }).then(resolve); 
                 } else {
                     resolve();
                 }
             });    
         });
-    };
+    }
 
     public run() {
         this.onQuestion.next(this.next());
-    };
+    }
 }

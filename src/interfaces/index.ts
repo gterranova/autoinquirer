@@ -1,9 +1,16 @@
 // tslint:disable:no-any
 // tslint:disable:no-reserved-keywords
 
+export const enum Action {
+    EXIT='exit',
+    ADD='push',
+    EDIT='set',
+    REMOVE='del'
+}
+
 export interface IState {
     path: string;
-    type: string;
+    type?: Action;
 }
 
 export interface IAnswer {
@@ -11,10 +18,6 @@ export interface IAnswer {
     input?: { value?: any};
 }
 
-export interface IChoice {
-    name: string;
-    value: string;
-}
 export interface IPrompt {
     name: string;
     type: string;
@@ -33,70 +36,37 @@ export interface IFeedBack {
 
 export declare type PrimitiveType = number | boolean | string | null;
 
-export const enum BlockType {
-    DOCUMENT, 
-    SCHEMA, 
-    DEFINITIONS, 
-    PROPERTY, 
-    PROPERTIES
-}
-
-export interface IPropertyBase {
+export interface IProperty {
     $ref?: string;
     $schema?: string;
     $id?: string;
     description?: string;
-    allOf?: IPropertyBase[];
-    oneOf?: IPropertyBase[];
-    anyOf?: IPropertyBase[];
+    allOf?: IProperty[];
+    oneOf?: IProperty[];
+    anyOf?: IProperty[];
     title?: string;
     type?: string | string[];
-    definitions?: IDefinitions;
+    definitions?: {
+        [key: string]: IProperty;
+    };
     format?: string;
     items?: IProperty;
     minItems?: number;
     additionalItems?: {
-        anyOf: IPropertyBase[];
-    } | IPropertyBase;
-    enum?: PrimitiveType[] | IPropertyBase[];
+        anyOf: IProperty[];
+    } | IProperty;
+    enum?: PrimitiveType[] | IProperty[];
     default?: PrimitiveType | Object;
-    additionalProperties?: IPropertyBase | boolean;
+    additionalProperties?: IProperty | boolean;
     required?: string[];
     propertyOrder?: string[];
-    properties?: IProperties;
+    properties?: {
+        [key: string]: IProperty;
+    };
     defaultProperties?: string[];
     typeof?: "function";
     depends?: string;
-    choices?: any;
-    reference?: string;
 }
-
-export interface IProperty extends IPropertyBase {
-    $discriminator: BlockType.PROPERTY;
-}
-
-export interface IProperties {
-    $discriminator: BlockType.PROPERTIES;
-    [key: string]: IProperty | BlockType;
-}
-
-export interface ISchema {
-    $discriminator: BlockType.SCHEMA;
-    uri: string;
-}
-
-export interface IDefinitions {
-    $discriminator: BlockType.DEFINITIONS;
-    [key: string]: IProperties | IProperty | BlockType;
-}
-
-export interface IDocument extends IPropertyBase {
-    $discriminator: BlockType.DOCUMENT;
-    schema?: ISchema[];
-    definitions?: IDefinitions;
-}
-
-export type IEntity = IDefinitions | IProperty | IProperties;
 
 export interface IPropertyClass {
     create(value: any);

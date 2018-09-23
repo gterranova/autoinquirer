@@ -1,38 +1,38 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 
-import { DataSource } from './datasource';
-import { BlockType, IAnswer, IPrompt, IState } from './interfaces';
+import { BaseDataSource } from './datasource';
+import { Action, IAnswer, IPrompt, IProperty, IState } from './interfaces';
 
 import { backPath, dummyPrompt, evalExpr, flattenDeep } from './utils';
 
 // tslint:disable-next-line:one-variable-per-declaration
-const separatorChoice = {type: 'separator'}, cancelChoice= {name: 'Cancel', value: { type: 'none' } };
+const separatorChoice = {type: 'separator'}, cancelChoice= {name: 'Cancel', value: { type: Action.EXIT } };
 
 export class PromptBuilder {
-    private dataSource: DataSource;
+    private dataSource: BaseDataSource;
 
-    constructor(dataSource: DataSource) {
+    constructor(dataSource: BaseDataSource) {
         this.dataSource = dataSource;
     }
 
-    public generatePrompts(initialState: IState): IPrompt[] {
-        if (initialState.type === 'none') { return []; }
+    public generatePrompts(initialState: IState, propertySchema: IProperty): IPrompt[] {
+        if (initialState.type === Action.EXIT) { return []; }
 
         return flattenDeep([
             dummyPrompt((answers: IAnswer) => { Object.assign(answers, { state: initialState });}),
             // the line below won't let to jump between different trees
-            this.evaluate({ ...initialState })
+            this.evaluate(initialState, propertySchema)
             //this.evaluate()
         ]);
     }
     
     private checkAllowed(path: string, propertySchema: any) {
-        if (!propertySchema.depends) { return true; }
+        if (!propertySchema || !propertySchema.depends) { return true; }
         const parentPath = backPath(path);
         if (parentPath.indexOf('/') === -1) { return true; }
         
-        const parentPropertyValue = this.dataSource.getValue(parentPath);
+        const parentPropertyValue = this.dataSource.get(parentPath);
         
         return parentPropertyValue? !!evalExpr(propertySchema.depends, parentPropertyValue): true;
         //console.log(propertySchema.depends, path, parentPropertyValue, allowed);
@@ -51,18 +51,15 @@ export class PromptBuilder {
         };
     }
     
-    private makePrompt(data: IState, propertySchema: any): IPrompt {
-        const { type } = data;
-        //console.log(action, path)
-        
+    private makePrompt(_: IState, propertySchema: any): IPrompt {        
         return {
             name: `input.value`,
             message: `Enter ${propertySchema.type ? propertySchema.type.toLowerCase(): 'value'}:`,
             default: (answers: IAnswer) => {
                 const { state } = answers;
-                const defaultValue = propertySchema.type === 'array' ? [] : propertySchema.default;
-                
-                return type==='add'?defaultValue:this.dataSource.getValue(state.path);
+                const currentValue = this.dataSource.get(state.path);
+
+                return currentValue!==undefined ? currentValue : propertySchema.default;
             },
             type: propertySchema.type==='boolean'? 'confirm': 
                 (propertySchema.type==='checkbox'? 'checkbox':
@@ -73,168 +70,111 @@ export class PromptBuilder {
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
-    private getChoices(initialState: IState) {
+    private getChoices(initialState: IState, propertySchema: any) {
         const schemaPath = initialState.path;
-        const value =  this.dataSource.getValue(schemaPath);
-        const schema = this.dataSource.getDefinition(schemaPath);
+        const value =  this.dataSource.get(schemaPath);
 
         const basePath = schemaPath.length ? `${schemaPath}/`: '';
-        if (schema) {
-            switch (schema.$discriminator) {
-                case BlockType.DEFINITIONS:
-                    return schema && Object.keys(schema).map( (key: string) => {
+        if (propertySchema) {
+            switch (propertySchema.type) {
+
+                case 'string':
+                case 'number':
+                case 'boolean':
+                    return null; //value && { name: value, path: `${basePath}${value?Action.EDIT:Action.ADD}` };
+                case 'object':
+                    return propertySchema.properties && Object.keys(propertySchema.properties).map( (key: string) => {
+                        const property: any = propertySchema.properties[key];
+                        if (!property) {
+                            throw new Error(`${schemaPath}/${key} not found`);
+                        }
+                        const disabled = !this.checkAllowed(`${schemaPath}/${key}`, property)
+
+                        const item = { 
+                            name: key, 
+                            value: {  
+                                path: `${basePath}${key}`
+                            },
+                            disabled
+                        };
+                        // tslint:disable-next-line:no-string-literal
+                        if (['array','object'].indexOf(property.type) === -1) { item.value['type'] = Action.EDIT; }
+                        
+                        return item;
+                    }) || [];
+                case 'array':
+                    const arrayItemSchema: any = propertySchema.items;
+                    const arrayItemType = arrayItemSchema && arrayItemSchema.type;
+                    const action = arrayItemType === 'object' || arrayItemType === 'array'? undefined: Action.EDIT; 
+        
+                    return value && value.map( (key: string, idx: number) => {
+                        const item = { 
+                            name: JSON.stringify(key), 
+                            value: {  
+                                path: `${basePath}${idx}`
+                            } 
+                        };
+                        // tslint:disable-next-line:no-string-literal
+                        if (action) { item.value['type'] = action; }
+                        
+                        return item;
+                    }) || [];
+
+                default:
+                    return value && Object.keys(value).map( (key: string) => {
                         return { 
                             name: key, 
                             value: {  
-                                type: 'select',
+                                type: Action.EDIT,
                                 path: `${basePath}${key}`
                             } 
                         };
-                    }).filter((c: any) => c.name !== '$discriminator') || [];
-                case BlockType.PROPERTIES:
-                    switch (Object(schema).type) {
-                        case 'string':
-                        case 'number':
-                        case 'boolean':
-                        //case 'array':
-                            return null; //value && { name: value, path: `${basePath}${value?'edit':'add'}` };
-                        default:
-                            return value && Object.keys(value).map( (key: string) => {
-                                return { 
-                                    name: key, 
-                                    value: {  
-                                        type: 'edit',
-                                        path: `${basePath}${key}`
-                                    } 
-                                };
-                            }).filter((c: any) => c.name !== '$discriminator') || [];        
-                    }
-                case BlockType.PROPERTY:
-                    switch (schema.type) {
-                        case 'object':
-                            return schema.properties && Object.keys(schema.properties).map( (key: string) => {
-                                const propertySchema: any = this.dataSource.getDefinition(`${schemaPath}/${key}`);
-                                const disabled = !this.checkAllowed(`${schemaPath}/${key}`, propertySchema)
-
-                                return { 
-                                    name: key, 
-                                    value: {  
-                                        type: 'edit',
-                                        path: `${basePath}${key}`
-                                    },
-                                    disabled
-                                };
-                            }).filter((c: any) => c.name !== '$discriminator') || [];
-                        case 'array':
-                            const arrayItemSchema: any = this.dataSource.getDefinition(`${schemaPath}/#`);
-                            const arrayItemType = arrayItemSchema && arrayItemSchema.type;
-                            const action = arrayItemType === 'object' || arrayItemType === 'array'? 'select': 'edit'; 
-                
-                            return value && value.map( (key: string, idx: number) => {
-                                return { 
-                                    name: JSON.stringify(key), 
-                                    value: {  
-                                        type: action,
-                                        path: `${basePath}${idx}`
-                                    } 
-                                };
-                            }).filter((c: any) => c.name !== '$discriminator') || [];
-                    default:
-                        return null; //[{ name: value}];
-                    }
-                default:
-                    return null; //value && { name: value, path: `${basePath}` };
+                    }) || [];        
             }    
         }
     }
     
-    private evaluate_object(initialState: IState, _: any) {
-        const choices = [...this.getChoices(initialState), separatorChoice,
+    private evaluate_object(initialState: IState, propertySchema: any) {
+        const choices = [...this.getChoices(initialState, propertySchema), separatorChoice,
             {
-                name: `Add`, 
-                value: {...initialState, type: 'add'}
-            },{
                 name: `Remove`, 
-                value: {...initialState, type: 'remove'}
+                value: {...initialState, type: Action.REMOVE }
             },{
                 name: `Back`, 
-                value: {...initialState, type: 'back' }
+                value: { path: backPath(initialState.path) }
             }, cancelChoice];
     
         return this.makeMenu(initialState, choices);
     }
 
-    private evaluate_array(initialState: IState, _: any) {
+    private evaluate_array(initialState: IState, propertySchema: any) {
         // select item
-        const arrayItemSchema: any = this.dataSource.getDefinition(`${initialState.path}/#`);
+        const arrayItemSchema: any = propertySchema.items;
         const arrayItemType = arrayItemSchema && arrayItemSchema.type;
         const choices = (answers: IAnswer) => {
             const { state } = answers;
 
-            return [...this.getChoices(state), separatorChoice, {
+            return [...this.getChoices(state, propertySchema), separatorChoice, {
                 name: `Add ${arrayItemType || '?'}`, 
-                value: {...state, type: 'add'}
+                value: {...state, type: Action.ADD}
             },{
                 name: `Back`, 
-                value: {...state, type: 'back' }
+                value: { path: backPath(state.path) }
             }, cancelChoice];
         };
     
         return this.makeMenu(initialState, choices);
     }
     
-    private evaluate(initialState: IState) {
-        const { path } = initialState;
-
-        // tslint:disable-next-line:no-parameter-reassignment
-        const propertySchema = this.dataSource.getDefinition(path);
-
-        if (!path) {
-            // Select collection
-            const choices = [...this.getChoices(initialState), separatorChoice, 
-                {name: 'Edit definitions', value: { path: 'definitions' }}, cancelChoice];
-
-            return this.makeMenu({ path:'', type: 'select' }, choices);
-        }
-
-        switch (propertySchema.$discriminator) {
-            case BlockType.PROPERTIES:
-                //console.log("evaluate_properties", path, propertySchema);
-                if (Object(propertySchema).type === 'object' || Object(propertySchema).type === 'array') {
-                    if (initialState.type === 'add') {
-                        return this.makePrompt({...initialState, type: 'edit'}, propertySchema);        
-                    }
-
-                    return this.evaluate_object(initialState, propertySchema);
-                }
-
-                return this.makePrompt({...initialState, type: 'edit'}, propertySchema);
-
-            case BlockType.PROPERTY:
-                if (propertySchema.type === 'object') {
-                    return this.evaluate_object(initialState, propertySchema);
-                } else if (propertySchema.type === 'array') {
-                    return this.evaluate_array(initialState, propertySchema);
-                } else {
-                    throw new Error('not supposed to be here');
-                }
-            /*
-            case 'collection':
-                const collection = this.dataSource.rootDocument.definitions[propertySchema.reference];
-                const choices = [...Object.keys(collection).map( (key: string) => { 
-                    return { 
-                        name: key, 
-                        value: { $ref: `#/${propertySchema.reference}/${key}` }
-                    }; 
-                }), separatorChoice, {name: `Back`, value: {...initialState, type: 'back' }}, 
-                    cancelChoice];
-
-                return this.makePrompt(initialState, {...propertySchema, choices });
-            */
+    private evaluate(initialState: IState, propertySchema: IProperty) {
+        switch (propertySchema.type) {
+            case 'object':
+                return this.evaluate_object(initialState, propertySchema);
+            case 'array':
+                return this.evaluate_array(initialState, propertySchema);
             default:
-                //console.log("evaluate_primitives", path, propertySchema);
-    
-                return this.makePrompt({...initialState, type: 'edit'}, propertySchema);
+                //console.log("evaluate_primitives", path, propertySchema);    
+                return this.makePrompt({...initialState, type: Action.EDIT}, propertySchema);
         }
     }
 

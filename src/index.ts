@@ -1,2 +1,2 @@
-export { DataSource } from './datasource';
+export { FileSystemDataSource } from './datasource';
 export { AutoInquirer } from './autoinquirer';
