@@ -10,6 +10,7 @@ import { backPath } from './utils';
 
 export class AutoInquirer {
     public onQuestion: Subject<any> = new Subject();
+    public onError: Subject<any> = new Subject();
     public onComplete: Subject<any> = new Subject();
 
     private dataSource: BaseDataSource;
@@ -68,8 +69,14 @@ export class AutoInquirer {
                     break;
                 case Action.EDIT:
                     if (input) {
-                        await this.dataSource.set(state.path, input.value); 
-                        this.answer = { state: { path: backPath(state.path) } };
+                        try {
+                            await this.dataSource.set(state.path, input.value); 
+                            this.answer = { state: { path: backPath(state.path) } };
+                        } catch (e) {
+                            const errors = JSON.parse(e.message);
+                            this.answer = { state: { ...state, errors } };
+                            this.onError.next(this.answer.state)
+                        }
                     }
                     break;
                 case Action.REMOVE:

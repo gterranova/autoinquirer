@@ -22,7 +22,7 @@ export class Document extends Definition {
     public getDefinition(name: string): IProperty {
         let definition = Object(this);
         if (!name || !name.length) { 
-            return { ...Object(this) };
+            return definition;
         }
         const parts = name.split('/');
 

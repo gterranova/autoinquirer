@@ -1,9 +1,11 @@
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var nodeExternals = require('webpack-node-externals');
 
 module.exports = {
     entry: './src/index.ts',
     target: 'node',
+    externals: [nodeExternals()], // in order to ignore all modules in node_modules folder
     devtool: 'none',
     module: {
         rules: [

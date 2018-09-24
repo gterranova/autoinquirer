@@ -11,6 +11,7 @@ export const enum Action {
 export interface IState {
     path: string;
     type?: Action;
+    errors?: any;
 }
 
 export interface IAnswer {

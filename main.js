@@ -1,7 +1,7 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 require('source-map-support').install();
-
+const chalk = require('chalk');
 var program = require('commander');
 const inquirer = require('inquirer');
 const path = require("path");
@@ -26,8 +26,13 @@ if (program.args.length !== 2) {
         
         const prompts = new Subject();
         const inq = inquirer.prompt(prompts);
+        const bottomBar = new inquirer.ui.BottomBar();
         inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data).then(() => autoInquirer.run()); });
         autoInquirer.onQuestion.subscribe( prompt => prompts.next(prompt) );
+        autoInquirer.onError.subscribe( state => { 
+            const errorString = state.errors.map( err => err.message ).join('\n')+'\n'; 
+            bottomBar.updateBottomBar(chalk.red(errorString));
+        });
         autoInquirer.onComplete.subscribe(() => prompts.complete() );
         inq.then( () => console.log('') );
         autoInquirer.run();
