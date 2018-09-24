@@ -7,14 +7,46 @@ import { Action, IPrompt, IProperty, IState } from './interfaces';
 import { backPath, evalExpr } from './utils';
 
 // tslint:disable-next-line:one-variable-per-declaration
-const separatorChoice = {type: 'separator'}, cancelChoice= {name: 'Cancel', value: { type: Action.EXIT } };
+const separatorChoice = {type: 'separator'};
+
+const defaultActions = {
+    'object': [Action.BACK, Action.REMOVE, Action.EXIT],
+    'array': [Action.ADD, Action.BACK, Action.EXIT]
+};
 
 export class PromptBuilder {
     private dataSource: BaseDataSource;
-
+    // tslint:disable-next-line:no-reserved-keywords
+    private customActions: { name: string; value: { type: string}}[] = [];
+    
     constructor(dataSource: BaseDataSource) {
         this.dataSource = dataSource;
     }
+
+    public addAction(name: string, title?: any) {
+        this.customActions.push({ name: title||(name.slice(0,1).toUpperCase()+name.slice(1)), value: { type: name }});
+    } 
+
+    public getActions(initialState: IState, propertySchema: any) {
+        const actions = this.customActions.map( (action: any) => {
+            return { name: action.name, value: {...initialState, ...action.value}};
+        });
+        const additionalActions = propertySchema.$actions || defaultActions[propertySchema.type];
+        if (additionalActions) {
+            additionalActions.map( (name: string) => {
+                console.log(name, Action.BACK, name === Action.BACK, initialState.path)
+                if (name === Action.BACK) {
+                    if (initialState.path) {
+                        actions.push({ name: 'Back', value: { path: backPath(initialState.path) }});
+                    }
+                } else {
+                    actions.push({ name: (name.slice(0,1).toUpperCase()+name.slice(1)), value: { ...initialState, type: name }});
+                }
+            });
+        }
+
+        return actions;
+    } 
 
     public async generatePrompts(initialState: IState, propertySchema: IProperty): Promise<IPrompt> {
         if (initialState.type === Action.EXIT) { return null; }
@@ -36,12 +68,17 @@ export class PromptBuilder {
     
     }
 
-    private makeMenu(_: IState, choices: any): IPrompt {
+    private async makeMenu(initialState: IState, propertySchema: any): Promise<IPrompt> {
+        // select item
+        const baseChoices = await this.getChoices(initialState, propertySchema);
+
+        const choices = [...baseChoices, separatorChoice];
+                
         return {
             name: 'state',
             type: 'list',
             message: `select:`,
-            choices,
+            choices: [...choices, ...this.getActions(initialState, propertySchema)],
             pageSize: 20
         };
     }
@@ -58,7 +95,8 @@ export class PromptBuilder {
                 (propertySchema.type==='checkbox'? 'checkbox':
                     (propertySchema.type==='collection' || propertySchema.enum? 'list':
                         'input')),
-            choices: propertySchema.enum
+            choices: propertySchema.enum,
+            errors: initialState.type === Action.EDIT && initialState.errors
         };
     }
 
@@ -66,7 +104,7 @@ export class PromptBuilder {
         const schemaPath = initialState.path;
         const value =  await this.dataSource.get(schemaPath);
 
-        const basePath = schemaPath.length ? `${schemaPath}/`: '';
+        const basePath = schemaPath && schemaPath.length ? `${schemaPath}/`: '';
         if (propertySchema) {
             switch (propertySchema.type) {
 
@@ -127,44 +165,12 @@ export class PromptBuilder {
         
         return [];
     }
-    
-    private async evaluate_object(initialState: IState, propertySchema: any): Promise<IPrompt> {
-        const baseChoices = await this.getChoices(initialState, propertySchema);
-        const choices = [...baseChoices, separatorChoice,
-            {
-                name: `Remove`, 
-                value: {...initialState, type: Action.REMOVE }
-            },{
-                name: `Back`, 
-                value: { path: backPath(initialState.path) }
-            }, cancelChoice];
-    
-        return this.makeMenu(initialState, choices);
-    }
-
-    private async evaluate_array(initialState: IState, propertySchema: any): Promise<IPrompt> {
-        // select item
-        const arrayItemSchema: any = propertySchema.items;
-        const arrayItemType = arrayItemSchema && arrayItemSchema.type;
-        const baseChoices = await this.getChoices(initialState, propertySchema);
-
-        const choices = [...baseChoices, separatorChoice, {
-                name: `Add ${arrayItemType || '?'}`, 
-                value: {...initialState, type: Action.ADD}
-            },{
-                name: `Back`, 
-                value: { path: backPath(initialState.path) }
-            }, cancelChoice];
-    
-        return this.makeMenu(initialState, choices);
-    }
-    
+        
     private evaluate(initialState: IState, propertySchema: IProperty): Promise<IPrompt> {
         switch (propertySchema.type) {
             case 'object':
-                return this.evaluate_object(initialState, propertySchema);
             case 'array':
-                return this.evaluate_array(initialState, propertySchema);
+                return this.makeMenu(initialState, propertySchema);
             default:
                 //console.log("evaluate_primitives", path, propertySchema);    
                 return this.makePrompt({...initialState, type: Action.EDIT}, propertySchema);

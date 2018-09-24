@@ -2,10 +2,11 @@
 // tslint:disable:no-reserved-keywords
 
 export const enum Action {
+    BACK='back',
     EXIT='exit',
-    ADD='push',
-    EDIT='set',
-    REMOVE='del'
+    ADD='add',
+    EDIT='edit',
+    REMOVE='remove'
 }
 
 export interface IState {
@@ -28,6 +29,7 @@ export interface IPrompt {
     default?: any | (IAnswer);
     choices?: any | (IAnswer);
     pageSize?: number;
+    errors?: any;
 }
 
 export interface IFeedBack {
@@ -69,10 +71,3 @@ export interface IProperty {
     depends?: string;
 }
 
-export interface IPropertyClass {
-    create(value: any);
-    get(id: string);
-    value();
-    update(id: string, value: any);
-    remove(id: string);
-}

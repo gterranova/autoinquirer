@@ -122,14 +122,16 @@ export class MemoryDataSource extends BaseDataSource {
 
     // tslint:disable-next-line:no-reserved-keywords
     public async set(itemPath: string, value: any) {
-        const schemaPath = actualPath(itemPath);
-        const schema = this.getDefinition(schemaPath);
-        const prepValue = this.coerce(schema, value);
-        if (!this.validate(schema, prepValue)) {
-            throw new Error(JSON.stringify(this.validator.errors));
+        if (value !== undefined) {
+            const schemaPath = actualPath(itemPath);
+            const schema = this.getDefinition(schemaPath);
+            const prepValue = this.coerce(schema, value);
+            if (!this.validate(schema, prepValue)) {
+                throw new Error(JSON.stringify(this.validator.errors));
+            }
+            objectPath.set(this.jsonDocument, schemaPath.split('/'), prepValue);
+            this.save();                
         }
-        objectPath.set(this.jsonDocument, schemaPath.split('/'), prepValue);
-        this.save();
     }
 
     public async del(itemPath: string) {

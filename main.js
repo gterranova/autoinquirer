@@ -28,12 +28,13 @@ if (program.args.length !== 2) {
         const inq = inquirer.prompt(prompts);
         const bottomBar = new inquirer.ui.BottomBar();
         inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data).then(() => autoInquirer.run()); });
-        autoInquirer.onQuestion.subscribe( prompt => prompts.next(prompt) );
-        autoInquirer.onError.subscribe( state => { 
+        autoInquirer.on('prompt', prompt => prompts.next(prompt) );
+        autoInquirer.on('error', state => { 
             const errorString = state.errors.map( err => err.message ).join('\n')+'\n'; 
             bottomBar.updateBottomBar(chalk.red(errorString));
         });
-        autoInquirer.onComplete.subscribe(() => prompts.complete() );
+        autoInquirer.on('exit', state => console.log(state));
+        autoInquirer.on('complete', () => prompts.complete() );
         inq.then( () => console.log('') );
         autoInquirer.run();
     

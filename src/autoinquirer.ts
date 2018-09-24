@@ -1,28 +1,30 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 
-import { Subject } from 'rxjs';
+import { EventEmitter } from 'events';
 import { BaseDataSource } from './datasource';
 import { Action, IAnswer, IFeedBack, IPrompt } from './interfaces';
 import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
 
-export class AutoInquirer {
-    public onQuestion: Subject<any> = new Subject();
-    public onError: Subject<any> = new Subject();
-    public onComplete: Subject<any> = new Subject();
-
+export class AutoInquirer extends EventEmitter {
     private dataSource: BaseDataSource;
     private promptBuilder: PromptBuilder;
     private question: IPrompt;
     private answer: IAnswer;
 
     constructor(dataSource: BaseDataSource, initialAnswer: IAnswer = { state: { path: '' }}) {
+        super();
         this.dataSource = dataSource;
         this.promptBuilder = new PromptBuilder(dataSource);
         this.answer = initialAnswer;
     }
+
+    public addAction(name: string, cb?: (...args: any[]) => any) {
+        this.promptBuilder.addAction(name, (name.slice(0,1).toUpperCase()+name.slice(1)));
+        this.on(name, cb)
+    } 
 
     public async next() {
         const { state } = this.answer;
@@ -42,7 +44,7 @@ export class AutoInquirer {
                 return prompt;
             }
         }
-        this.onComplete.next();
+        this.emit('complete');
         
         return null;
     }
@@ -61,22 +63,22 @@ export class AutoInquirer {
     public async performActions(answer: IAnswer) {
         const { state, input } = answer;
     
-        //console.log("ACTION:", answer, propertySchema);
+        //console.log("ACTION:", answer);
         if (state && state.type) {
             switch (state.type) {
                 case Action.ADD:
                     await this.dataSource.push(state.path, input && input.value);
                     break;
                 case Action.EDIT:
-                    if (input) {
-                        try {
-                            await this.dataSource.set(state.path, input.value); 
+                    try {
+                        await this.dataSource.set(state.path, input && input.value); 
+                        if (input) {
                             this.answer = { state: { path: backPath(state.path) } };
-                        } catch (e) {
-                            const errors = JSON.parse(e.message);
-                            this.answer = { state: { ...state, errors } };
-                            this.onError.next(this.answer.state)
                         }
+                    } catch (e) {
+                        const errors = JSON.parse(e.message);
+                        this.answer = { state: { ...state, errors } };
+                        this.emit('error', this.answer.state)
                     }
                     break;
                 case Action.REMOVE:
@@ -88,10 +90,11 @@ export class AutoInquirer {
                     break;
                 default:
             }
+            this.emit(state.type, state);
         }
     }
 
     public async run() {
-        this.onQuestion.next(await this.next());
+        this.emit('prompt', await this.next())
     }
 }
