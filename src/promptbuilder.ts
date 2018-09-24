@@ -86,16 +86,18 @@ export class PromptBuilder {
     private async makePrompt(initialState: IState, propertySchema: any): Promise<IPrompt> {        
         const currentValue = await this.dataSource.get(initialState.path);
         const defaultValue = currentValue!==undefined ? currentValue : propertySchema.default;
-        
+        const isCheckbox = propertySchema.items && propertySchema.items.enum;
+        const choices = !isCheckbox? propertySchema.enum: propertySchema.items.enum;
+
         return {
             name: `input.value`,
             message: `Enter ${propertySchema.type ? propertySchema.type.toLowerCase(): 'value'}:`,
             default: defaultValue,
             type: propertySchema.type==='boolean'? 'confirm': 
-                (propertySchema.type==='checkbox'? 'checkbox':
-                    (propertySchema.type==='collection' || propertySchema.enum? 'list':
+                (isCheckbox? 'checkbox':
+                    (propertySchema.enum? 'list':
                         'input')),
-            choices: propertySchema.enum,
+            choices,
             errors: initialState.type === Action.EDIT && initialState.errors
         };
     }
@@ -125,8 +127,10 @@ export class PromptBuilder {
                                 value: { path: `${basePath}${key}` },
                                 disabled: !allowed
                             };
-                            // tslint:disable-next-line:no-string-literal
-                            if (['array','object'].indexOf(property.type) === -1) { item.value['type'] = Action.EDIT; }
+                            if (property.type !== 'object' || property.type !== 'array' || (property.items && property.items.enum)) { 
+                                // tslint:disable-next-line:no-string-literal
+                                item.value['type'] = Action.EDIT; 
+                            }
                             
                             return item;    
                         });
@@ -168,8 +172,11 @@ export class PromptBuilder {
         
     private evaluate(initialState: IState, propertySchema: IProperty): Promise<IPrompt> {
         switch (propertySchema.type) {
-            case 'object':
             case 'array':
+                if (propertySchema.items && propertySchema.items.enum) {
+                    return this.makePrompt({...initialState, type: Action.EDIT}, propertySchema);
+                }
+            case 'object':
                 return this.makeMenu(initialState, propertySchema);
             default:
                 //console.log("evaluate_primitives", path, propertySchema);    
