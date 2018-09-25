@@ -2,19 +2,19 @@
 // tslint:disable:no-console
 
 import { EventEmitter } from 'events';
-import { BaseDataSource } from './datasource';
+import { DataSource } from './datasource';
 import { Action, IAnswer, IFeedBack, IPrompt } from './interfaces';
 import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
 
 export class AutoInquirer extends EventEmitter {
-    private dataSource: BaseDataSource;
+    private dataSource: DataSource;
     private promptBuilder: PromptBuilder;
     private question: IPrompt;
     private answer: IAnswer;
 
-    constructor(dataSource: BaseDataSource, initialAnswer: IAnswer = { state: { path: '' }}) {
+    constructor(dataSource: DataSource, initialAnswer: IAnswer = { state: { path: '' }}) {
         super();
         this.dataSource = dataSource;
         this.promptBuilder = new PromptBuilder(dataSource);

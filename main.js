@@ -7,7 +7,7 @@ const inquirer = require('inquirer');
 const path = require("path");
 
 const Subject = require('rxjs').Subject;
-const { FileSystemDataSource, AutoInquirer } = require('./build/src');
+const { MongoDataSource, AutoInquirer } = require('./build/src');
 
 program
   .version('1.0.0')
@@ -18,7 +18,8 @@ program
 if (program.args.length !== 2) {
     program.outputHelp();
 } else {
-    const dataSource = new FileSystemDataSource(program.args[0], program.args[1]);
+    const dataSource = new MongoDataSource(program.args[0], program.args[1], 
+        'mongodb+srv://***');
     dataSource.initialize().then( _ => {
         const autoInquirer = new AutoInquirer(dataSource);
 
@@ -35,7 +36,7 @@ if (program.args.length !== 2) {
         });
         autoInquirer.on('exit', state => console.log(state));
         autoInquirer.on('complete', () => prompts.complete() );
-        inq.then( () => console.log('') );
+        inq.then( () => dataSource.close() );
         autoInquirer.run();
     
     });

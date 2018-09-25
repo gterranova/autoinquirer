@@ -29,7 +29,7 @@ export class Document extends Definition {
         while (definition && parts.length) {
             const key = parts.shift();
 
-            if (definition.type === 'array' && key==='items' || (/^[a-f0-9-]{36}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key))) {
+            if (definition.type === 'array' && key==='items' || (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key))) {
                 definition = definition.items;
             } else if (definition.type === 'object' && definition.properties && definition.properties[key]) {
                 definition = definition.properties[key];

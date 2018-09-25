@@ -1,7 +1,7 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 
-import { BaseDataSource } from './datasource';
+import { DataSource } from './datasource';
 import { Action, IPrompt, IProperty, IState } from './interfaces';
 
 import { backPath, evalExpr } from './utils';
@@ -15,11 +15,11 @@ const defaultActions = {
 };
 
 export class PromptBuilder {
-    private dataSource: BaseDataSource;
+    private dataSource: DataSource;
     // tslint:disable-next-line:no-reserved-keywords
     private customActions: { name: string; value: { type: string}}[] = [];
     
-    constructor(dataSource: BaseDataSource) {
+    constructor(dataSource: DataSource) {
         this.dataSource = dataSource;
     }
 
@@ -34,7 +34,6 @@ export class PromptBuilder {
         const additionalActions = propertySchema.$actions || defaultActions[propertySchema.type];
         if (additionalActions) {
             additionalActions.map( (name: string) => {
-                console.log(name, Action.BACK, name === Action.BACK, initialState.path)
                 if (name === Action.BACK) {
                     if (initialState.path) {
                         actions.push({ name: 'Back', value: { path: backPath(initialState.path) }});
@@ -140,12 +139,14 @@ export class PromptBuilder {
                     const arrayItemSchema: any = propertySchema.items;
                     const arrayItemType = arrayItemSchema && arrayItemSchema.type;
                     const action = arrayItemType === 'object' || arrayItemType === 'array'? undefined: Action.EDIT; 
-        
-                    return value && value.map( (key: string, idx: number) => {
+                    const isCollection = propertySchema.$collection !== undefined;
+                    
+                    return value && value.map( (arrayItem: any, idx: number) => {
+                        const myId = (arrayItem && arrayItem._id) || idx;
                         const item = { 
-                            name: JSON.stringify(key), 
+                            name: `${JSON.stringify(arrayItem)} - ${basePath}${myId}`, 
                             value: {  
-                                path: `${basePath}${idx}`
+                                path: `${basePath}${myId}`
                             } 
                         };
                         // tslint:disable-next-line:no-string-literal
