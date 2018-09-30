@@ -1,52 +1,45 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 
+import fs from "fs";
 import objectPath from 'object-path';
-import { actualPath } from '../utils';
+import { loadJSON } from '../utils';
 import { DataSource } from './index';
 
 export class MemoryDataSource extends DataSource {
-    protected jsonDocument: any;
+    private jsonDocument: any;
+    private dataFile: string;
 
-    constructor(schemaFile: string) {
-        super(schemaFile);
+    constructor(data: any) {
+        super();
+        this.dataFile = (typeof data === 'string') && data;
+        this.jsonDocument = this.dataFile && loadJSON(this.dataFile) || {};
     }
 
-    public async setup() {
-        const schema = this.getDefinition('');
-        this.jsonDocument = this.coerce(schema);
+    public async connect() {
+        // Nothing to do
     }
 
-    // tslint:disable-next-line:no-empty
-    public async save() {}
+    public async close() {
+        this.save();
+    }
+
+    public async save() {
+        if (this.dataFile) { fs.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2)); }
+    }
 
     // tslint:disable-next-line:no-reserved-keywords
     public async get(itemPath?: string) {
         if (!itemPath) { return this.jsonDocument; }
 
-        const schemaParts = actualPath(itemPath);
-
-        return objectPath.get(this.jsonDocument, schemaParts.split('/'));
+        return objectPath.get(this.jsonDocument, itemPath.split('/'));
     }
 
-    public async push(itemPath: string, value: any) {
-        const schemaPath = actualPath(itemPath);
-        const schema = this.getDefinition(schemaPath);
-    
-        //console.log('addItemByPath', schemaPath.split('/'), schema.type, value);
-        if (schema.type === 'array') {
-            const arrayItemSchema: any = schema.items;
-
-            // tslint:disable-next-line:no-parameter-reassignment
-            value = this.coerce(arrayItemSchema, value);    
-
-            if (!schemaPath) { 
-                this.jsonDocument.push(value); 
-            } else {
-                objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
-            }
+    public async push(itemPath: string, value: any) {    
+        if (!itemPath) { 
+            this.jsonDocument.push(value); 
         } else {
-            throw new Error('not implemented')
+            objectPath.push(this.jsonDocument, itemPath.split('/'), value);
         }
         this.save();    
     }
@@ -54,20 +47,19 @@ export class MemoryDataSource extends DataSource {
     // tslint:disable-next-line:no-reserved-keywords
     public async set(itemPath: string, value: any) {
         if (value !== undefined) {
-            const schemaPath = actualPath(itemPath);
-            const schema = this.getDefinition(schemaPath);
-            const prepValue = this.coerce(schema, value);
-            if (!this.validate(schema, prepValue)) {
-                throw new Error(JSON.stringify(this.validator.errors));
-            }
-            objectPath.set(this.jsonDocument, schemaPath.split('/'), prepValue);
+            objectPath.set(this.jsonDocument, itemPath.split('/'), value);
             this.save();                
         }
     }
 
     public async del(itemPath: string) {
-        const schemaPath = actualPath(itemPath);
+        const schemaPath = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
         this.save();
     }
-};
+
+    public delCascade() {
+        throw new Error("Method not implemented.");
+    }
+
+}

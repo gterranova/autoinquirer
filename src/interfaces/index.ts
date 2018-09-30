@@ -17,7 +17,7 @@ export interface IState {
 
 export interface IAnswer {
     state: IState;
-    input?: { value?: any};
+    value?: any;
 }
 
 export interface IPrompt {
@@ -38,6 +38,11 @@ export interface IFeedBack {
 }
 
 export declare type PrimitiveType = number | boolean | string | null;
+
+export interface IProxyInfo {
+    proxyName: string;
+    params: any;
+}
 
 export interface IProperty {
     $ref?: string;
@@ -67,7 +72,9 @@ export interface IProperty {
         [key: string]: IProperty;
     };
     defaultProperties?: string[];
+    // custom properties
     typeof?: "function";
     depends?: string;
+    $proxy?: IProxyInfo;
 }
 

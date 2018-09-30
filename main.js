@@ -7,8 +7,51 @@ const inquirer = require('inquirer');
 const path = require("path");
 
 const Subject = require('rxjs').Subject;
-const { MongoDataSource, AutoInquirer } = require('./build/src');
+const { Dispatcher, JsonSchema, MemoryDataSource, MongoDataSource, AutoInquirer } = require('./build/src');
 
+async function main() { // jshint ignore:line
+    const mongoDataSource = new MongoDataSource({ 
+        uri: 'mongodb+srv://gianpaolo:******@cluster0-wrvuf.mongodb.net?retryWrites=true', 
+        databaseName: 'my-transmission',
+        collectionName: 'test'
+    });
+    console.log(program.args[1])
+    const dispatcher = new Dispatcher(
+        new JsonSchema(program.args[0]), 
+        program.args[1] ? new MemoryDataSource(program.args[1]) : mongoDataSource
+    );
+    dispatcher.registerProxy('mongodb', mongoDataSource);
+
+    await dispatcher.connect(); // jshint ignore:line
+
+    const autoInquirer = new AutoInquirer(dispatcher);
+
+    //autoInquirer.inquire(inquirer.prompt).then(() => console.log('') );
+    
+    const prompts = new Subject();
+    const inq = inquirer.prompt(prompts);
+    const bottomBar = new inquirer.ui.BottomBar();
+    inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data).then(() => autoInquirer.run()); });
+    autoInquirer.on('prompt', prompt => prompts.next(prompt) );
+    autoInquirer.on('error', state => { 
+        const errorString = state.errors+'\n'; 
+        bottomBar.updateBottomBar(chalk.red(errorString));
+    });
+    autoInquirer.on('exit', state => console.log(state));
+    autoInquirer.on('complete', () => prompts.complete() );
+    inq.then( () => dispatcher.close() );
+
+    process.on('unhandledRejection', (err, p) => {
+        console.log('An unhandledRejection occurred');
+        console.log(`Rejected Promise: ${p}`);
+        console.log(`Rejection:`, err);
+        dispatcher.close();
+      });
+
+    autoInquirer.run();
+
+}
+  
 program
   .version('1.0.0')
   .description('Example json editor')
@@ -18,27 +61,5 @@ program
 if (program.args.length !== 2) {
     program.outputHelp();
 } else {
-    const dataSource = new MongoDataSource(program.args[0], program.args[1], 
-        'mongodb+srv://***');
-    dataSource.initialize().then( _ => {
-        const autoInquirer = new AutoInquirer(dataSource);
-
-        //autoInquirer.inquire(inquirer.prompt).then(() => console.log('') );
-        
-        const prompts = new Subject();
-        const inq = inquirer.prompt(prompts);
-        const bottomBar = new inquirer.ui.BottomBar();
-        inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data).then(() => autoInquirer.run()); });
-        autoInquirer.on('prompt', prompt => prompts.next(prompt) );
-        autoInquirer.on('error', state => { 
-            const errorString = state.errors.map( err => err.message ).join('\n')+'\n'; 
-            bottomBar.updateBottomBar(chalk.red(errorString));
-        });
-        autoInquirer.on('exit', state => console.log(state));
-        autoInquirer.on('complete', () => prompts.complete() );
-        inq.then( () => dataSource.close() );
-        autoInquirer.run();
-    
-    });
-        
+    main();
 }

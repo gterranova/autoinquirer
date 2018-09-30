@@ -15,7 +15,7 @@ export const actualPath = (itemPath: string): string => {
     return parts[parts.length-1];
 };
 
-export const backPath = (itemPath: string) => {
+export const backPath = (itemPath: string): string => {
     if (!itemPath) { return ''; }
     const parent = itemPath.lastIndexOf('/') !== -1 ? itemPath.slice(0, itemPath.lastIndexOf('/')) : '';
     const isComplexPath = parent.lastIndexOf('§') !== -1;
@@ -36,22 +36,6 @@ export function evalExpr(expression: string, context: any) {
         console.warn('•Expression: {{x \'' + expression + '\'}}\n•JS-Error: ', e, '\n•Context: ', context);
         
         return;
-    }    
-}
-
-export const dummyPrompt = (cb?: any) => {
-    // tslint:disable-next-line:no-parameter-reassignment no-empty
-    if (!cb) { cb = () => {}; }
-    
-    return { 
-        when: (answers: any) => {
-            cb(answers);
-
-            return false;    
-        },
-        message: 'continue',
-        type: 'confirm',
-        name: 'confirm'
     }    
 }
 
@@ -85,5 +69,30 @@ export function loadJSON(fileName: string): any {
     }
     
     return undefined;
+}
+
+export function absolute(testPath: string, absolutePath: string) {
+    if (testPath && testPath[0] === '/') { return testPath; }
+    if (!testPath) { return absolutePath; }
+    const p0 = absolutePath.split('/');
+    const rel = testPath.split('/');
+    while (rel.length) { 
+        const t = rel.shift(); 
+        if (t === '.') { continue; } 
+        else if (t === '..') { if (p0) { p0.pop(); } } 
+        else { p0.push(t) } 
+    }
+
+    return p0.join('/');
+}
+
+export function getType(value: any) {
+    // tslint:disable-next-line:no-reserved-keywords
+    const type = typeof value;
+    if (type === 'object') {
+        return value ? Object.prototype.toString.call(value).slice(8, -1) : 'null';
+    }
+
+    return type;
 }
 

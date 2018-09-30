@@ -1,63 +1,58 @@
+import { IProperty } from '../interfaces';
+import { getType } from '../utils';
+
 // tslint:disable:no-any
 // tslint:disable:no-console
 
-import ajv from 'ajv';
-import { IProperty } from '../interfaces';
-import { Document } from '../types';
-import { actualPath } from '../utils';
-
-const defaultTypeValue = {
-    'object': (value?: any) => value? { ...value }: {},
-    'array': (value?: any) => value? [ ...value ]: [],
-    'string': (value?: any)=> value ||'',
-    'number': (value?: any)=> parseFloat(value) || 0,
-    'integer': (value?: any)=> parseFloat(value) || 0,
-    'boolean': (value?: any) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
-};
-
 export abstract class DataSource {
-    public schemaDocument: Document;
-    public validator: any;
-    private schemaFile: string;
+    public async abstract connect(); 
+    public async abstract close(); 
 
-    constructor(schemaFile: string) {
-        this.schemaFile = schemaFile;
-        this.validator = new ajv({ coerceTypes: true });
-    }
-
-    public async initialize() {
-        this.schemaDocument = await Document.load(this.schemaFile);
-        await this.setup();
-    } 
-
-    public getDefinition(schemaPath: string): IProperty {
-        const schemaParts = actualPath(schemaPath);
-
-        return this.schemaDocument.getDefinition(schemaParts);
-    }
-
-    public abstract setup(); 
     // tslint:disable-next-line:no-reserved-keywords
-    public async abstract get(itemPath?: string);
+    public async abstract get(itemPath?: string, schema?: IProperty, parentPath?: string, params?: any);
     // tslint:disable-next-line:no-reserved-keywords
-    public async abstract set(itemPath: string, value: any)
-    public async abstract push(itemPath: string, value: any);
-    public async abstract del(itemPath: string);
-    public async abstract save();
+    public async abstract set(itemPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: any);
+    public async abstract push(itemPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: any);
+    public async abstract del(itemPath?: string, schema?: IProperty, parentPath?: string, params?: any);
+    public async abstract delCascade(parentPath?: string, params?: any);
 
-    protected coerce(schema: IProperty, value?: any) {
-        if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
-            // tslint:disable-next-line:no-parameter-reassignment
-            if (!value || ((schema.type !== 'number' && schema.type !== 'integer') || 
-                /^(\d+|\d*(\.\d+)?)$/.test(value))) {
-                return defaultTypeValue[schema.type](value || schema.default);                
+    public async convertObjIDToIndex(path: string | string[], basePath: string='', obj?: any, ...others: any[]) {
+        if (!path) { return obj; }
+        const parts = typeof path === 'string' ? path.split('/') : path;
+        const converted = [];
+        let currentObj = obj || await this.get.call(this, basePath, ...others);
+
+        for (const key of parts) {
+            if (Array.isArray(currentObj)) {
+                let idx = key;
+                if (/^[a-f0-9-]{24}$/.test(key)) {
+                    const item = currentObj.find( (itemObj: any) => {
+                        return itemObj && itemObj._id === key; 
+                    });
+                    if (!item) {
+                        return [...converted, ...parts.slice(converted.length)].join('/');
+                    }    
+                    idx = currentObj.indexOf(item).toString();
+                }
+                converted.push(idx);
+                currentObj = currentObj[idx];
+                continue;
+
+            } else if (getType(currentObj) === 'Object' && currentObj[key]) {
+                converted.push(key);
+                currentObj = currentObj[key];
+                continue;
             }
+            
+            return [...converted, ...parts.slice(converted.length)].join('/');
         }
-
-        return value;
+        
+        return converted.join('/');
     }
 
-    protected validate(schema: any, data: any) {
-        return this.validator.validate(schema, data);
-    }
 }
+
+export { Dispatcher } from './dispatcher';
+export { JsonSchema } from './jsonschema';
+export { MemoryDataSource } from './memory';
+export { MongoDataSource } from './mongodb';

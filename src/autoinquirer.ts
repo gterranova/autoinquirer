@@ -2,22 +2,21 @@
 // tslint:disable:no-console
 
 import { EventEmitter } from 'events';
-import { DataSource } from './datasource';
+import { Dispatcher } from './datasource/dispatcher';
 import { Action, IAnswer, IFeedBack, IPrompt } from './interfaces';
 import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
 
 export class AutoInquirer extends EventEmitter {
-    private dataSource: DataSource;
+    private dataDispatcher: Dispatcher;
     private promptBuilder: PromptBuilder;
-    private question: IPrompt;
     private answer: IAnswer;
 
-    constructor(dataSource: DataSource, initialAnswer: IAnswer = { state: { path: '' }}) {
+    constructor(dataDispatcher: Dispatcher, initialAnswer: IAnswer = { state: { path: '' }}) {
         super();
-        this.dataSource = dataSource;
-        this.promptBuilder = new PromptBuilder(dataSource);
+        this.dataDispatcher = dataDispatcher;
+        this.promptBuilder = new PromptBuilder(dataDispatcher);
         this.answer = initialAnswer;
     }
 
@@ -26,23 +25,12 @@ export class AutoInquirer extends EventEmitter {
         this.on(name, cb)
     } 
 
-    public async next() {
+    public async next(): Promise<IPrompt> {
         const { state } = this.answer;
-        const propertySchema = this.dataSource.getDefinition(state.path);
-        this.question = await this.promptBuilder.generatePrompts(state, propertySchema);
-        if (this.question!==null) {
-            const prompt = this.question;
-            if (!prompt.when || prompt.when(this.answer)) {
-                prompt.when = true;
-                if (prompt.default && typeof(prompt.default) === 'function') {
-                    prompt.default = prompt.default(this.answer);
-                }
-                if (prompt.choices && typeof(prompt.choices) === 'function') {
-                    prompt.choices = prompt.choices(this.answer);
-                }
-
-                return prompt;
-            }
+        const propertySchema = await this.dataDispatcher.getSchema(state.path);
+        const prompt = await this.promptBuilder.generatePrompts(state, propertySchema);
+        if (prompt !== null) {
+            return prompt;
         }
         this.emit('complete');
         
@@ -50,43 +38,44 @@ export class AutoInquirer extends EventEmitter {
     }
 
     public async onAnswer(data: IFeedBack) {
-        if (/^input\./.test(data.name)) {
-            const pair = {}; pair[data.name.split('.').pop()] = data.answer;
-            this.answer = {...this.answer, input: pair};
-        } else {
-            this.answer = {...this.answer, [data.name]: data.answer};
-        }
+        this.answer = {...this.answer, [data.name]: data.answer};
         await this.performActions(this.answer);
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
     public async performActions(answer: IAnswer) {
-        const { state, input } = answer;
+        const { state, value } = answer;
     
         //console.log("ACTION:", answer);
         if (state && state.type) {
             switch (state.type) {
                 case Action.ADD:
-                    await this.dataSource.push(state.path, input && input.value);
+                    try {
+                        await this.dataDispatcher.push(state.path, value);
+                    } catch (e) {
+                        this.answer = { state: { ...state, errors: e.message } };    
+                        this.emit('error', this.answer.state);
+                    }
                     break;
                 case Action.EDIT:
-                    try {
-                        await this.dataSource.set(state.path, input && input.value); 
-                        if (input) {
+                    if (value !== undefined) {
+                        try {
+                            await this.dataDispatcher.set(state.path, value);
                             this.answer = { state: { path: backPath(state.path) } };
+                        } catch (e) {
+                            this.answer = { state: { ...state, errors: e.message } };    
+                            this.emit('error', this.answer.state);
                         }
-                    } catch (e) {
-                        const errors = JSON.parse(e.message);
-                        this.answer = { state: { ...state, errors } };
-                        this.emit('error', this.answer.state)
                     }
                     break;
                 case Action.REMOVE:
-                    await this.dataSource.del(state.path);
-                    this.answer = { state: { path: backPath(state.path) } };
-                    break;
-                case Action.EXIT:
-                    this.question = null;
+                    try { 
+                        await this.dataDispatcher.del(state.path);
+                        this.answer = { state: { path: backPath(state.path) } };
+                    } catch (e) { 
+                        this.answer = { state: { ...state, errors: e.message } };    
+                        this.emit('error', this.answer.state);
+                    } 
                     break;
                 default:
             }

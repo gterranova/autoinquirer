@@ -1,200 +1,87 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 
-import fs from "fs";
 import { MongoClient, ObjectID } from 'mongodb';
 import objectPath from 'object-path';
-import { loadJSON } from '../utils';
-import { MemoryDataSource } from './memory';
+import { IProperty } from '../interfaces';
+import { getType } from '../utils';
+import { DataSource } from './index';
 
-const dbName = 'my-transmission';
-
-function getType(value: any) {
-    // tslint:disable-next-line:no-reserved-keywords
-    const type = typeof value;
-    if (type === 'object') {
-        return value ? Object.prototype.toString.call(value).slice(8, -1) : 'null';
-    }
-
-    return type;
+interface IMongoConfig {
+    uri?: string;
+    databaseName?: string;
+    collectionName?: string;
 }
 
-function findEntryPoints(p: string, schema: any) {
-    let paths = {};
-    if (schema.type=== 'object') {
-        Object.keys(schema.properties).map((key: string) => {
-            paths = {...paths, ...findEntryPoints(key, schema.properties[key])};
-        });
-    } else if (schema.type === 'array') {
-        if (schema.$collection) {
-            return {[p]: schema.$collection};
-        }
-        paths = findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items)
-    } 
-
-    return Object.keys(paths).reduce( (acc: any, key: string) => {
-        acc[`${p}${p?'\\/':'^'}${key}`] = paths[key];
-        
-        return acc; 
-    }, {});
-}
-
-export class MongoDataSource extends MemoryDataSource {
-    private dataFile: string;
-    private connectionUrl: string;
-    private entryPoints: any = {};
+export class MongoDataSource extends DataSource {
+    private config: IMongoConfig;
     private client: MongoClient;
     private db: any;
+    private isConnected: boolean;
 
-    constructor(schemaFile: string, dataFile: string, connectionUrl: string) {
-        super(schemaFile);
-        this.dataFile = dataFile;
-        this.connectionUrl = connectionUrl;
+    constructor(config: IMongoConfig = {}) {
+        super();
+        this.config = config;
     }
 
-    public async setup() {
-        const schema = this.getDefinition('');
-        const defaultValue = this.coerce(schema);
-        this.jsonDocument = loadJSON(this.dataFile);
-        if (!this.jsonDocument || getType(this.jsonDocument) !== getType(defaultValue)) {
-            this.jsonDocument = defaultValue;
-        }
-        this.entryPoints = findEntryPoints('', this.schemaDocument);
+    public async connect() {
+        if (this.isConnected) { return };
+
         await new Promise((resolve: any, reject: any) => {
-            MongoClient.connect(this.connectionUrl, { useNewUrlParser: true }, (err: any, client: any) => {
+            const { uri, databaseName } = this.config;
+            MongoClient.connect(uri, { useNewUrlParser: true }, (err: any, client: any) => {
                 if (err) { reject(err); }
                 this.client = client;
-                this.db = client.db(dbName);
+                if (!databaseName) {
+                    throw new Error("MongoDataSource: a databaseName must be passed");
+                }
+                this.db = client.db(databaseName);
+                this.isConnected = true;
                 resolve();
             });  
         });
+        //console.log("Mongodb: initialized");
     }
 
     public async close() {
-        this.client.close();
-    }
-
-    public async save() {
-        fs.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2));
-    }
-
-    // tslint:disable-next-line:no-reserved-keywords
-    public async get(itemPath?: string) {
-        if (!itemPath) { return this.jsonDocument; }
-
-        const collectionRefs = this.getCollectionsForPath(itemPath);
-        if (collectionRefs.length) {
-            const lastCollection = collectionRefs.pop();
-
-            return this.getCollection(lastCollection);
-        };
-        const schemaPath = this.convertObjIDToIndex(itemPath);
-
-        return objectPath.get(this.jsonDocument, schemaPath.split('/'));
-    }
-
-    public async push(itemPath: string, value: any) {
-        const schemaPath = this.convertObjIDToIndex(itemPath);
-        const schema = this.getDefinition(schemaPath);
-    
-        //console.log('addItemByPath', schemaPath.split('/'), schema.type, value);
-        if (schema.type === 'array') {
-            const arrayItemSchema: any = schema.items;
-
-            // tslint:disable-next-line:no-parameter-reassignment
-            value = this.coerce(arrayItemSchema, value);    
-
-            const collectionRefs = this.getCollectionsForPath(itemPath);
-            if (collectionRefs.length) {
-                const lastCollection = collectionRefs.pop();
-    
-                return this.pushCollection(lastCollection, value);
-            };
-
-            if (getType(value) === getType({})) {
-                value._id = new ObjectID().toHexString();
-            }
-    
-            if (!schemaPath) { 
-                this.jsonDocument.push(value); 
-            } else {
-                objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
-            }
-        } else {
-            throw new Error('not implemented')
-        }
-        this.save();    
+        if (!this.isConnected) { return };
+        await this.client.close();
+        this.isConnected = false;
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async set(itemPath: string, value: any) {
-        if (value !== undefined) {
-            const schemaPath = this.convertObjIDToIndex(itemPath);
-            const schema = this.getDefinition(schemaPath);
-            const prepValue = this.coerce(schema, value);
-            if (!this.validate(schema, prepValue)) {
-                throw new Error(JSON.stringify(this.validator.errors));
-            }
-            const collectionRefs = this.getCollectionsForPath(itemPath);
-            if (collectionRefs.length) {
-                const lastCollection = collectionRefs.pop();
-    
-                return this.setCollection(lastCollection, prepValue);
-            };
-            objectPath.set(this.jsonDocument, schemaPath.split('/'), prepValue);
-            this.save();                
-        }
-    }
-
-    public async del(itemPath: string) {
-        const schemaPath = this.convertObjIDToIndex(itemPath);
-
-        const collectionRefs = this.getCollectionsForPath(itemPath);
-        if (collectionRefs.length) {
-            const lastCollection = collectionRefs.pop();
-
-            return this.delCollection(lastCollection);
-        };
-        this.getCollectionsWithinPath(itemPath).map( (name: string) => {
-            const collection = this.db.collection(name);
-            console.log("Must delete from", name, "with collectionPath starting with", RegExp(`^${itemPath}`));
-
-            return collection.deleteMany({ collectionPath: RegExp(`^${itemPath}`) });
-        });
-        objectPath.del(this.jsonDocument, schemaPath.split('/'));
-        this.save();
-    }
-
-    private async getCollection(data: { name: string; collectionPath: string; objPath: string }) {
-        const { name, collectionPath, objPath} = data;
-        const collection = this.db.collection(name);
+    public async get(objPath?: string, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+        const collection = this.getCollection(params);
+        //console.log("GET", objPath);
 
         if (!objPath) {
             // tslint:disable-next-line:no-unnecessary-local-variable
-            const index = await collection.find({ collectionPath }).toArray();
+            const index = await collection.find({ parentPath: parentPath || '' }).toArray();
 
             return index; 
         }
 
         const parts = objPath.split('/');
         const collectionId = parts.shift();
-        const item = await collection.findOne({ _id: new ObjectID(collectionId) /* collectionPath */});    
+        const item = await collection.findOne({ _id: new ObjectID(collectionId) /* parentPath */});    
 
         if (item && parts.length) {
-            return objectPath.get(item, parts);
+            const schemaPath = await this.convertObjIDToIndex(parts, collectionId, item, schema, parentPath, params);
+            //console.log("---> ", parts.join('.'), schemaPath.replace(/\//g,'.'));
+
+            return objectPath.get(item, schemaPath.split('/'));
         }
         
         return item;
 
     }
 
-    private async pushCollection(data: { name: string; collectionPath: string; objPath: string }, value: any) {
-        const { name, collectionPath, objPath} = data;
-        const collection = this.db.collection(name);
+    public async push(objPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+        const collection = this.getCollection(params);
 
         const parts = objPath.split('/');
         if (!objPath) {
-            const r = await collection.insertOne({...value, collectionPath });
+            const r = await collection.insertOne({...value, parentPath: [parentPath] });
             
             return { _id: r.insertedId }; 
         } else if (parts.length < 2) { 
@@ -202,19 +89,23 @@ export class MongoDataSource extends MemoryDataSource {
         }
         
         const collectionId = new ObjectID(parts.shift());
-        const item = await collection.findOne({ _id: collectionId, collectionPath });    
-        objectPath.push(item, parts, value);
+        const schemaPath = await this.convertObjIDToIndex(parts, collectionId.toHexString(), null, schema, parentPath, params);
+        //console.log("PUSH", parts.join('.'), schemaPath.replace(/\//g,'.'));
+        if (getType(value) === 'Object') {
+            value._id = new ObjectID().toHexString();
+        }
 
-        await collection.updateOne({ _id: collectionId /* collectionPath */}, 
-            { $set: {...item, _id: collectionId } });    
+        // tslint:disable-next-line:no-unnecessary-local-variable
+        const item = await collection.updateOne({ _id: collectionId, parentPath },
+            { $push: { [schemaPath.replace(/\//g,'.')]: value } });    
         
         return item;
 
     }
 
-    private async setCollection(data: { name: string; collectionPath: string; objPath: string }, value: any) {
-        const { name, collectionPath, objPath} = data;
-        const collection = this.db.collection(name);
+    // tslint:disable-next-line:no-reserved-keywords
+    public async set(objPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+        const collection = this.getCollection(params);
 
         if (!objPath) {
             throw new Error("Cannot set a collection!");
@@ -224,36 +115,42 @@ export class MongoDataSource extends MemoryDataSource {
         const collectionId = new ObjectID(parts.shift());
         let item;
         if (parts.length) {
-            item = await collection.findOne({ _id: collectionId, collectionPath });    
-            objectPath.set(item, parts, value);
+            const schemaPath = await this.convertObjIDToIndex(parts, collectionId.toHexString(), null, schema, parentPath, params);
+            //("SET", parts.join('.'), schemaPath.replace(/\//g,'.'));
+            item = await collection.updateOne({ _id: collectionId, parentPath },
+                { $set: { [schemaPath.replace(/\//g,'.')]: value }});    
         } else {
-            item = value;
+            item = await collection.updateOne({ _id: collectionId, parentPath },
+                { $set: value });    
         }
-        await collection.updateOne({ _id: collectionId }, { $set: {...item, _id: collectionId } });    
         
         return item;
 
     }
 
-    private async delCollection(data: { name: string; collectionPath: string; objPath: string }) {
-        const { name, collectionPath, objPath} = data;
-        const collection = this.db.collection(name);
+    public async del(objPath?: string, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+        const collection = this.getCollection(params);
 
         const parts = objPath.split('/');
         if (!objPath) {
-            await collection.deleteMany({ collectionPath });
+            await collection.deleteMany({ parentPath: parentPath || '' });
 
             return; 
         }
         
         const collectionId = new ObjectID(parts.shift());
         if (!parts.length) {
-            await collection.deleteOne({ _id: collectionId, collectionPath });
+            await collection.deleteOne({ _id: collectionId, parentPath });
             
             return; 
         }
-        const item = await collection.findOne({ _id: collectionId, collectionPath });    
-        objectPath.del(item, parts);
+
+        // Have not found a way to do it in a single op (cannot $pull by index position)
+        const item = await collection.findOne({ _id: collectionId, parentPath });
+        const schemaPath = await this.convertObjIDToIndex(parts, collectionId.toHexString(), item, schema, parentPath, params);
+        //console.log("DEL", parts.join('.'), schemaPath.replace(/\//g,'.'));
+        
+        objectPath.del(item, schemaPath.split('/'));
 
         await collection.updateOne({ _id: collectionId }, 
             { $set: {...item, _id: collectionId } });    
@@ -262,53 +159,15 @@ export class MongoDataSource extends MemoryDataSource {
 
     }
 
-    private getCollectionsForPath(schemaPath: string) {
-        return Object.keys(this.entryPoints).filter( (k: string) => {
-            return RegExp(k).test(schemaPath);
-        }).map( (foundKey: string) => {
-            const objPath = schemaPath.replace(RegExp(foundKey), ''); 
-            const collectionPath = schemaPath.slice(0, schemaPath.length-objPath.length);
-            
-            return { name: this.entryPoints[foundKey], collectionPath, objPath: objPath.replace(/^\//, '')};
-        });        
+    public async delCascade(parentPath?: string, params?: IMongoConfig) {
+        const collection = this.getCollection(params);
+        //console.log("collection", params.collectionName, { 'parentPath.$': RegExp(`^${parentPath}`) })
+        await collection.deleteMany({ 'parentPath': RegExp(`^${parentPath}`) })
     }
 
-    private getCollectionsWithinPath(schemaPath: string) {
-        // tslint:disable-next-line:prefer-template
-        const comparisonPath = '^'+schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
-            .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})').replace('/', '\\/')
-        
-        return Object.keys(this.entryPoints).filter( (k: string) => {
-            console.log(k, comparisonPath, k.indexOf(comparisonPath) !== -1);
-
-            return k.indexOf(comparisonPath) !== -1;
-        }).map( (foundKey: string) => {
-            return this.entryPoints[foundKey];
-        });        
+    private getCollection(params: IMongoConfig = {}) {
+        const { collectionName } = { ...this.config, ...params };
+           
+        return this.db.collection(collectionName);
     }
-
-    private convertObjIDToIndex(path: string) {
-        const parts = path.split('/');
-        const converted = [];
-        for (const key of parts) {
-            if (/^[a-f0-9-]{24}$/.test(key)) {
-                const tempObj = objectPath.get(this.jsonDocument, converted);
-                if (tempObj && Array.isArray(tempObj)) {
-                    const item = tempObj.find( (itemObj: any) => {
-                        return typeof itemObj === 'object' && itemObj && itemObj._id === key; 
-                    });
-                    if (item) {
-                        converted.push(tempObj.indexOf(item));
-                        continue;
-                    }
-                }
-                
-                return [...converted, ...parts.slice(converted.length)].join('/');
-            }
-            converted.push(key);
-        }
-        
-        return converted.join('/');
-    }
-    
 };

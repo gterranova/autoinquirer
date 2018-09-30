@@ -8,7 +8,7 @@
     ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "allowJs": true,
+    "allowJs": false,
     "importHelpers": true,
     "jsx": "react",
     "alwaysStrict": true,
