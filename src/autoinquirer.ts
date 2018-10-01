@@ -20,11 +20,6 @@ export class AutoInquirer extends EventEmitter {
         this.answer = initialAnswer;
     }
 
-    public addAction(name: string, cb?: (...args: any[]) => any) {
-        this.promptBuilder.addAction(name, (name.slice(0,1).toUpperCase()+name.slice(1)));
-        this.on(name, cb)
-    } 
-
     public async next(): Promise<IPrompt> {
         const { state } = this.answer;
         const propertySchema = await this.dataDispatcher.getSchema(state.path);
@@ -42,43 +37,24 @@ export class AutoInquirer extends EventEmitter {
         await this.performActions(this.answer);
     }
 
-    // tslint:disable-next-line:cyclomatic-complexity
     public async performActions(answer: IAnswer) {
         const { state, value } = answer;
     
         //console.log("ACTION:", answer);
-        if (state && state.type) {
-            switch (state.type) {
-                case Action.ADD:
-                    try {
-                        await this.dataDispatcher.push(state.path, value);
-                    } catch (e) {
-                        this.answer = { state: { ...state, errors: e.message } };    
-                        this.emit('error', this.answer.state);
-                    }
-                    break;
-                case Action.EDIT:
-                    if (value !== undefined) {
-                        try {
-                            await this.dataDispatcher.set(state.path, value);
-                            this.answer = { state: { path: backPath(state.path) } };
-                        } catch (e) {
-                            this.answer = { state: { ...state, errors: e.message } };    
-                            this.emit('error', this.answer.state);
-                        }
-                    }
-                    break;
-                case Action.REMOVE:
-                    try { 
-                        await this.dataDispatcher.del(state.path);
-                        this.answer = { state: { path: backPath(state.path) } };
-                    } catch (e) { 
-                        this.answer = { state: { ...state, errors: e.message } };    
-                        this.emit('error', this.answer.state);
-                    } 
-                    break;
-                default:
+        if (state && state.type && state.type === Action.PUSH || state.type === Action.DEL || (state.type === Action.SET && value !== undefined)) {
+            const nextPath = state.type !== Action.PUSH? backPath(state.path): state.path;
+            
+            try {
+                await this.dataDispatcher.dispatch(state.type, state.path, null, value);
+                this.answer = { state: { path: nextPath } };
+                this.emit(state.type, state);
+            } catch (e) {
+                if (e instanceof Error) {
+                    this.answer = { state: { ...state, errors: e.message } };                    
+                    this.emit('error', this.answer.state);    
+                }
             }
+        } else {
             this.emit(state.type, state);
         }
     }

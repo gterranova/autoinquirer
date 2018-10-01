@@ -1,8 +1,6 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
-import { ObjectID } from 'mongodb';
 import { IProperty, IProxyInfo } from '../interfaces';
-import { getType } from '../utils';
 import { DataSource } from './index';
 import { JsonSchema } from './jsonschema';
 
@@ -14,9 +12,14 @@ interface IEntryPointInfo {
     objPath: string;
 };
 
+interface IProxy {
+    name: string; 
+    dataSource: DataSource
+}
+
 export class Dispatcher extends DataSource {
     private entryPoints: IEntryPoints = {};
-    private proxies: { name: string; dataSource: DataSource}[] = [];
+    private proxies: IProxy[] = [];
     private schemaSource: JsonSchema;
     private dataSource: DataSource;
 
@@ -35,17 +38,17 @@ export class Dispatcher extends DataSource {
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
         //console.log("ENTRY POINTS:", this.entryPoints)
-        await Promise.all(this.proxies.map( (proxy: any) => proxy.dataSource.connect() ));
+        await Promise.all(this.proxies.map( (proxy: IProxy) => proxy.dataSource.connect() ));
     } 
 
     public async close() {
         await this.schemaSource.close();
         await this.dataSource.close();
-        await Promise.all(this.proxies.map( (proxy: any) => proxy.dataSource.close() ));
+        await Promise.all(this.proxies.map( (proxy: IProxy) => proxy.dataSource.close() ));
     } 
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(itemPath?: string) {
+    public async getSchema(itemPath?: string): Promise<IProperty> {
         // tslint:disable-next-line:no-unnecessary-local-variable
         const schema = await this.schemaSource.get(itemPath);
         
@@ -53,108 +56,62 @@ export class Dispatcher extends DataSource {
     }
     
     // tslint:disable-next-line:no-reserved-keywords
-    public async get(itemPath?: string) {
-        const schema = await this.schemaSource.get(itemPath);
-        let value;
-        try { 
-            value = await this.processProxy('get', itemPath, schema); 
-        } catch (e) { 
-            if (e.message !== "Not a proxy") {
-                throw e;
-            }
-            const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
-            value = await this.dataSource.get(schemaPath, schema);
-        } 
-        
-        return value;
-    }
-    
-    // tslint:disable-next-line:no-reserved-keywords
-    public async set(itemPath?: string, value?: any) {
-        if (value !== undefined) {
-            const schemaPath = await this.convertObjIDToIndex(itemPath);
-            // tslint:disable-next-line:no-console
-            const schema = await this.schemaSource.get(schemaPath);
-            // tslint:disable-next-line:no-parameter-reassignment
-            value = this.schemaSource.validate(schema, value);
-            try { 
-                await this.processProxy('set', itemPath, value, schema); 
-            } catch (e) { 
-                // not a proxy 
-                if (e.message !== "Not a proxy") {
-                    throw e;
-                }
-                await this.dataSource.set(schemaPath, value, schema);
-            } 
-        }
-    }
-    
-    public async push(itemPath?: string, value?: any) {
-        const schemaPath = await this.convertObjIDToIndex(itemPath);
-        const schema = await this.schemaSource.get(schemaPath);
-        // tslint:disable-next-line:no-parameter-reassignment
-        value = this.schemaSource.validate(schema.items, value);
-        if (getType(value) === 'Object' && !schema.$proxy) {
-            value._id = new ObjectID().toHexString();
-        }
-
-        try { 
-            await this.processProxy('push', itemPath, value, schema); 
-        } catch (e) { 
-            if (e.message !== "Not a proxy") {
-                throw e;
-            }
-            // tslint:disable-next-line:no-console
-            //console.log("PUSH", e.message, itemPath, value, schema);
-            await this.dataSource.push(schemaPath, value, schema);
-        }
-    }
-    
-    public async del(itemPath?: string) {
-        const schemaPath = await this.convertObjIDToIndex(itemPath);
-        const schema = await this.schemaSource.get(schemaPath);
-        try { 
-            await this.processProxy('del', itemPath, schema); 
-        } catch (e) { 
-            // not a proxy 
-            if (e.message !== "Not a proxy") {
-                throw e;
-            }
-            await Promise.all([...this.getProxyWithinPath(itemPath).map( (proxyInfo: IProxyInfo) => {
-                const dataSource = this.getProxy(proxyInfo)
-                // tslint:disable-next-line:no-console
-                //console.log("Must delete from", dataSource, proxyInfo, "with parentPath starting with", RegExp(`^${itemPath}`));
-
-                return dataSource.delCascade(itemPath, proxyInfo.params);
-            }), this.dataSource.del(schemaPath, schema)]);
-        } 
-    }
-    
-    public delCascade() {
+    public async get() {
         throw new Error("Method not implemented.");
     }
-
+    
     public registerProxy(name: string, dataSource: DataSource) {
         this.proxies.push({ name, dataSource });
     }
 
-    public async processProxy(methodName: string, itemPath: string, ...args: any[]) {
+    public async dispatch(methodName: string, itemPath: string, _?: IProperty, value?: any): Promise<any> {
+        // tslint:disable-next-line:no-console
+        //console.log(`DISPATCH ${methodName}:`, itemPath, value)
+
+        const schema = await this.getSchema(itemPath);
+        if (value !== undefined && methodName === 'set' || methodName === 'push' ) {
+            // tslint:disable-next-line:no-parameter-reassignment
+            value = this.schemaSource.validate(methodName === 'push'? schema.items : schema, value);
+        }
+
+        if (methodName === 'del') {
+            const promises: Promise<any>[] = [];
+            for (const proxyInfo of this.getProxyWithinPath(itemPath)) {
+                const dataSource = this.getProxy(proxyInfo)
+                // tslint:disable-next-line:no-console
+                //console.log("Must delete from", proxyInfo, "with parentPath starting with", RegExp(`^${itemPath}`));
+                // tslint:disable-next-line:no-string-literal
+                if (dataSource['delCascade'] !== undefined) {
+                    promises.push(dataSource.dispatch('delCascade', itemPath, proxyInfo.params));
+                }
+            }
+            // tslint:disable-next-line:no-string-literal
+            if (this.dataSource['delCascade'] !== undefined) {
+                promises.push(this.dataSource.dispatch('delCascade', itemPath));
+            }
+
+            await Promise.all(promises);            
+        }
+        
         const collectionRefs = this.getProxyForPath(itemPath);
-        if (collectionRefs.length) {
+        if (collectionRefs.length>0) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
             const lastCollection = collectionRefs.pop();
             const { objPath, parentPath, proxyInfo } = lastCollection;
             const dataSource = this.getProxy(proxyInfo);
             if (dataSource && dataSource[methodName]) {
-                return dataSource[methodName].call(dataSource, objPath, ...args, parentPath, proxyInfo.params);
+                // tslint:disable-next-line:no-return-await
+                return await dataSource.dispatch(methodName, objPath, schema, value, parentPath, proxyInfo.params);
             }
         };
-        throw new Error("Not a proxy");
+
+        // tslint:disable-next-line:no-return-await
+        return await this.dataSource.dispatch(methodName, itemPath, schema, value);
     }
     
-    public findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {
-        let paths = {};
+    private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {
+        let paths: IEntryPoints = {};
         if (schema.type=== 'object') {
             Object.keys(schema.properties).map((key: string) => {
                 paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
@@ -167,14 +124,14 @@ export class Dispatcher extends DataSource {
             return {...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items)}
         } 
     
-        return Object.keys(paths).reduce( (acc: any, key: string) => {
-            acc[`${p}${p?'\\/':'^'}${key}`] = paths[key];
+        return Object.keys(paths).reduce( (acc: IEntryPoints, key: string) => {
+            acc[`${p}${p?'\\/':''}${key}`] = paths[key];
             
             return acc; 
         }, {});
     }
     
-    public getProxyForPath(schemaPath: string): IEntryPointInfo[] {
+    private getProxyForPath(schemaPath: string): IEntryPointInfo[] {
         return Object.keys(this.entryPoints).filter( (k: string) => {
             return RegExp(k).test(schemaPath);
         }).map( (foundKey: string) => {
@@ -185,9 +142,9 @@ export class Dispatcher extends DataSource {
         });        
     }
 
-    public getProxyWithinPath(schemaPath: string): IProxyInfo[] {
+    private getProxyWithinPath(schemaPath: string): IProxyInfo[] {
         // tslint:disable-next-line:prefer-template
-        const comparisonPath = '^'+schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
+        const comparisonPath = schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
             .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})').replace('/', '\\/')
         
         return Object.keys(this.entryPoints).filter( (k: string) => {
@@ -197,8 +154,8 @@ export class Dispatcher extends DataSource {
         });        
     }
 
-    public getProxy(proxyInfo: IProxyInfo): DataSource {
-        const proxy = this.proxies.find( (p: any) => p.name === proxyInfo.proxyName);
+    private getProxy(proxyInfo: IProxyInfo): DataSource {
+        const proxy = this.proxies.find( (p: IProxy) => p.name === proxyInfo.proxyName);
         
         return proxy && proxy.dataSource;
     }

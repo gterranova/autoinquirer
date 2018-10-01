@@ -2,8 +2,10 @@
 // tslint:disable:no-console
 
 import fs from "fs";
+import { ObjectID } from 'mongodb';
 import objectPath from 'object-path';
-import { loadJSON } from '../utils';
+import { IProperty } from '../interfaces';
+import { getType, loadJSON } from '../utils';
 import { DataSource } from './index';
 
 export class MemoryDataSource extends DataSource {
@@ -21,7 +23,7 @@ export class MemoryDataSource extends DataSource {
     }
 
     public async close() {
-        this.save();
+        return this.save();
     }
 
     public async save() {
@@ -30,36 +32,52 @@ export class MemoryDataSource extends DataSource {
 
     // tslint:disable-next-line:no-reserved-keywords
     public async get(itemPath?: string) {
+        const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
         if (!itemPath) { return this.jsonDocument; }
 
-        return objectPath.get(this.jsonDocument, itemPath.split('/'));
+        return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
 
-    public async push(itemPath: string, value: any) {    
-        if (!itemPath) { 
-            this.jsonDocument.push(value); 
-        } else {
-            objectPath.push(this.jsonDocument, itemPath.split('/'), value);
+    public async push(itemPath: string, _?: IProperty, value?: any) {
+        if (value !== undefined) {
+            if (getType(value) === 'Object') {
+                value._id = new ObjectID().toHexString();
+            }
+    
+            if (!itemPath) { 
+                this.jsonDocument.push(value); 
+            } else {
+                objectPath.push(this.jsonDocument, itemPath.split('/'), value);
+            }
+            
+            return this.save();    
         }
-        this.save();    
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async set(itemPath: string, value: any) {
+    public async set(itemPath: string, _: IProperty, value: any) {
         if (value !== undefined) {
-            objectPath.set(this.jsonDocument, itemPath.split('/'), value);
-            this.save();                
+            const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
+            objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
+            
+            return this.save();                
         }
     }
 
     public async del(itemPath: string) {
         const schemaPath = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
-        this.save();
+        
+        return this.save();
     }
 
-    public delCascade() {
-        throw new Error("Method not implemented.");
+    public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
+        if (!this[methodName]) {
+            throw new Error(`Method ${methodName} not implemented`);
+        }
+
+        // tslint:disable-next-line:no-return-await
+        return await this[methodName].call(this, itemPath, schema, value, parentPath, params);
     }
 
 }

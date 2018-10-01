@@ -1,32 +1,32 @@
 import { IProperty } from '../interfaces';
 import { getType } from '../utils';
 
-// tslint:disable:no-any
 // tslint:disable:no-console
 
+// tslint:disable-next-line:no-any
+export declare type Item = any;
+// tslint:disable-next-line:no-any
+export declare type Param = any;
+
 export abstract class DataSource {
-    public async abstract connect(); 
-    public async abstract close(); 
+    public async abstract connect(): Promise<void>; 
+    public async abstract close(): Promise<void>; 
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async abstract get(itemPath?: string, schema?: IProperty, parentPath?: string, params?: any);
-    // tslint:disable-next-line:no-reserved-keywords
-    public async abstract set(itemPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: any);
-    public async abstract push(itemPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: any);
-    public async abstract del(itemPath?: string, schema?: IProperty, parentPath?: string, params?: any);
-    public async abstract delCascade(parentPath?: string, params?: any);
+    public async abstract get(itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param): Promise<Item>;
+    public async abstract dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param);
 
-    public async convertObjIDToIndex(path: string | string[], basePath: string='', obj?: any, ...others: any[]) {
-        if (!path) { return obj; }
+    public async convertObjIDToIndex(path: string | string[], basePath: string='', obj?: Item, ...others: Param[]): Promise<string> {
+        if (!path) { return ''; }
         const parts = typeof path === 'string' ? path.split('/') : path;
         const converted = [];
-        let currentObj = obj || await this.get.call(this, basePath, ...others);
+        let currentObj = obj || await this.dispatch.call(this, 'get', basePath, ...others);
 
         for (const key of parts) {
             if (Array.isArray(currentObj)) {
                 let idx = key;
                 if (/^[a-f0-9-]{24}$/.test(key)) {
-                    const item = currentObj.find( (itemObj: any) => {
+                    const item = currentObj.find( (itemObj: Item) => {
                         return itemObj && itemObj._id === key; 
                     });
                     if (!item) {

@@ -1,13 +1,13 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 
-import { MongoClient, ObjectID } from 'mongodb';
+import { Db, MongoClient, MongoError, ObjectID } from 'mongodb';
 import objectPath from 'object-path';
 import { IProperty } from '../interfaces';
 import { getType } from '../utils';
 import { DataSource } from './index';
 
-interface IMongoConfig {
+export interface IMongoConfig {
     uri?: string;
     databaseName?: string;
     collectionName?: string;
@@ -16,7 +16,7 @@ interface IMongoConfig {
 export class MongoDataSource extends DataSource {
     private config: IMongoConfig;
     private client: MongoClient;
-    private db: any;
+    private db: Db;
     private isConnected: boolean;
 
     constructor(config: IMongoConfig = {}) {
@@ -29,8 +29,10 @@ export class MongoDataSource extends DataSource {
 
         await new Promise((resolve: any, reject: any) => {
             const { uri, databaseName } = this.config;
-            MongoClient.connect(uri, { useNewUrlParser: true }, (err: any, client: any) => {
-                if (err) { reject(err); }
+            MongoClient.connect(uri, { useNewUrlParser: true }, (err: MongoError, client: MongoClient) => {
+                if (err) { 
+                    return reject(err); 
+                }
                 this.client = client;
                 if (!databaseName) {
                     throw new Error("MongoDataSource: a databaseName must be passed");
@@ -50,7 +52,7 @@ export class MongoDataSource extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async get(objPath?: string, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+    public async get(objPath?: string, schema?: IProperty, _?: any, parentPath?: string, params?: IMongoConfig) {
         const collection = this.getCollection(params);
         //console.log("GET", objPath);
 
@@ -76,7 +78,7 @@ export class MongoDataSource extends DataSource {
 
     }
 
-    public async push(objPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+    public async push(objPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: IMongoConfig): Promise<any> {
         const collection = this.getCollection(params);
 
         const parts = objPath.split('/');
@@ -104,7 +106,7 @@ export class MongoDataSource extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async set(objPath?: string, value?: any, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+    public async set(objPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: IMongoConfig) {
         const collection = this.getCollection(params);
 
         if (!objPath) {
@@ -128,7 +130,7 @@ export class MongoDataSource extends DataSource {
 
     }
 
-    public async del(objPath?: string, schema?: IProperty, parentPath?: string, params?: IMongoConfig) {
+    public async del(objPath?: string, schema?: IProperty, _?: any, parentPath?: string, params?: IMongoConfig) {
         const collection = this.getCollection(params);
 
         const parts = objPath.split('/');
@@ -163,6 +165,15 @@ export class MongoDataSource extends DataSource {
         const collection = this.getCollection(params);
         //console.log("collection", params.collectionName, { 'parentPath.$': RegExp(`^${parentPath}`) })
         await collection.deleteMany({ 'parentPath': RegExp(`^${parentPath}`) })
+    }
+
+    public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
+        if (!this[methodName]) {
+            throw new Error(`Method ${methodName} not implemented`);
+        }
+
+        // tslint:disable-next-line:no-return-await
+        return await this[methodName].call(this, itemPath, schema, value, parentPath, params);
     }
 
     private getCollection(params: IMongoConfig = {}) {

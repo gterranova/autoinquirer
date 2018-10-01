@@ -4,15 +4,21 @@
 export const enum Action {
     BACK='back',
     EXIT='exit',
-    ADD='add',
-    EDIT='edit',
-    REMOVE='remove'
+    PUSH='push',
+    SET='set',
+    DEL='del'
 }
 
 export interface IState {
     path: string;
-    type?: Action;
-    errors?: any;
+    type?: Action | string;
+    errors?: string;
+}
+
+export interface INameValueState {
+    name: string;
+    value: IState | string;
+    disabled?: boolean;
 }
 
 export interface IAnswer {
@@ -53,7 +59,7 @@ export interface IProperty {
     oneOf?: IProperty[];
     anyOf?: IProperty[];
     title?: string;
-    type?: string | string[];
+    type?: string;
     definitions?: {
         [key: string]: IProperty;
     };
@@ -75,6 +81,7 @@ export interface IProperty {
     // custom properties
     typeof?: "function";
     depends?: string;
+    $data?: string;
     $proxy?: IProxyInfo;
 }
 

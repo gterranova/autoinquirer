@@ -23,6 +23,7 @@
       "arrow-parameter",
       "property-declaration",
       "member-variable-declaration"
-    ]
+    ],
+    "strict-boolean-expressions": false
   }
 }

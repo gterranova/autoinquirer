@@ -9,11 +9,11 @@ import { DataSource } from './index';
 
 const defaultTypeValue = {
     'object': (value?: any) => value? { ...value }: {},
-    'array': (value?: any) => value? [ ...value ]: [],
-    'string': (value?: any)=> value ||'',
-    'number': (value?: any)=> parseFloat(value) || 0,
-    'integer': (value?: any)=> parseFloat(value) || 0,
-    'boolean': (value?: any) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
+    'array': (value?: any[]) => value? [ ...value ]: [],
+    'string': (value?: string)=> value ||'',
+    'number': (value?: string)=> parseFloat(value) || 0,
+    'integer': (value?: string)=> parseFloat(value) || 0,
+    'boolean': (value?: boolean | string | number) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
 };
 
 export class JsonSchema extends DataSource {
@@ -59,24 +59,7 @@ export class JsonSchema extends DataSource {
 
         return definition;
     }
-    
-    // tslint:disable-next-line:no-reserved-keywords
-    public set() {
-        throw new Error("Method not implemented.");
-    }
-    
-    public push() {
-        throw new Error("Method not implemented.");
-    }
-    
-    public del() {
-        throw new Error("Method not implemented.");
-    }
-    
-    public delCascade() {
-        throw new Error("Method not implemented.");
-    }
-    
+        
     public coerce(schema: IProperty, value?: any) {
         if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
             // tslint:disable-next-line:no-parameter-reassignment
@@ -98,4 +81,12 @@ export class JsonSchema extends DataSource {
         return value;
     }
 
+    public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
+        if (!this[methodName]) {
+            throw new Error(`Method ${methodName} not implemented`);
+        }
+
+        // tslint:disable-next-line:no-return-await
+        return await this[methodName].call(this, itemPath, schema, value, parentPath, params);
+    }
 }

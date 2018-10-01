@@ -9,7 +9,9 @@ module.exports = {
     bundle: './src/index.ts'
   },
   target: 'node',
-  externals: [nodeExternals()], // in order to ignore all modules in node_modules folder
+  externals: [nodeExternals({
+    whitelist: ['ajv', 'object-path', 'json-schema-ref-parser']
+  })], // in order to ignore all modules in node_modules folder
   devtool: 'source-map',
   module: {
     rules: [{
