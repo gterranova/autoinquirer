@@ -6,9 +6,17 @@ var program = require('commander');
 const inquirer = require('inquirer');
 
 const Subject = require('rxjs').Subject;
-const { Dispatcher, JsonSchema, MemoryDataSource, MongoDataSource, AutoInquirer, PromptBuilder } = require('./build/src');
+const { Dispatcher, MongoDataSource, AutoInquirer, PromptBuilder } = require('./build/src');
 
 async function main() { // jshint ignore:line
+    const prompts = new Subject();
+    process.on('unhandledRejection', (err, p) => {
+        console.log('An unhandledRejection occurred');
+        console.log(`Rejected Promise: ${p}`);
+        console.log(`Rejection:`, err);
+        prompts.complete();
+    });
+
     const mongoDataSource = new MongoDataSource({ 
         uri: 'mongodb+srv://gianpaolo:*****@cluster0-wrvuf.mongodb.net?retryWrites=true', 
         databaseName: 'my-transmission',
@@ -16,8 +24,8 @@ async function main() { // jshint ignore:line
     });
     
     const dispatcher = new Dispatcher(
-        new JsonSchema(program.args[0]), 
-        program.args[1] ? new MemoryDataSource(program.args[1]) : mongoDataSource,
+        program.args[0], 
+        program.args[1] || mongoDataSource,
         new PromptBuilder()
     );
     dispatcher.registerProxy('mongodb', mongoDataSource);
@@ -28,7 +36,6 @@ async function main() { // jshint ignore:line
 
     //autoInquirer.inquire(inquirer.prompt).then(() => console.log('') );
     
-    const prompts = new Subject();
     const inq = inquirer.prompt(prompts);
     const bottomBar = new inquirer.ui.BottomBar();
     inq.ui.process.subscribe( data => { autoInquirer.onAnswer(data).then(() => autoInquirer.run()); });
@@ -40,13 +47,6 @@ async function main() { // jshint ignore:line
     autoInquirer.on('exit', state => console.log(state));
     autoInquirer.on('complete', () => prompts.complete() );
     inq.then( () => dispatcher.close() );
-
-    process.on('unhandledRejection', (err, p) => {
-        console.log('An unhandledRejection occurred');
-        console.log(`Rejected Promise: ${p}`);
-        console.log(`Rejection:`, err);
-        dispatcher.close();
-      });
 
     autoInquirer.run();
 

@@ -189,18 +189,12 @@ export class PromptBuilder extends DataRenderer {
         return isCheckBox? propertySchema.items.enum : propertySchema.enum;         
     }
         
-    private evaluate(methodName: string, itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {
-        if (methodName === Action.SET && this.isCheckBox(propertySchema)) {
+    private evaluate(_: string, itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {
+        if (this.isPrimitive(propertySchema)) {
             return this.makePrompt(propertySchema, propertyValue);
         }
-        switch (propertySchema.type) {
-            case 'array':
-            case 'object':
-                return this.makeMenu(itemPath, propertySchema, propertyValue);
-            default:
-                //console.log("evaluate_primitives", path, propertySchema);    
-                return this.makePrompt(propertySchema, propertyValue);
-        }
+        
+        return this.makeMenu(itemPath, propertySchema, propertyValue);
     }
 
 }

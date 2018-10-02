@@ -20,12 +20,11 @@ export class AutoInquirer extends EventEmitter {
     public async next(): Promise<IPrompt> {
         const { state } = this.answer;
         const prompt = await this.dataDispatcher.render(state.type, state.path);
-        if (prompt !== null) {
-            return prompt;
+        if (prompt === null) {
+            this.emit('complete');
         }
-        this.emit('complete');
         
-        return null;
+        return prompt;
     }
 
     public async onAnswer(data: IFeedBack) {

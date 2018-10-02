@@ -4,6 +4,7 @@ import { IProperty, IProxyInfo } from '../interfaces';
 import { absolute } from '../utils';
 import { DataRenderer, DataSource } from './index';
 import { JsonSchema } from './jsonschema';
+import { MemoryDataSource } from './memory';
 
 declare type IEntryPoints = { [key: string]: IProxyInfo};
 
@@ -25,10 +26,10 @@ export class Dispatcher extends DataSource {
     private dataSource: DataSource;
     private renderer: DataRenderer;
 
-    constructor(schema: JsonSchema, data: DataSource, renderer?: DataRenderer) {
+    constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer) {
         super();
-        this.schemaSource = schema;
-        this.dataSource = data;
+        this.schemaSource = (typeof schema === 'string')? new JsonSchema(schema): schema;
+        this.dataSource = (typeof data === 'string')? new MemoryDataSource(data): data;
         this.renderer = renderer;
     }
 
@@ -36,7 +37,6 @@ export class Dispatcher extends DataSource {
         await this.schemaSource.connect();
         await this.dataSource.connect();
 
-        // tslint:disable-next-line:no-backbone-get-set-outside-model
         const schema = await this.schemaSource.get();
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
@@ -67,7 +67,7 @@ export class Dispatcher extends DataSource {
         this.proxies.push({ name, dataSource });
     }
 
-    public async dispatch(methodName: string, itemPath: string, propertySchema?: IProperty, value?: any): Promise<any> {
+    public async dispatch(methodName: string, itemPath: string = '', propertySchema?: IProperty, value?: any): Promise<any> {
         // tslint:disable-next-line:no-console
         //console.log(`DISPATCH ${methodName}:`, itemPath, value)
 
@@ -94,7 +94,7 @@ export class Dispatcher extends DataSource {
             await Promise.all(promises);            
         } else if (methodName === 'get' && schema.$data !==  undefined || schema.type === 'array') {
             const property = (schema.type === 'array')? schema.items: schema;
-            if (property.$data && typeof property.$data === 'string') {
+            if (property && property.$data && typeof property.$data === 'string') {
                 const absolutePath = absolute(property.$data, itemPath);
                 const values: any[] = await this.dispatch('get', absolutePath);
                 property.$values = values.reduce( (acc: any, curr: any) => {
