@@ -4,26 +4,22 @@
 import { EventEmitter } from 'events';
 import { Dispatcher } from './datasource/dispatcher';
 import { Action, IAnswer, IFeedBack, IPrompt } from './interfaces';
-import { PromptBuilder } from './promptbuilder';
 import { backPath } from './utils';
 
 
 export class AutoInquirer extends EventEmitter {
     private dataDispatcher: Dispatcher;
-    private promptBuilder: PromptBuilder;
     private answer: IAnswer;
 
     constructor(dataDispatcher: Dispatcher, initialAnswer: IAnswer = { state: { path: '' }}) {
         super();
         this.dataDispatcher = dataDispatcher;
-        this.promptBuilder = new PromptBuilder(dataDispatcher);
         this.answer = initialAnswer;
     }
 
     public async next(): Promise<IPrompt> {
         const { state } = this.answer;
-        const propertySchema = await this.dataDispatcher.getSchema(state.path);
-        const prompt = await this.promptBuilder.generatePrompts(state, propertySchema);
+        const prompt = await this.dataDispatcher.render(state.type, state.path);
         if (prompt !== null) {
             return prompt;
         }

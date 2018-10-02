@@ -1,7 +1,8 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
 import { IProperty, IProxyInfo } from '../interfaces';
-import { DataSource } from './index';
+import { absolute } from '../utils';
+import { DataRenderer, DataSource } from './index';
 import { JsonSchema } from './jsonschema';
 
 declare type IEntryPoints = { [key: string]: IProxyInfo};
@@ -22,11 +23,13 @@ export class Dispatcher extends DataSource {
     private proxies: IProxy[] = [];
     private schemaSource: JsonSchema;
     private dataSource: DataSource;
+    private renderer: DataRenderer;
 
-    constructor(schema: JsonSchema, data: DataSource) {
+    constructor(schema: JsonSchema, data: DataSource, renderer?: DataRenderer) {
         super();
         this.schemaSource = schema;
         this.dataSource = data;
+        this.renderer = renderer;
     }
 
     public async connect() {
@@ -64,17 +67,15 @@ export class Dispatcher extends DataSource {
         this.proxies.push({ name, dataSource });
     }
 
-    public async dispatch(methodName: string, itemPath: string, _?: IProperty, value?: any): Promise<any> {
+    public async dispatch(methodName: string, itemPath: string, propertySchema?: IProperty, value?: any): Promise<any> {
         // tslint:disable-next-line:no-console
         //console.log(`DISPATCH ${methodName}:`, itemPath, value)
 
-        const schema = await this.getSchema(itemPath);
+        const schema = propertySchema || await this.getSchema(itemPath);
         if (value !== undefined && methodName === 'set' || methodName === 'push' ) {
             // tslint:disable-next-line:no-parameter-reassignment
             value = this.schemaSource.validate(methodName === 'push'? schema.items : schema, value);
-        }
-
-        if (methodName === 'del') {
+        } else if (methodName === 'del') {
             const promises: Promise<any>[] = [];
             for (const proxyInfo of this.getProxyWithinPath(itemPath)) {
                 const dataSource = this.getProxy(proxyInfo)
@@ -91,6 +92,17 @@ export class Dispatcher extends DataSource {
             }
 
             await Promise.all(promises);            
+        } else if (methodName === 'get' && schema.$data !==  undefined || schema.type === 'array') {
+            const property = (schema.type === 'array')? schema.items: schema;
+            if (property.$data && typeof property.$data === 'string') {
+                const absolutePath = absolute(property.$data, itemPath);
+                const values: any[] = await this.dispatch('get', absolutePath);
+                property.$values = values.reduce( (acc: any, curr: any) => {
+                    acc[`${absolutePath}/${curr._id}`] = curr;
+                    
+                    return acc;
+                }, {});    
+            }
         }
         
         const collectionRefs = this.getProxyForPath(itemPath);
@@ -108,6 +120,17 @@ export class Dispatcher extends DataSource {
 
         // tslint:disable-next-line:no-return-await
         return await this.dataSource.dispatch(methodName, itemPath, schema, value);
+    }
+
+    public async render(methodName: string = 'get', itemPath: string = '', schema?: IProperty, value?: any) {
+        const propertySchema = schema || await this.getSchema(itemPath);
+        const propertyValue = value || await this.dispatch('get', itemPath, propertySchema);
+        if (this.renderer) {
+            // tslint:disable-next-line:no-return-await
+            return await this.renderer.render(methodName, itemPath, propertySchema, propertyValue);
+        }
+        
+        return propertyValue;
     }
     
     private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {

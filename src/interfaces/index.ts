@@ -82,6 +82,7 @@ export interface IProperty {
     typeof?: "function";
     depends?: string;
     $data?: string;
+    $values?: { [key: string]: any};
     $proxy?: IProxyInfo;
 }
 

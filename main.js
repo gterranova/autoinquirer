@@ -4,21 +4,21 @@ require('source-map-support').install();
 const chalk = require('chalk');
 var program = require('commander');
 const inquirer = require('inquirer');
-const path = require("path");
 
 const Subject = require('rxjs').Subject;
-const { Dispatcher, JsonSchema, MemoryDataSource, MongoDataSource, AutoInquirer } = require('./build/src');
+const { Dispatcher, JsonSchema, MemoryDataSource, MongoDataSource, AutoInquirer, PromptBuilder } = require('./build/src');
 
 async function main() { // jshint ignore:line
     const mongoDataSource = new MongoDataSource({ 
-        uri: 'mongodb+srv://gianpaolo:******@cluster0-wrvuf.mongodb.net?retryWrites=true', 
+        uri: 'mongodb+srv://gianpaolo:*****@cluster0-wrvuf.mongodb.net?retryWrites=true', 
         databaseName: 'my-transmission',
         collectionName: 'test'
     });
-    console.log(program.args[1])
+    
     const dispatcher = new Dispatcher(
         new JsonSchema(program.args[0]), 
-        program.args[1] ? new MemoryDataSource(program.args[1]) : mongoDataSource
+        program.args[1] ? new MemoryDataSource(program.args[1]) : mongoDataSource,
+        new PromptBuilder()
     );
     dispatcher.registerProxy('mongodb', mongoDataSource);
 
@@ -58,7 +58,7 @@ program
   .arguments('<jsonfile>')
   .parse(process.argv);
 
-if (program.args.length !== 2) {
+if (program.args.length < 1) {
     program.outputHelp();
 } else {
     main();
