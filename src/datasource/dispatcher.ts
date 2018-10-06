@@ -78,7 +78,7 @@ export class Dispatcher extends DataSource {
             return;
         } 
         // tslint:disable-next-line:no-bitwise
-        else if (value !== undefined && (~['set','push'].indexOf(methodName)) ) {
+        else if (~['set','push'].indexOf(methodName)) {
             // tslint:disable-next-line:no-parameter-reassignment
             value = this.schemaSource.validate(methodName === 'push'? schema.items : schema, value);
         } else if (methodName === 'del') {
@@ -130,6 +130,9 @@ export class Dispatcher extends DataSource {
                 return await dataSource.dispatch(methodName, objPath, schema, value, parentPath, proxyInfo.params);
             }
         };
+
+        // tslint:disable-next-line:no-console
+        if (methodName === 'push') { console.log("this.dataSource.dispatch", methodName, itemPath, schema, value); }
 
         // tslint:disable-next-line:no-return-await
         return await this.dataSource.dispatch(methodName, itemPath, schema, value);

@@ -52,6 +52,13 @@ export class JsonSchema extends DataSource {
                 definition = definition.properties[key];
             } else if (definition.type === 'object' && key==='properties') {
                 definition = definition.properties;
+            } else if (definition.type === 'object' && definition.patternProperties) {
+                const patternFound = Object.keys(definition.patternProperties).find( (pattern: string) => RegExp(pattern).test(key));
+                if (patternFound) {
+                    definition = definition.patternProperties[patternFound];
+                } else {
+                    definition = undefined;
+                }
             } else {
                 definition = definition[key];
             }

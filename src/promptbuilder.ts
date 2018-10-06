@@ -91,8 +91,22 @@ export class PromptBuilder extends DataRenderer {
                 case 'boolean':
                     return null; 
                 case 'object':
-                    return propertySchema.properties && await Promise.all(Object.keys(propertySchema.properties).map( (key: string) => {
-                        const property: IProperty = propertySchema.properties[key];
+                    const propertyProperties = propertySchema.properties? {...propertySchema.properties } : {};
+                    if (propertySchema.patternProperties && getType(propertyValue) === 'Object') {
+                        const objProperties = Object.keys(propertySchema.properties) || [];
+                        // tslint:disable-next-line:no-bitwise
+                        const otherProperties = Object.keys(propertyValue).filter( (p: string) => p[0] !== '_' && !~objProperties.indexOf(p) );
+                        for (const key of otherProperties) {
+                            const patternFound = Object.keys(propertySchema.patternProperties).find( (pattern: string) => RegExp(pattern).test(key));
+                            if (patternFound) {
+                                propertyProperties[key] = propertySchema.patternProperties[patternFound];
+                            }            
+                        }    
+                    }
+
+                    // tslint:disable-next-line:no-return-await
+                    return await Promise.all(Object.keys(propertyProperties).map( (key: string) => {
+                        const property: IProperty = propertyProperties[key];
                         if (!property) {
                             throw new Error(`${schemaPath}/${key} not found`);
                         }
@@ -113,7 +127,8 @@ export class PromptBuilder extends DataRenderer {
                             return item;    
                         });
 
-                    })) || [];
+                    }));
+
                 case 'array':
                     const arrayItemSchema: IProperty = propertySchema.items;
                     
