@@ -31,7 +31,7 @@ export class PromptBuilder extends DataRenderer {
                     if (itemPath) {
                         actions.push({ name: 'Back', value: { path: backPath(itemPath) }});
                     }
-                } else {
+                } else if (propertySchema.readOnly !== true || name === Action.EXIT) {
                     actions.push({ name: (name.slice(0,1).toUpperCase()+name.slice(1)), value: { path: itemPath, type: name }});
                 }
             });
@@ -70,6 +70,7 @@ export class PromptBuilder extends DataRenderer {
             name: `value`,
             message: `Enter ${propertySchema.type ? propertySchema.type.toLowerCase(): 'value'}:`,
             default: defaultValue,
+            disabled: !!propertySchema.readOnly,
             type: propertySchema.type==='boolean'? 'confirm': 
                 (isCheckbox? 'checkbox':
                     (choices && choices.length? 'list':
@@ -97,12 +98,14 @@ export class PromptBuilder extends DataRenderer {
                         }
                         
                         return this.checkAllowed(property, propertyValue).then( (allowed: boolean) => {
+                            const readOnly = (!!propertySchema.readOnly || !!property.readOnly);
+                            const writeOnly = (!!propertySchema.writeOnly || !!property.writeOnly);
                             const item: INameValueState = { 
                                 name: this.getName(propertyValue && propertyValue[key], key, property), 
                                 value: { path: `${basePath}${key}` },
-                                disabled: !allowed
+                                disabled: !allowed || (this.isPrimitive(property) && readOnly && !writeOnly)
                             };
-                            if (this.isPrimitive(property)) { 
+                            if (this.isPrimitive(property) && allowed && !readOnly || writeOnly) { 
                                 // tslint:disable-next-line:no-string-literal
                                 item.value['type'] = Action.SET; 
                             }
@@ -113,16 +116,19 @@ export class PromptBuilder extends DataRenderer {
                     })) || [];
                 case 'array':
                     const arrayItemSchema: IProperty = propertySchema.items;
-
+                    
                     return propertyValue && propertyValue.map( (arrayItem: Item, idx: number) => {
                         const myId = (arrayItem && arrayItem._id) || idx;
+                        const readOnly = (!!propertySchema.readOnly || !!arrayItemSchema.readOnly);
+                        const writeOnly = (!!propertySchema.writeOnly || !!arrayItemSchema.writeOnly);
                         const item: INameValueState = { 
                             name: this.getName(arrayItem, myId, arrayItemSchema), 
+                            disabled: this.isPrimitive(arrayItemSchema) && readOnly && !writeOnly,
                             value: {  
                                 path: `${basePath}${myId}`
                             } 
                         };
-                        if (this.isPrimitive(arrayItemSchema)) { 
+                        if (this.isPrimitive(arrayItemSchema) && !readOnly || writeOnly) { 
                             // tslint:disable-next-line:no-string-literal
                             item.value['type'] = Action.SET; 
                         }
@@ -150,26 +156,30 @@ export class PromptBuilder extends DataRenderer {
         const head = propertyNameOrIndex !== null ? `${propertyNameOrIndex}: `:'';
         const tail = (value !== undefined && value !== null) ?
             (propertySchema.type !== 'object' && propertySchema.type !== 'array' ? JSON.stringify(value) :  
-                (value.title || value.name || (propertyNameOrIndex? `[${propertySchema.type}]`: ''))):
+                (value.title || value.name || `[${propertySchema.type}]`)):
             '';
 
         return `${head}${tail}`;
     }
 
-    private isPrimitive(propertySchema: IProperty): boolean {
-        return propertySchema.type !== 'object' && 
-            propertySchema.type !== 'array' || 
+    private isPrimitive(propertySchema: IProperty = {}): boolean {
+        return ((propertySchema.type !== 'object' && 
+            propertySchema.type !== 'array')) || 
             this.isSelect(propertySchema) ||
             this.isCheckBox(propertySchema);
     }
 
     private isCheckBox(propertySchema: IProperty): boolean {
-        return propertySchema && propertySchema.type === 'array' && 
+        if (propertySchema === undefined) { return false; };
+
+        return propertySchema.type === 'array' && 
             this.isSelect(propertySchema.items);
     }
 
     private isSelect(propertySchema: IProperty): boolean {
-        return propertySchema && propertySchema.enum !== undefined || propertySchema.$data !== undefined;
+        if (propertySchema === undefined) { return false; };
+
+        return propertySchema.enum !== undefined || propertySchema.$data !== undefined;
     }
 
     private async getOptions(propertySchema: IProperty): Promise<INameValueState[] | PrimitiveType[] | IProperty[]> {
@@ -180,8 +190,9 @@ export class PromptBuilder extends DataRenderer {
         if (getType($values) === 'Object') {
             return Object.keys($values).map( (key: string) => {
                 return { 
-                    name: this.getName($values[key], null, { type: 'object' }), 
-                    value: key 
+                    name: getType($values[key]) === 'Object'? this.getName($values[key], null, { type: 'object' }): $values[key], 
+                    value: key,
+                    disabled: !!property.readOnly
                 };
             });
         }
@@ -193,7 +204,7 @@ export class PromptBuilder extends DataRenderer {
         if (this.isPrimitive(propertySchema)) {
             return this.makePrompt(propertySchema, propertyValue);
         }
-        
+
         return this.makeMenu(itemPath, propertySchema, propertyValue);
     }
 

@@ -36,7 +36,7 @@ export class Dispatcher extends DataSource {
     public async connect() {
         await this.schemaSource.connect();
         await this.dataSource.connect();
-
+        
         const schema = await this.schemaSource.get();
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
@@ -67,12 +67,18 @@ export class Dispatcher extends DataSource {
         this.proxies.push({ name, dataSource });
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     public async dispatch(methodName: string, itemPath: string = '', propertySchema?: IProperty, value?: any): Promise<any> {
         // tslint:disable-next-line:no-console
         //console.log(`DISPATCH ${methodName}:`, itemPath, value)
 
         const schema = propertySchema || await this.getSchema(itemPath);
-        if (value !== undefined && methodName === 'set' || methodName === 'push' ) {
+        // tslint:disable-next-line:no-bitwise
+        if (schema.readOnly === true && (~['set','push','del'].indexOf(methodName))) {
+            return;
+        } 
+        // tslint:disable-next-line:no-bitwise
+        else if (value !== undefined && (~['set','push'].indexOf(methodName)) ) {
             // tslint:disable-next-line:no-parameter-reassignment
             value = this.schemaSource.validate(methodName === 'push'? schema.items : schema, value);
         } else if (methodName === 'del') {
@@ -92,16 +98,23 @@ export class Dispatcher extends DataSource {
             }
 
             await Promise.all(promises);            
-        } else if (methodName === 'get' && schema.$data !==  undefined || schema.type === 'array') {
+        } else if (methodName === 'get') {
             const property = (schema.type === 'array')? schema.items: schema;
             if (property && property.$data && typeof property.$data === 'string') {
                 const absolutePath = absolute(property.$data, itemPath);
                 const values: any[] = await this.dispatch('get', absolutePath);
-                property.$values = values.reduce( (acc: any, curr: any) => {
-                    acc[`${absolutePath}/${curr._id}`] = curr;
+
+                property.$values = values.reduce( (acc: any, curr: any, idx: number) => {
+                    if (property.type === 'integer' || property.type === 'number') {
+                        acc[idx] = curr;
+                    } else {
+                        acc[`${absolutePath}/${curr._id||idx}`] = curr;
+                    }
                     
                     return acc;
                 }, {});    
+            } else {
+                if (schema.writeOnly === true) { return; }
             }
         }
         
@@ -135,7 +148,12 @@ export class Dispatcher extends DataSource {
     
     private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {
         let paths: IEntryPoints = {};
+        if (!schema) { return {}; }
+
         if (schema.type=== 'object') {
+            if (schema.$proxy) {
+                paths[p] = schema.$proxy;
+            }
             Object.keys(schema.properties).map((key: string) => {
                 paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
             });

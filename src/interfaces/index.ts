@@ -35,6 +35,7 @@ export interface IPrompt {
     default?: any | (IAnswer);
     choices?: any | (IAnswer);
     pageSize?: number;
+    disabled?: boolean;
     errors?: any;
 }
 
@@ -79,6 +80,8 @@ export interface IProperty {
     };
     defaultProperties?: string[];
     // custom properties
+    readOnly?: boolean;
+    writeOnly?: boolean;
     typeof?: "function";
     depends?: string;
     $data?: string;
