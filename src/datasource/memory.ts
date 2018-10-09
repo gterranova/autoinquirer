@@ -47,7 +47,8 @@ export class MemoryDataSource extends DataSource {
             if (!itemPath) { 
                 this.jsonDocument.push(value); 
             } else {
-                objectPath.push(this.jsonDocument, itemPath.split('/'), value);
+                const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
+                objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
             }
             
             return this.save();    

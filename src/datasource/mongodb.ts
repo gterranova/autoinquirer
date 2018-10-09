@@ -58,7 +58,7 @@ export class MongoDataSource extends DataSource {
 
         if (!objPath) {
             // tslint:disable-next-line:no-unnecessary-local-variable
-            const index = await collection.find({ parentPath: parentPath || '' }).toArray();
+            const index = await collection.find({ parentPath: parentPath || null }).toArray();
 
             return index; 
         }
@@ -98,7 +98,7 @@ export class MongoDataSource extends DataSource {
         }
 
         // tslint:disable-next-line:no-unnecessary-local-variable
-        const item = await collection.updateOne({ _id: collectionId, parentPath },
+        const item = await collection.updateOne({ _id: collectionId },
             { $push: { [schemaPath.replace(/\//g,'.')]: value } });    
         
         return item;
@@ -119,10 +119,10 @@ export class MongoDataSource extends DataSource {
         if (parts.length) {
             const schemaPath = await this.convertObjIDToIndex(parts, collectionId.toHexString(), null, schema, parentPath, params);
             //("SET", parts.join('.'), schemaPath.replace(/\//g,'.'));
-            item = await collection.updateOne({ _id: collectionId, parentPath },
+            item = await collection.updateOne({ _id: collectionId },
                 { $set: { [schemaPath.replace(/\//g,'.')]: value }});    
         } else {
-            item = await collection.updateOne({ _id: collectionId, parentPath },
+            item = await collection.updateOne({ _id: collectionId },
                 { $set: value });    
         }
         
@@ -135,20 +135,20 @@ export class MongoDataSource extends DataSource {
 
         const parts = objPath.split('/');
         if (!objPath) {
-            await collection.deleteMany({ parentPath: parentPath || '' });
+            await collection.deleteMany({ parentPath: parentPath || null });
 
             return; 
         }
         
         const collectionId = new ObjectID(parts.shift());
         if (!parts.length) {
-            await collection.deleteOne({ _id: collectionId, parentPath });
+            await collection.deleteOne({ _id: collectionId });
             
             return; 
         }
 
         // Have not found a way to do it in a single op (cannot $pull by index position)
-        const item = await collection.findOne({ _id: collectionId, parentPath });
+        const item = await collection.findOne({ _id: collectionId });
         const schemaPath = await this.convertObjIDToIndex(parts, collectionId.toHexString(), item, schema, parentPath, params);
         //console.log("DEL", parts.join('.'), schemaPath.replace(/\//g,'.'));
         

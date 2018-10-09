@@ -1,29 +1,12 @@
 // tslint:disable:no-any
 import fs from "fs";
 
-export function flattenDeep(arr1: any[]) {
-    return arr1.reduce((acc: any[], val: any) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
-}
-
-export const actualPath = (itemPath: string): string => {
-    if (!itemPath) { return ''; }
-    const parts = itemPath.split('§');
-    if (parts.length > 1 && parts[parts.length-1].indexOf('/') === -1) {
-        return actualPath(itemPath.slice(0, itemPath.lastIndexOf('§')-1));
-    }
-
-    return parts[parts.length-1];
-};
-
 export const backPath = (itemPath: string): string => {
     if (!itemPath) { return ''; }
-    const parent = itemPath.lastIndexOf('/') !== -1 ? itemPath.slice(0, itemPath.lastIndexOf('/')) : '';
-    const isComplexPath = parent.lastIndexOf('§') !== -1;
-    if (isComplexPath && parent.slice(parent.lastIndexOf('§')).split('/').length === 1) {
-        return backPath(parent);
-    }
-
-    return parent;
+    const parts = itemPath.split('/');
+    parts.pop();
+    
+    return parts.join('/');
 };
 
 
@@ -58,8 +41,12 @@ export function absolute(testPath: string, absolutePath: string): string {
     while (rel.length) { 
         const t = rel.shift(); 
         if (t === '.') { continue; } 
-        else if (t === '..') { if (p0) { p0.pop(); } } 
-        else { p0.push(t) } 
+        else if (t === '..') { 
+            if (!p0.length) {  
+                continue;
+            }
+            p0.pop(); 
+        } else { p0.push(t) } 
     }
 
     return p0.join('/');

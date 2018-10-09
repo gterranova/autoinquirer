@@ -59,8 +59,25 @@ export class Dispatcher extends DataSource {
     }
     
     // tslint:disable-next-line:no-reserved-keywords
-    public async get() {
-        throw new Error("Method not implemented.");
+    public async get(itemPath: string = '', propertySchema?: IProperty) {
+        // tslint:disable-next-line:no-return-await
+        return await this.dispatch('get', itemPath, propertySchema);
+    }
+
+    // tslint:disable-next-line:no-reserved-keywords
+    public async set(itemPath: string = '', propertySchema?: IProperty, value?: any) {
+        // tslint:disable-next-line:no-return-await
+        return await this.dispatch('set', itemPath, propertySchema, value);
+    }
+
+    public async push(itemPath: string = '', propertySchema?: IProperty, value?: any) {
+        // tslint:disable-next-line:no-return-await
+        return await this.dispatch('push', itemPath, propertySchema, value);
+    }
+
+    public async del(itemPath: string = '', propertySchema?: IProperty) {
+        // tslint:disable-next-line:no-return-await
+        return await this.dispatch('del', itemPath, propertySchema);
     }
     
     public registerProxy(name: string, dataSource: DataSource) {
@@ -102,7 +119,7 @@ export class Dispatcher extends DataSource {
             const property = (schema.type === 'array')? schema.items: schema;
             if (property && property.$data && typeof property.$data === 'string') {
                 const absolutePath = absolute(property.$data, itemPath);
-                const values: any[] = await this.dispatch('get', absolutePath);
+                const values: any[] = await this.dispatch('get', absolutePath) || [];
 
                 property.$values = values.reduce( (acc: any, curr: any, idx: number) => {
                     if (property.type === 'integer' || property.type === 'number') {
@@ -131,9 +148,6 @@ export class Dispatcher extends DataSource {
             }
         };
 
-        // tslint:disable-next-line:no-console
-        if (methodName === 'push') { console.log("this.dataSource.dispatch", methodName, itemPath, schema, value); }
-
         // tslint:disable-next-line:no-return-await
         return await this.dataSource.dispatch(methodName, itemPath, schema, value);
     }
@@ -155,11 +169,16 @@ export class Dispatcher extends DataSource {
 
         if (schema.type=== 'object') {
             if (schema.$proxy) {
-                paths[p] = schema.$proxy;
+                paths[''] = schema.$proxy;
             }
-            Object.keys(schema.properties).map((key: string) => {
-                paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
-            });
+            if (schema.properties) {
+                Object.keys(schema.properties).map((key: string) => {
+                    paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
+                });        
+            } else {
+                // tslint:disable-next-line:no-console
+                console.warn("Malformed schema: object missing properties:", schema);
+            }
         } else if (schema.type === 'array') {
             if (schema.$proxy) {
                 paths[p] = schema.$proxy;
@@ -167,14 +186,17 @@ export class Dispatcher extends DataSource {
             
             return {...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items)}
         } 
-    
+
         return Object.keys(paths).reduce( (acc: IEntryPoints, key: string) => {
-            acc[`${p}${p?'\\/':''}${key}`] = paths[key];
+            const fixedObjKey = key.replace(/\\\/$/, '');
+            acc[`${p}${p?'\\/':''}${fixedObjKey}`] = paths[key];
+            // tslint:disable-next-line:no-console
+            //console.log(p,key,`${p}${p?'\\/':''}${key}`)
             
             return acc; 
         }, {});
     }
-    
+
     private getProxyForPath(schemaPath: string): IEntryPointInfo[] {
         return Object.keys(this.entryPoints).filter( (k: string) => {
             return RegExp(k).test(schemaPath);
