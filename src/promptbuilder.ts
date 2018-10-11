@@ -131,8 +131,8 @@ export class PromptBuilder extends DataRenderer {
 
                 case 'array':
                     const arrayItemSchema: IProperty = propertySchema.items;
-                    
-                    return propertyValue && propertyValue.map( (arrayItem: Item, idx: number) => {
+
+                    return Array.isArray(propertyValue) && propertyValue.map( (arrayItem: Item, idx: number) => {
                         const myId = (arrayItem && arrayItem._id) || idx;
                         const readOnly = (!!propertySchema.readOnly || !!arrayItemSchema.readOnly);
                         const writeOnly = (!!propertySchema.writeOnly || !!arrayItemSchema.writeOnly);

@@ -1,7 +1,7 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
 import { IProperty, IProxyInfo } from '../interfaces';
-import { absolute } from '../utils';
+import { absolute, getType } from '../utils';
 import { DataRenderer, DataSource } from './index';
 import { JsonSchema } from './jsonschema';
 import { MemoryDataSource } from './memory';
@@ -38,6 +38,13 @@ export class Dispatcher extends DataSource {
         await this.dataSource.connect();
         
         const schema = await this.schemaSource.get();
+        const rootValue = await this.dataSource.dispatch('get', '');
+        const coercedValue = this.schemaSource.coerce({ type: schema.type }, rootValue);
+        if (getType(rootValue) !== getType(coercedValue)) {
+            // tslint:disable-next-line:no-console
+            //console.log({ type: schema.type }, rootValue, coercedValue);
+            this.dataSource.dispatch('set', '', schema, coercedValue);    
+        }
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
         //console.log("ENTRY POINTS:", this.entryPoints)

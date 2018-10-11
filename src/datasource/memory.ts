@@ -58,9 +58,13 @@ export class MemoryDataSource extends DataSource {
     // tslint:disable-next-line:no-reserved-keywords
     public async set(itemPath: string, _: IProperty, value: any) {
         if (value !== undefined) {
-            const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
-            objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
-            
+            if (!itemPath) {
+                this.jsonDocument = value;
+            } else {
+                const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
+                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);    
+            }
+
             return this.save();                
         }
     }

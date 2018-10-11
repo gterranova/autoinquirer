@@ -4,13 +4,13 @@ import $RefParser from 'json-schema-ref-parser';
 
 import ajv from 'ajv';
 import { IProperty } from '../interfaces';
-import { loadJSON } from '../utils';
+import { getType, loadJSON } from '../utils';
 import { DataSource } from './index';
 
 const defaultTypeValue = {
-    'object': (value?: any) => value? { ...value }: {},
-    'array': (value?: any[]) => value? [ ...value ]: [],
-    'string': (value?: string)=> value ||'',
+    'object': (value?: any) => getType(value) === 'Object' ? value: {},
+    'array': (value?: any[]) => Array.isArray(value)? value: [],
+    'string': (value?: any)=> value !== undefined? value.toString(): value,
     'number': (value?: string)=> parseFloat(value) || 0,
     'integer': (value?: string)=> parseFloat(value) || 0,
     'boolean': (value?: boolean | string | number) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
@@ -70,9 +70,9 @@ export class JsonSchema extends DataSource {
     public coerce(schema: IProperty, value?: any) {
         if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
             // tslint:disable-next-line:no-parameter-reassignment
-            if (!value || ((schema.type !== 'number' && schema.type !== 'integer') || 
+            if (value !== undefined || ((schema.type !== 'number' && schema.type !== 'integer') || 
                 /^(\d+|\d*(\.\d+)?)$/.test(value))) {
-                return defaultTypeValue[schema.type](value || schema.default);                
+                return defaultTypeValue[schema.type](value !== undefined? value: schema.default);                
             }
         }
 
@@ -80,7 +80,13 @@ export class JsonSchema extends DataSource {
     }
 
     public validate(schema: IProperty, data: any) {
-        const value = this.coerce(schema, data);
+        const value = this.coerce(schema, data !== undefined? data: schema.default);
+        // tslint:disable-next-line:triple-equals
+        if (value !== schema.default && value.toString() !== (data !== undefined? data: schema.default).toString()) {
+            // tslint:disable-next-line:no-console
+            //console.log(schema, value, data);
+            throw new Error(`Error: expecting an ${schema.type}`);            
+        }
         if (!this.validator.validate(schema, value)) {
             throw new Error(this.validator.errors.map( (err: any) => err.message ).join('\n'));
         };

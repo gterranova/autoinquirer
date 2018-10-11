@@ -82,6 +82,7 @@ export interface IProperty {
         [key: string]: IProperty;
     };
     defaultProperties?: string[];
+    pattern?: string;
     // custom properties
     readOnly?: boolean;
     writeOnly?: boolean;

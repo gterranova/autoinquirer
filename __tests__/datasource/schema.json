@@ -1,0 +1,27 @@
+{
+  "definitions": {
+    "Schema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "uri": {
+            "type": "string"
+          },
+          "another": {
+            "type": "object",
+            "properties": {
+              "foo": { "type": "string"}
+            }
+          }
+        },
+        "patternProperties": {
+          "^([A-Z]+)$": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/definitions/Schema"
+}
