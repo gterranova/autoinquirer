@@ -14,8 +14,8 @@ export class MemoryDataSource extends DataSource {
 
     constructor(data: any) {
         super();
-        this.dataFile = (typeof data === 'string') && data;
-        this.jsonDocument = this.dataFile && loadJSON(this.dataFile) || {};
+        this.dataFile = (typeof data === 'string')? data: undefined;
+        this.jsonDocument = this.dataFile !== undefined? loadJSON(this.dataFile): data;
     }
 
     public async connect() {
@@ -47,7 +47,7 @@ export class MemoryDataSource extends DataSource {
             if (!itemPath) { 
                 this.jsonDocument.push(value); 
             } else {
-                const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
+                const schemaPath = await this.convertObjIDToIndex(itemPath);
                 objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
             }
             
@@ -61,7 +61,7 @@ export class MemoryDataSource extends DataSource {
             if (!itemPath) {
                 this.jsonDocument = value;
             } else {
-                const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
+                const schemaPath = await this.convertObjIDToIndex(itemPath);
                 objectPath.set(this.jsonDocument, schemaPath.split('/'), value);    
             }
 
@@ -69,7 +69,12 @@ export class MemoryDataSource extends DataSource {
         }
     }
 
-    public async del(itemPath: string) {
+    public async del(itemPath?: string) {
+        if (!itemPath) {
+            this.jsonDocument = undefined;
+            
+            return this.save();
+        }
         const schemaPath = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
         

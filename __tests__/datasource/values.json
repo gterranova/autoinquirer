@@ -1,0 +1,11 @@
+[
+  {
+    "uri": "test",
+    "another": {
+      "foo": "bar"
+    },
+    "ABC": true,
+    "myArray": ["A", "B", "C"],
+    "myObjArray": []
+  }
+]

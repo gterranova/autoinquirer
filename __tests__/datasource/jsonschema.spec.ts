@@ -2,8 +2,13 @@
 import path from 'path';
 import { JsonSchema } from '../../src/datasource/index';
 
+let defaultSchema;
+beforeEach(() => {
+    defaultSchema = new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'));
+});
+
 describe('JsonSchema', () => {
-    const schema = new JsonSchema();
+    const schema = new JsonSchema(undefined);
     it('to be defined', () => {
         expect(schema).toBeDefined();
     });
@@ -53,18 +58,16 @@ describe('constructor', () => {
 
 describe('connect', () => {
     it('to dereference $refs', async () => {
-        const schema = new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'));
-        await schema.connect();
-        const data = await schema.get();
+        await defaultSchema.connect();
+        const data = await defaultSchema.get();
         expect(data.type).toBe('array'); 
     });
 });
 
 describe('close', () => {
     it('does nothing', () => {
-        const schema = new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'));
-        expect(schema.close).toBeDefined(); 
-        expect(schema.close()).resolves.toBeFalsy(); 
+        expect(defaultSchema.close).toBeDefined(); 
+        expect(defaultSchema.close()).resolves.toBeFalsy(); 
     });
 });
 
@@ -102,56 +105,54 @@ describe('coerce', () => {
 
 describe('validate', () => {
     it('to validate input or throw error', async () => {
-        const schema = new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'));
-        await schema.connect();
+        await defaultSchema.connect();
 
-        expect(()=>schema.validate({ type: 'object' }, 'a string')).toThrowError();
-        expect(()=>schema.validate({ type: 'object' }, { name: 'a string'})).not.toThrowError();
-        expect(()=>schema.validate({ type: 'array' }, 'a string')).toThrowError();
-        expect(()=>schema.validate({ type: 'array' }, ['a string'])).not.toThrowError();
-        expect(()=>schema.validate({ type: 'string' }, 'a string')).not.toThrowError();
-        expect(()=>schema.validate({ type: 'string' }, 1)).not.toThrowError();
-        expect(()=>schema.validate({ type: 'string' }, false)).not.toThrowError();
-        expect(()=>schema.validate({ type: 'string' }, true)).not.toThrowError();
-        expect(()=>schema.validate({ type: 'number' }, 'a string')).toThrowError();
-        expect(()=>schema.validate({ type: 'integer' }, 'a string')).toThrowError();
-        expect(()=>schema.validate({ type: 'number' }, '100')).not.toThrowError();
-        expect(()=>schema.validate({ type: 'number' }, '10.12')).not.toThrowError();
-        expect(()=>schema.validate({ type: 'number' }, '.12')).toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, 'a string')).toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, 'true')).not.toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, 'false')).not.toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, 'yes')).toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, '1')).toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, 1)).toThrowError();
-        expect(()=>schema.validate({ type: 'boolean' }, 0)).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'object' }, 'a string')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'object' }, { name: 'a string'})).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'array' }, 'a string')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'array' }, ['a string'])).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'string' }, 'a string')).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'string' }, 1)).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'string' }, false)).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'string' }, true)).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number' }, 'a string')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'integer' }, 'a string')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number' }, '100')).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number' }, '10.12')).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number' }, '.12')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'a string')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'true')).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'false')).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'yes')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, '1')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 1)).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 0)).toThrowError();
 
-        expect(()=>schema.validate({ type: 'string' }, undefined)).toThrowError();
-        expect(()=>schema.validate({ type: 'number' }, undefined)).toThrowError()
-        expect(()=>schema.validate({ type: 'string', default: '' }, undefined)).not.toThrowError();
-        expect(()=>schema.validate({ type: 'number', default: 0 }, undefined)).not.toThrowError()
-        expect(()=>schema.validate({ type: 'number', default: '0' }, undefined)).not.toThrowError()
+        expect(()=>defaultSchema.validate({ type: 'string' }, undefined)).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number' }, undefined)).toThrowError()
+        expect(()=>defaultSchema.validate({ type: 'string', default: '' }, undefined)).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number', default: 0 }, undefined)).not.toThrowError()
+        expect(()=>defaultSchema.validate({ type: 'number', default: '0' }, undefined)).not.toThrowError()
 
-        expect(()=>schema.validate({}, 1234)).not.toThrowError();
-        expect(()=>schema.validate({ type: 'foo' }, 1234)).toThrowError();
+        expect(()=>defaultSchema.validate({}, 1234)).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'foo' }, 1234)).toThrowError();
 
-        expect(()=>schema.validate({ type: 'string', pattern: '^([A-Z]*)$' }, 'a string')).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'string', pattern: '^([A-Z]*)$' }, 'a string')).toThrowError();
     });
 });
 
 describe('dispatch', () => {
-    const schema = new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'));
     it('dispatches method calls', async () => {
-        const expected = await schema.dispatch('get', '');
+        const expected = await defaultSchema.dispatch('get', '');
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        const received = await schema.get('');
+        const received = await defaultSchema.get('');
         expect(expected).toEqual(received);
     });
 
     it('throws if method does not exists', async () => {
         let exception;
         try {
-            await schema.dispatch('foo', '')
+            await defaultSchema.dispatch('foo', '')
         } catch (e) {
             exception = e;
         }
@@ -160,36 +161,35 @@ describe('dispatch', () => {
 });
 
 describe('dispatch', () => {
-    const schema = new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'));
     it('walks array', async () => {
-        await schema.connect();
-        const received = await schema.dispatch('get', '#');
+        await defaultSchema.connect();
+        const received = await defaultSchema.dispatch('get', '#');
         const expected = "object";
         expect(received.type).toEqual(expected);
     });
     it('walks objects', async () => {
-        await schema.connect();
-        const received = await schema.dispatch('get', '#/uri');
+        await defaultSchema.connect();
+        const received = await defaultSchema.dispatch('get', '#/uri');
         const expected = "string";
         expect(received.type).toBe(expected);
     });
     it('walks named properties', async () => {
-        await schema.connect();
-        const received = await schema.dispatch('get', '#/properties');
+        await defaultSchema.connect();
+        const received = await defaultSchema.dispatch('get', '#/properties');
         const expected = "string";
         expect(received.uri.type).toBe(expected);
     });
     it('walks pattern properties', async () => {
-        await schema.connect();
-        let received = await schema.dispatch('get', '#/ABC');
+        await defaultSchema.connect();
+        let received = await defaultSchema.dispatch('get', '#/ABC');
         const expected = "boolean";
         expect(received.type).toBe(expected);
-        received = await schema.dispatch('get', '#/abcNotInPattern');
+        received = await defaultSchema.dispatch('get', '#/abcNotInPattern');
         expect(received).not.toBeDefined();
     });
     it('returns undefined in any other case', async () => {
-        await schema.connect();
-        const received = await schema.dispatch('get', '#/another/hhh/sdsada');
+        await defaultSchema.connect();
+        const received = await defaultSchema.dispatch('get', '#/another/hhh/sdsada');
         expect(received).not.toBeDefined();
     });
 });

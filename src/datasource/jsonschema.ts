@@ -82,10 +82,10 @@ export class JsonSchema extends DataSource {
     public validate(schema: IProperty, data: any) {
         const value = this.coerce(schema, data !== undefined? data: schema.default);
         // tslint:disable-next-line:triple-equals
-        if (value !== schema.default && value.toString() !== (data !== undefined? data: schema.default).toString()) {
+        if (value !== schema.default && value !== undefined && (data !== undefined || schema.default  !== undefined) && value.toString() !== (data !== undefined? data: schema.default).toString()) {
             // tslint:disable-next-line:no-console
             //console.log(schema, value, data);
-            throw new Error(`Error: expecting an ${schema.type}`);            
+            throw new Error(`Error: expecting an ${schema.type}`); 
         }
         if (!this.validator.validate(schema, value)) {
             throw new Error(this.validator.errors.map( (err: any) => err.message ).join('\n'));

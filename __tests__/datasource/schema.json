@@ -13,7 +13,22 @@
             "properties": {
               "foo": { "type": "string"}
             }
-          }
+          },
+          "myArray": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "myObjArray": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties":{
+                "name": { "type": "string" }
+              }
+            }
+          }          
         },
         "patternProperties": {
           "^([A-Z]+)$": {
