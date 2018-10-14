@@ -3,8 +3,9 @@
 import $RefParser from 'json-schema-ref-parser';
 
 import ajv from 'ajv';
+import path from 'path';
 import { IProperty } from '../interfaces';
-import { getType, loadJSON } from '../utils';
+import { findUp, getType, loadJSON } from '../utils';
 import { DataSource } from './index';
 
 const defaultTypeValue = {
@@ -19,16 +20,21 @@ const defaultTypeValue = {
 export class JsonSchema extends DataSource {
     private validator: any;
     private schemaData: IProperty;
+    private basePath: string;
 
     constructor(data: IProperty | string) {
         super();
         this.validator = new ajv({ coerceTypes: true });
         this.schemaData = (typeof data === 'string') ? loadJSON(data) : data;
+        this.basePath = (typeof data === 'string') ? path.resolve(path.dirname(data)) : path.resolve(path.dirname(findUp('package.json', process.cwd())));
     }
 
     public async connect() {
         const parser = new $RefParser();
+        const currentPath = process.cwd();
+        process.chdir(this.basePath);
         this.schemaData = await parser.dereference(this.schemaData);
+        process.chdir(currentPath);
     } 
 
     public async close() {

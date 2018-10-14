@@ -1,5 +1,10 @@
 import path from 'path';
-import { absolute, backPath, evalExpr, getType, loadJSON } from '../src/utils';
+import { absolute, backPath, evalExpr, findUp, getType, loadJSON } from '../src/utils';
+
+const mockWarn = jest.spyOn(global.console, 'warn');
+beforeEach(() => {
+  mockWarn.mockReset();
+});
 
 describe('absolute', () => {
   it('does nothing to absolute paths', () => {
@@ -107,11 +112,10 @@ describe('evalExpr', () => {
     expect(evalExpr('this.type === \'foo\'', { type: 'test' })).toBe(false);
   });
   it('returns true on errors', () => {
-    const mockWarn = jest.spyOn(global.console, 'warn');
     expect(evalExpr('thisIsWrong', {})).toBe(true);
     expect(evalExpr('thisIsWrong', null)).toBe(true);
     expect(evalExpr('thisIsWrong', undefined)).toBe(true);
-    expect(global.console.warn).toHaveBeenCalledTimes(3);
+    expect(mockWarn).toHaveBeenCalledTimes(3);
     expect(mockWarn.mock.calls[0].toString()).toMatch(/thisIsWrong is not defined/);
   });
 });
@@ -133,5 +137,16 @@ describe('loadJSON', () => {
       exception = e;
     }
     expect(exception).toBeDefined();
+  });
+});
+
+describe('findUp', () => {
+  it('returns parent path containing a file', () => {
+    const pkgFile = findUp('package.json', path.join(process.cwd()));
+    expect(path.resolve(path.dirname(pkgFile))).toBe(path.resolve(path.join(__dirname, '..')));
+  });
+  it('returns on not existent parent path containing a file', () => {
+    const pkg = findUp('notexists.json', path.join(process.cwd()));
+    expect(path.resolve(path.dirname(pkg))).toBe(path.join(process.cwd()));
   });
 });
