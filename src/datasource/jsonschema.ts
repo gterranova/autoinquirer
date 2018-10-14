@@ -79,7 +79,11 @@ export class JsonSchema extends DataSource {
         return value;
     }
 
-    public validate(schema: IProperty, data: any) {
+    public validate(schema?: IProperty, data?: any) {
+        if (schema === undefined) { return; }
+        // avoid ajv RangeError: Maximum call stack size exceeded
+        // tslint:disable-next-line:no-parameter-reassignment
+        schema = {...schema, $ref: undefined};
         const value = this.coerce(schema, data !== undefined? data: schema.default);
         // tslint:disable-next-line:triple-equals
         if (value !== schema.default && value !== undefined && (data !== undefined || schema.default  !== undefined) && value.toString() !== (data !== undefined? data: schema.default).toString()) {

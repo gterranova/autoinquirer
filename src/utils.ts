@@ -1,5 +1,7 @@
 // tslint:disable:no-any
 import fs from "fs";
+import os from "os";
+import crypto from "crypto";
 
 export const backPath = (itemPath: string): string => {
     if (!itemPath) { return ''; }
@@ -62,3 +64,19 @@ export function getType(value: any): string {
     return type;
 }
 
+/**
+ * Generates a MongoDB-style ObjectId in Node.js. Uses nanosecond timestamp in place of counter; 
+ * should be impossible for same process to generate multiple objectId in same nanosecond? (clock 
+ * drift can result in an *extremely* remote possibility of id conflicts).
+ *
+ * @returns {string} Id in same format as MongoDB ObjectId.
+ */
+export function objectId(): string {
+    const now = new Date();
+    const seconds = Math.floor(now.getTime()/1000).toString(16);
+    const machineId = crypto.createHash('md5').update(os.hostname()).digest('hex').slice(0, 6);
+    const processId = process.pid.toString(16).slice(0, 4).padStart(4, '0');
+    const counter = process.hrtime()[1].toString(16).slice(0, 6).padStart(6, '0');
+
+    return seconds + machineId + processId + counter;
+}

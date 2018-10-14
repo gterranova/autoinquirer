@@ -58,5 +58,4 @@ export abstract class DataSource {
 
 export { Dispatcher } from './dispatcher';
 export { JsonSchema } from './jsonschema';
-export { MemoryDataSource } from './memory';
-export { MongoDataSource } from './mongodb';
+export { JsonDataSource } from './json';

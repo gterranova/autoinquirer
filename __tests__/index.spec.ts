@@ -17,14 +17,9 @@ describe('JsonSchema', () => {
         expect(Index.JsonSchema).toBeDefined();
     });
 });
-describe('MemoryDataSource', () => {
+describe('JsonDataSource', () => {
     it('to be defined', () => {
-        expect(Index.MemoryDataSource).toBeDefined();
-    });
-});
-describe('MongoDataSource', () => {
-    it('to be defined', () => {
-        expect(Index.MongoDataSource).toBeDefined();
+        expect(Index.JsonDataSource).toBeDefined();
     });
 });
 describe('PromptBuilder', () => {

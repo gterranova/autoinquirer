@@ -134,6 +134,8 @@ describe('validate', () => {
         expect(()=>defaultSchema.validate({ type: 'number', default: 0 }, undefined)).not.toThrowError()
         expect(()=>defaultSchema.validate({ type: 'number', default: '0' }, undefined)).not.toThrowError()
 
+        expect(()=>defaultSchema.validate(undefined, 1234)).not.toThrowError();
+        expect(defaultSchema.validate(undefined, 1234)).not.toBeDefined();
         expect(()=>defaultSchema.validate({}, 1234)).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'foo' }, 1234)).toThrowError();
 

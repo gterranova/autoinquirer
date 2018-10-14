@@ -41,14 +41,9 @@ describe('JsonSchema', () => {
         expect(datasource.JsonSchema).toBeDefined();
     });
 });
-describe('MemoryDataSource', () => {
+describe('JsonDataSource', () => {
     it('to be defined', () => {
-        expect(datasource.MemoryDataSource).toBeDefined();
-    });
-});
-describe('MongoDataSource', () => {
-    it('to be defined', () => {
-        expect(datasource.MongoDataSource).toBeDefined();
+        expect(datasource.JsonDataSource).toBeDefined();
     });
 });
 

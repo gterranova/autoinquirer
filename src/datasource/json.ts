@@ -2,13 +2,12 @@
 // tslint:disable:no-console
 
 import fs from "fs";
-import { ObjectID } from 'mongodb';
 import objectPath from 'object-path';
 import { IProperty } from '../interfaces';
-import { getType, loadJSON } from '../utils';
+import { getType, loadJSON, objectId } from '../utils';
 import { DataSource } from './index';
 
-export class MemoryDataSource extends DataSource {
+export class JsonDataSource extends DataSource {
     private jsonDocument: any;
     private dataFile: string;
 
@@ -41,7 +40,7 @@ export class MemoryDataSource extends DataSource {
     public async push(itemPath: string, _?: IProperty, value?: any) {
         if (value !== undefined) {
             if (getType(value) === 'Object') {
-                value._id = new ObjectID().toHexString();
+                value._id = objectId();
             }
     
             if (!itemPath) { 

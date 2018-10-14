@@ -4,7 +4,7 @@ import { IProperty, IProxyInfo } from '../interfaces';
 import { absolute, getType } from '../utils';
 import { DataRenderer, DataSource } from './index';
 import { JsonSchema } from './jsonschema';
-import { MemoryDataSource } from './memory';
+import { JsonDataSource } from './json';
 
 declare type IEntryPoints = { [key: string]: IProxyInfo};
 
@@ -29,7 +29,7 @@ export class Dispatcher extends DataSource {
     constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer) {
         super();
         this.schemaSource = (typeof schema === 'string')? new JsonSchema(schema): schema;
-        this.dataSource = (typeof data === 'string')? new MemoryDataSource(data): data;
+        this.dataSource = (typeof data === 'string')? new JsonDataSource(data): data;
         this.renderer = renderer;
     }
 
@@ -66,23 +66,23 @@ export class Dispatcher extends DataSource {
     }
     
     // tslint:disable-next-line:no-reserved-keywords
-    public async get(itemPath: string = '', propertySchema?: IProperty) {
+    public async get(itemPath?: string, propertySchema?: IProperty) {
         // tslint:disable-next-line:no-return-await
         return await this.dispatch('get', itemPath, propertySchema);
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async set(itemPath: string = '', propertySchema?: IProperty, value?: any) {
+    public async set(itemPath?: string, propertySchema?: IProperty, value?: any) {
         // tslint:disable-next-line:no-return-await
         return await this.dispatch('set', itemPath, propertySchema, value);
     }
 
-    public async push(itemPath: string = '', propertySchema?: IProperty, value?: any) {
+    public async push(itemPath?: string, propertySchema?: IProperty, value?: any) {
         // tslint:disable-next-line:no-return-await
         return await this.dispatch('push', itemPath, propertySchema, value);
     }
 
-    public async del(itemPath: string = '', propertySchema?: IProperty) {
+    public async del(itemPath?: string, propertySchema?: IProperty) {
         // tslint:disable-next-line:no-return-await
         return await this.dispatch('del', itemPath, propertySchema);
     }
@@ -91,14 +91,13 @@ export class Dispatcher extends DataSource {
         this.proxies.push({ name, dataSource });
     }
 
-    // tslint:disable-next-line:cyclomatic-complexity
-    public async dispatch(methodName: string, itemPath: string = '', propertySchema?: IProperty, value?: any): Promise<any> {
+    public async dispatch(methodName: string, itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any> {
         // tslint:disable-next-line:no-console
         //console.log(`DISPATCH ${methodName}:`, itemPath, value)
-
+        itemPath = itemPath !== undefined? itemPath: '';
         const schema = propertySchema || await this.getSchema(itemPath);
         // tslint:disable-next-line:no-bitwise
-        if (schema.readOnly === true && (~['set','push','del'].indexOf(methodName))) {
+        if (schema === undefined || (schema.readOnly === true && (~['set','push','del'].indexOf(methodName)))) {
             return;
         } 
         // tslint:disable-next-line:no-bitwise
@@ -112,7 +111,7 @@ export class Dispatcher extends DataSource {
                 // tslint:disable-next-line:no-console
                 //console.log("Must delete from", proxyInfo, "with parentPath starting with", RegExp(`^${itemPath}`));
                 // tslint:disable-next-line:no-string-literal
-                if (dataSource['delCascade'] !== undefined) {
+                if (dataSource && dataSource['delCascade'] !== undefined) {
                     promises.push(dataSource.dispatch('delCascade', itemPath, proxyInfo.params));
                 }
             }
@@ -142,12 +141,10 @@ export class Dispatcher extends DataSource {
             }
         }
         
-        const collectionRefs = this.getProxyForPath(itemPath);
-        if (collectionRefs.length>0) {
+        for (const proxy of this.getProxyForPath(itemPath).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
-            const lastCollection = collectionRefs.pop();
-            const { objPath, parentPath, proxyInfo } = lastCollection;
+            const { objPath, parentPath, proxyInfo } = proxy;
             const dataSource = this.getProxy(proxyInfo);
             if (dataSource && dataSource[methodName]) {
                 // tslint:disable-next-line:no-return-await
@@ -196,7 +193,7 @@ export class Dispatcher extends DataSource {
 
         return Object.keys(paths).reduce( (acc: IEntryPoints, key: string) => {
             const fixedObjKey = key.replace(/\\\/$/, '');
-            acc[`${p}${p?'\\/':''}${fixedObjKey}`] = paths[key];
+            acc[`${p}\\/${fixedObjKey}`] = paths[key];
             // tslint:disable-next-line:no-console
             //console.log(p,key,`${p}${p?'\\/':''}${key}`)
             
@@ -204,9 +201,10 @@ export class Dispatcher extends DataSource {
         }, {});
     }
 
-    private getProxyForPath(schemaPath: string): IEntryPointInfo[] {
+    private getProxyForPath(itemPath?: string): IEntryPointInfo[] {
+        const schemaPath = itemPath !== undefined && itemPath !== null? itemPath: '';
         return Object.keys(this.entryPoints).filter( (k: string) => {
-            return RegExp(k).test(schemaPath);
+            return k.length? RegExp(k).test(schemaPath): true;
         }).map( (foundKey: string) => {
             const objPath = schemaPath.replace(RegExp(foundKey), ''); 
             const parentPath = schemaPath.slice(0, schemaPath.length-objPath.length);
@@ -215,7 +213,8 @@ export class Dispatcher extends DataSource {
         });        
     }
 
-    private getProxyWithinPath(schemaPath: string): IProxyInfo[] {
+    private getProxyWithinPath(itemPath?: string): IProxyInfo[] {
+        const schemaPath = itemPath !== undefined? itemPath: '';
         // tslint:disable-next-line:prefer-template
         const comparisonPath = schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
             .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})').replace('/', '\\/')

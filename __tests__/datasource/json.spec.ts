@@ -1,17 +1,17 @@
 // tslint:disable-next-line:no-unused-expression
 import fs from 'fs';
 import path from 'path';
-import { MemoryDataSource } from '../../src/datasource/index';
+import { JsonDataSource } from '../../src/datasource/index';
 
 const mockWrite = jest.spyOn(fs, 'writeFileSync');
 let dsValues;
 beforeEach(() => {
-    dsValues = new MemoryDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
+    dsValues = new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
     mockWrite.mockReset();
 });
 
-describe('MemoryDataSource', () => {
-    const ds = new MemoryDataSource({  test: 1 });
+describe('JsonDataSource', () => {
+    const ds = new JsonDataSource({  test: 1 });
     it('to be defined', () => {
         expect(ds).toBeDefined();
     });
@@ -27,7 +27,7 @@ describe('MemoryDataSource', () => {
 
 describe('constructor', () => {
     it('constructor to accept object', async () => {
-        const ds0 = new MemoryDataSource({ test: 1 });
+        const ds0 = new JsonDataSource({ test: 1 });
         const value = await ds0.get();
         expect(value).toEqual({ test: 1 });
         expect(ds0.dataFile).not.toBeDefined(); 
@@ -36,7 +36,7 @@ describe('constructor', () => {
         let ds;
         let exception;
         try {
-            ds = new MemoryDataSource(path.join(process.cwd(), '__tests__', 'notexists.json'));
+            ds = new JsonDataSource(path.join(process.cwd(), '__tests__', 'notexists.json'));
         } catch (e) {
             exception = e;
         }
@@ -49,7 +49,7 @@ describe('constructor', () => {
         let ds;
         let exception;
         try {
-            ds = new MemoryDataSource(path.join(process.cwd(), '__tests__', 'malformed.json'));
+            ds = new JsonDataSource(path.join(process.cwd(), '__tests__', 'malformed.json'));
         } catch (e) {
             exception = e;
         }
@@ -66,7 +66,7 @@ describe('connect', () => {
 
 describe('close', () => {
     it('does nothing', () => {
-        const ds = new MemoryDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
+        const ds = new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
         expect(ds.close).toBeDefined(); 
         expect(ds.close()).resolves.toBeFalsy(); 
     });
@@ -114,7 +114,7 @@ describe('dispatch', () => {
 
 describe('save', () => {
     it('does nothing if not dataFile', async () => {
-        const ds1 = new MemoryDataSource({});
+        const ds1 = new JsonDataSource({});
         await ds1.save();
         expect(mockWrite).not.toBeCalled();
     });
@@ -159,7 +159,7 @@ describe('push', () => {
         expect(newValue).toHaveLength(1);
     });
     it('pushes to root if no path is provided', async () => {
-        const arrayDs = new MemoryDataSource([]);
+        const arrayDs = new JsonDataSource([]);
         await arrayDs.push(null, null, {'baz': 1});
         expect(mockWrite).not.toBeCalled();
         const newValue = await arrayDs.get();

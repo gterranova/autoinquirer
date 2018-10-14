@@ -4,6 +4,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
           "uri": {
             "type": "string"
@@ -28,15 +29,58 @@
                 "name": { "type": "string" }
               }
             }
-          }          
+          },
+          "myLinkedArray": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "$data": "../myObjArray"
+            }
+          },
+          "myNumberLinkedArray": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "$data": "../myObjArray"
+            }
+          },
+          "myUndefinedLinkedArray": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "$data": "../isNotDefined"
+            }
+          },
+          "myDataProxy": {
+            "type": "array",
+            "$proxy": {
+              "proxyName": "myProxy",
+              "params": {}
+            }
+          },
+          "myObjDataProxy": {
+            "type": "object",
+            "$proxy": {
+              "proxyName": "myObjProxy",
+              "params": {}
+            }
+          }
         },
         "patternProperties": {
           "^([A-Z]+)$": {
-            "type": "boolean"
+            "type": "boolean",
+            "readOnly": true
+          },
+          "^(wo[A-Z]+)$": {
+            "type": "boolean",
+            "writeOnly": true
           }
         }
       }
     }
   },
-  "$ref": "#/definitions/Schema"
+  "$ref": "#/definitions/Schema",
+  "$proxy": {
+    "proxyName": "dummyProxy"
+  }
 }
