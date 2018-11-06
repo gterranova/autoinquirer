@@ -6,7 +6,7 @@ import ajv from 'ajv';
 import path from 'path';
 import { IProperty } from '../interfaces';
 import { findUp, getType, loadJSON } from '../utils';
-import { DataSource } from './index';
+import { DataSource } from './datasource';
 
 const defaultTypeValue = {
     'object': (value?: any) => getType(value) === 'Object' ? value: {},

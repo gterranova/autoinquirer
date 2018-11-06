@@ -10,7 +10,7 @@ node_modules/
 coverage
 
 # Transpiled files
-build/
+# build/
 dist/
 
 # VS Code
@@ -28,3 +28,6 @@ dist/
 
 # Misc
 .DS_Store
+examples/
+server/
+autoinquirer.code-workspace

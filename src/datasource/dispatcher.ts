@@ -2,9 +2,9 @@
 // tslint:disable-next-line:import-name
 import { IProperty, IProxyInfo } from '../interfaces';
 import { absolute, getType } from '../utils';
-import { DataRenderer, DataSource } from './index';
-import { JsonSchema } from './jsonschema';
+import { DataRenderer, DataSource } from './datasource';
 import { JsonDataSource } from './json';
+import { JsonSchema } from './jsonschema';
 
 declare type IEntryPoints = { [key: string]: IProxyInfo};
 
@@ -91,9 +91,11 @@ export class Dispatcher extends DataSource {
         this.proxies.push({ name, dataSource });
     }
 
+    // tslint:disable-next-line:cyclomatic-complexity
     public async dispatch(methodName: string, itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any> {
         // tslint:disable-next-line:no-console
         //console.log(`DISPATCH ${methodName}:`, itemPath, value)
+        // tslint:disable-next-line:no-parameter-reassignment
         itemPath = itemPath !== undefined? itemPath: '';
         const schema = propertySchema || await this.getSchema(itemPath);
         // tslint:disable-next-line:no-bitwise
@@ -203,6 +205,7 @@ export class Dispatcher extends DataSource {
 
     private getProxyForPath(itemPath?: string): IEntryPointInfo[] {
         const schemaPath = itemPath !== undefined && itemPath !== null? itemPath: '';
+        
         return Object.keys(this.entryPoints).filter( (k: string) => {
             return k.length? RegExp(k).test(schemaPath): true;
         }).map( (foundKey: string) => {

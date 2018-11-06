@@ -10,7 +10,8 @@ module.exports = {
   },
   target: 'node',
   externals: [nodeExternals({
-    whitelist: ['ajv', 'object-path', 'json-schema-ref-parser']
+    whitelist: ['ajv', 'object-path', 'json-schema-ref-parser', 
+      'ono', 'call-me-maybe', 'format-util']
   })], // in order to ignore all modules in node_modules folder
   devtool: 'source-map',
   module: {

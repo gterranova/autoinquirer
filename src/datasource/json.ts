@@ -5,7 +5,7 @@ import fs from "fs";
 import objectPath from 'object-path';
 import { IProperty } from '../interfaces';
 import { getType, loadJSON, objectId } from '../utils';
-import { DataSource } from './index';
+import { DataSource } from './datasource';
 
 export class JsonDataSource extends DataSource {
     private jsonDocument: any;
