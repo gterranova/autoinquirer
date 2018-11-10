@@ -8,8 +8,9 @@ export declare class JsonDataSource extends DataSource {
     close(): Promise<void>;
     save(): Promise<void>;
     get(itemPath?: string): Promise<any>;
-    push(itemPath: string, _?: IProperty, value?: any): Promise<void>;
+    push(itemPath: string, _?: IProperty, value?: any): Promise<any>;
     set(itemPath: string, _: IProperty, value: any): Promise<void>;
+    update(itemPath: string, _: IProperty, value: any): Promise<any>;
     del(itemPath?: string): Promise<void>;
     dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any): Promise<any>;
 }

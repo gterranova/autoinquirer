@@ -49,8 +49,9 @@ export class JsonDataSource extends DataSource {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
                 objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
             }
+            this.save();
             
-            return this.save();    
+            return value;
         }
     }
 
@@ -63,21 +64,35 @@ export class JsonDataSource extends DataSource {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
                 objectPath.set(this.jsonDocument, schemaPath.split('/'), value);    
             }
+            this.save();
+        }
+    }
 
-            return this.save();                
+    // tslint:disable-next-line:no-reserved-keywords
+    public async update(itemPath: string, _: IProperty, value: any) {
+        if (value !== undefined) {
+            if (!itemPath) {
+                this.jsonDocument = {...this.jsonDocument, ...value};
+            } else {
+                const schemaPath = await this.convertObjIDToIndex(itemPath);
+                // tslint:disable-next-line:no-parameter-reassignment
+                value = {...objectPath.get(this.jsonDocument, schemaPath.split('/')), ...value};
+                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);    
+            }
+            this.save();
+            
+            return value;
         }
     }
 
     public async del(itemPath?: string) {
         if (!itemPath) {
             this.jsonDocument = undefined;
-            
-            return this.save();
+            this.save();
         }
         const schemaPath = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
-        
-        return this.save();
+        this.save();
     }
 
     public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {

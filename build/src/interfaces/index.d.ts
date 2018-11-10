@@ -3,6 +3,7 @@ export declare const enum Action {
     EXIT = "exit",
     PUSH = "push",
     SET = "set",
+    UPDATE = "update",
     DEL = "del"
 }
 export interface IState {

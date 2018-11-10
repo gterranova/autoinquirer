@@ -49,7 +49,8 @@ class JsonDataSource extends datasource_1.DataSource {
                     const schemaPath = yield this.convertObjIDToIndex(itemPath);
                     object_path_1.default.push(this.jsonDocument, schemaPath.split('/'), value);
                 }
-                return this.save();
+                this.save();
+                return value;
             }
         });
     }
@@ -63,7 +64,23 @@ class JsonDataSource extends datasource_1.DataSource {
                     const schemaPath = yield this.convertObjIDToIndex(itemPath);
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
                 }
-                return this.save();
+                this.save();
+            }
+        });
+    }
+    update(itemPath, _, value) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (value !== undefined) {
+                if (!itemPath) {
+                    this.jsonDocument = Object.assign({}, this.jsonDocument, value);
+                }
+                else {
+                    const schemaPath = yield this.convertObjIDToIndex(itemPath);
+                    value = Object.assign({}, object_path_1.default.get(this.jsonDocument, schemaPath.split('/')), value);
+                    object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
+                }
+                this.save();
+                return value;
             }
         });
     }
@@ -71,11 +88,11 @@ class JsonDataSource extends datasource_1.DataSource {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!itemPath) {
                 this.jsonDocument = undefined;
-                return this.save();
+                this.save();
             }
             const schemaPath = yield this.convertObjIDToIndex(itemPath);
             object_path_1.default.del(this.jsonDocument, schemaPath.split('/'));
-            return this.save();
+            this.save();
         });
     }
     dispatch(methodName, itemPath, schema, value, parentPath, params) {
