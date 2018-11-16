@@ -1,7 +1,7 @@
 // tslint:disable-next-line:no-unused-expression
 import fs from 'fs';
 import path from 'path';
-import { Dispatcher, JsonSchema, JsonDataSource } from '../../src/datasource/index';
+import { Dispatcher, JsonDataSource, JsonSchema } from '../../src/datasource/index';
 
 const mockWrite = jest.spyOn(fs, 'writeFileSync');
 let dispatcher;
@@ -164,7 +164,7 @@ describe('dispatch', () => {
         await dispatcher.get('0/myLinkedArray');
         const schema = await dispatcher.getSchema('0/myLinkedArray');
         expect(Object.keys(schema.items.$values)).toHaveLength(1);
-        console.log(Object.keys(schema.items.$values)[0]);
+        // console.log(Object.keys(schema.items.$values)[0]);
         expect(/^0\/myObjArray\/[a-f0-9]{24}$/.test(Object.keys(schema.items.$values)[0])).toBe(true);
     });
     it('adds $values on $data link reference (obj without _id)', async () => {
@@ -174,7 +174,7 @@ describe('dispatch', () => {
         await dispatcher.get('0/myLinkedArray');
         const schema = await dispatcher.getSchema('0/myLinkedArray');
         expect(Object.keys(schema.items.$values)).toHaveLength(1);
-        console.log(Object.keys(schema.items.$values)[0]);
+        // console.log(Object.keys(schema.items.$values)[0]);
         expect(/^0\/myObjArray\/0$/.test(Object.keys(schema.items.$values)[0])).toBe(true);
     });
     it('adds $values on $data link reference (number)', async () => {
@@ -183,7 +183,7 @@ describe('dispatch', () => {
         await dispatcher.get('0/myNumberLinkedArray');
         const schema = await dispatcher.getSchema('0/myNumberLinkedArray');
         expect(Object.keys(schema.items.$values)).toHaveLength(1);
-        console.log(Object.keys(schema.items.$values)[0]);
+        // console.log(Object.keys(schema.items.$values)[0]);
         expect(Object.keys(schema.items.$values)[0]).toBe('0');
     });
     it('adds $values on $data link reference (undefined link)', async () => {
@@ -281,6 +281,17 @@ describe('push', () => {
         const newValue = await dispatcher.get('0/myObjArray/0');
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         expect(newValue.baz).toBe(1);
+        expect(newValue._id).toBeDefined();
+        expect(newValue._id).toHaveLength(24);
+    });
+    it('resolves slugs', async () => {
+        await dispatcher.push('0/myObjArray', null, {'name': 'my test', 'slug': 'my-test'});
+        expect(mockWrite).toHaveBeenCalledTimes(1);
+        expect(dispatcher.convertObjIDToIndex('0/myObjArray/my-test'))
+            .resolves.toBe('0/myObjArray/0');
+        const newValue = await dispatcher.get('0/myObjArray/my-test');
+        // tslint:disable-next-line:no-backbone-get-set-outside-model
+        expect(newValue.name).toBe('my test');
         expect(newValue._id).toBeDefined();
         expect(newValue._id).toHaveLength(24);
     });

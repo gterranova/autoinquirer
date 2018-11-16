@@ -31,8 +31,8 @@ export class JsonDataSource extends DataSource {
 
     // tslint:disable-next-line:no-reserved-keywords
     public async get(itemPath?: string) {
-        const schemaPath = !itemPath? '' : await this.convertObjIDToIndex(itemPath);
         if (!itemPath) { return this.jsonDocument; }
+        const schemaPath = await this.convertObjIDToIndex(itemPath);
 
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
@@ -89,6 +89,8 @@ export class JsonDataSource extends DataSource {
         if (!itemPath) {
             this.jsonDocument = undefined;
             this.save();
+            
+            return;
         }
         const schemaPath = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));

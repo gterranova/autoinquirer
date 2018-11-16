@@ -41,7 +41,7 @@ export class JsonSchema extends DataSource {
         // pass
     } 
     
-    // tslint:disable-next-line:no-reserved-keywords
+    // tslint:disable-next-line:no-reserved-keywords cyclomatic-complexity
     public async get(itemPath?: string) {
         let definition = this.schemaData;
         if (!itemPath || !itemPath.length) { 
@@ -52,7 +52,9 @@ export class JsonSchema extends DataSource {
         while (definition && parts.length) {
             const key = parts.shift();
 
-            if (definition.type === 'array' && key==='items' || (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key))) {
+            if (definition.type === 'array' && key==='items' || 
+                (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) ||
+                (definition.items && definition.items.properties && definition.items.properties.slug)) {
                 definition = definition.items;
             } else if (definition.type === 'object' && definition.properties && definition.properties[key]) {
                 definition = definition.properties[key];

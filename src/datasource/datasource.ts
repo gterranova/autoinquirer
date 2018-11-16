@@ -37,6 +37,13 @@ export abstract class DataSource {
                         return [...converted, ...parts.slice(converted.length)].join('/');
                     }    
                     idx = currentObj.indexOf(item).toString();
+                } else {
+                    const item = currentObj.find( (itemObj: Item) => {
+                        return itemObj && itemObj.slug === key; 
+                    });
+                    if (item) {
+                        idx = currentObj.indexOf(item).toString();
+                    }    
                 }
                 converted.push(idx);
                 currentObj = currentObj[idx];

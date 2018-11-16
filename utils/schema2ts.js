@@ -28,19 +28,24 @@ function getReturnType(entry, data, interfaces) {
         if (data[entry].hasPattern) {
             members['[key: string]'] = 'any';
         }
+        members['_id?'] = 'string';
+
         interfaces[iName] = members;
         return iName;       
     }
     return data[entry].returnType.replace('integer', 'number');
 }
 
-function createApi(data, excludedTypes, maxDepth) {
+function createApi(data, excludedTypes, requestReturnType, maxDepth) {
     const interfaces = {};
     excludedTypes = excludedTypes || [];
     maxDepth = maxDepth || 100;
     const output = [
         "// tslint:disable:variable-name interface-name no-return-await no-any no-reserved-keywords prefer-template"
     ];
+    if (!program.usePromise) {
+        output.push('import { Observable } from "rxjs";\n');
+    }
     const members = [`export abstract class ${program.className} {`];
     for (let entry of Object.keys(data)) {
         if (entry.split('/').length>maxDepth+1) {
@@ -54,42 +59,63 @@ function createApi(data, excludedTypes, maxDepth) {
 
         const returnType = getReturnType(entry, data, interfaces);
         if (~excludedTypes.indexOf(returnType)) { continue; }
-        const funcParams = [...params.map( p=> `${p}: string`)]
+        const funcParams = [...params.map( p=> `${p}: string`)];
 
         if (/\[\]$/.test(returnType) && data[entry].set) {
             const funcName = camelcase(`push${name}`);
             const baseType = returnType.replace(/\[\]$/, '');
-            const funcParamsDef = [...funcParams, `value: ${baseType}`];
+            const funcParamsDef = [...funcParams, `value: ${baseType}`, 'params?: any'];
 
-            const requestParams = ["'push'", `\`${intepolatedEntry}\``, 'value']
-            members.push(`    public async ${funcName}(${funcParamsDef.join(', ')}): Promise<${baseType}> {`);
-            members.push(`        return await this.request(${requestParams.join(', ')});`);
+            const requestParams = ["'push'", `\`${intepolatedEntry}\``, 'value', 'params'];
+            members.push(`    public ${funcName}(${funcParamsDef.join(', ')}): ${requestReturnType}<${baseType}> {`);
+            members.push(`        return this.request(${requestParams.join(', ')});`);
             members.push(`    }\n`);
         }
         if (hasPattern) {
             const funcName = camelcase(`${/\[\]$/.test(returnType)?'All':''}${name?name:'Root'}`);
-            const funcParamsDef = [...funcParams, 'pattern: string'];
-            const requestParams = ["'get'", `\`${intepolatedEntry+'/${pattern}'}\``]
-            members.push(`    public async ${funcName}(${funcParamsDef.join(', ')}): Promise<any> {`);
-            members.push(`        return await this.request(${requestParams.join(', ')});`);
+            const funcParamsDef = [...funcParams, 'pattern: string', 'params?: any'];
+            const requestParams = ["'get'", `\`${intepolatedEntry+'/${pattern}'}\``, 'params'];
+            members.push(`    public ${funcName}(${funcParamsDef.join(', ')}): ${requestReturnType}<any> {`);
+            members.push(`        return this.request(${requestParams.join(', ')});`);
             members.push(`    }\n`);
         } else if (data[entry].get) {
             const funcName = camelcase(`get${/\[\]$/.test(returnType)?'All':''}${name?name:'Root'}`);
-            const requestParams = ["'get'", `\`${intepolatedEntry}\``]
-            members.push(`    public async ${funcName}(${funcParams.join(', ')}): Promise<${returnType}> {`);
-            members.push(`        return await this.request(${requestParams.join(', ')});`);
+            const funcParamsDef = [...funcParams, 'params?: any'];
+            const requestParams = ["'get'", `\`${intepolatedEntry}\``, 'params'];
+            const requestParamsSchema = ["'get'", `\`${intepolatedEntry}\``, '{ ...params, schema: true}'];
+            members.push(`    public ${funcName}(${funcParamsDef.join(', ')}): ${requestReturnType}<${returnType}> {`);
+            members.push(`        return this.request(${requestParams.join(', ')});`);
+            members.push(`    }\n`);
+            members.push(`    public ${funcName}Schema(${funcParamsDef.join(', ')}): ${requestReturnType}<any> {`);
+            members.push(`        return this.request(${requestParamsSchema.join(', ')});`);
             members.push(`    }\n`);
         }
         if (data[entry].set) {
             const funcName = camelcase(`set${/\[\]$/.test(returnType)?'All':''}${name?name:'Root'}`);
-            const funcParamsDef = [...funcParams, `value: ${returnType}`];
-            const requestParams = ["'set'", `\`${intepolatedEntry}\``, 'value']
-            members.push(`    public async ${funcName}(${funcParamsDef.join(', ')}): Promise<void> {`);
-            members.push(`        await this.request(${requestParams.join(', ')});`);
+            const funcParamsDef = [...funcParams, `value: ${returnType}`, 'params?: any'];
+            const requestParams = ["'set'", `\`${intepolatedEntry}\``, 'value', 'params'];
+            members.push(`    public ${funcName}(${funcParamsDef.join(', ')}): ${requestReturnType}<void> {`);
+            members.push(`        return this.request(${requestParams.join(', ')});`);
+            members.push(`    }\n`);
+        }
+        if (data[entry].update) {
+            const funcName = camelcase(`update${/\[\]$/.test(returnType)?'All':''}${name?name:'Root'}`);
+            const funcParamsDef = [...funcParams, `value: ${returnType}`, 'params?: any'];
+            const requestParams = ["'update'", `\`${intepolatedEntry}\``, 'value', 'params'];
+            members.push(`    public ${funcName}(${funcParamsDef.join(', ')}): ${requestReturnType}<${returnType}> {`);
+            members.push(`        return this.request(${requestParams.join(', ')});`);
+            members.push(`    }\n`);
+        }
+        if (data[entry].delete) {
+            const funcName = camelcase(`delete${/\[\]$/.test(returnType)?'All':''}${name?name:'Root'}`);
+            const funcParamsDef = [...funcParams, 'params?: any'];
+            const requestParams = ["'delete'", `\`${intepolatedEntry}\``, 'params'];
+            members.push(`    public ${funcName}(${funcParamsDef.join(', ')}): ${requestReturnType}<void> {`);
+            members.push(`        return this.request(${requestParams.join(', ')});`);
             members.push(`    }\n`);
         }
     }
-    members.push("    protected abstract request(method: string, itemPath: string, value?: any);");
+    members.push("    protected abstract request(method: string, itemPath: string, value?: any, params?: any);");
     members.push("}\n");
     for (let iName of Object.keys(interfaces)) {
         output.push(`export interface ${iName} {`);
@@ -119,6 +145,8 @@ function describe(p, schema, originalSchema) {
         returnType: schema.type === 'array'? `${schema.items.type}[]` : schema.type, 
         'get': schema.writeOnly !== true, 
         'set': schema.readOnly !== true,
+        'update': schema.readOnly !== true && schema.type !== 'array',
+        'delete': schema.readOnly !== true,
         hasPattern: schema.patternProperties,
         '$ref': originalSchema && (schema.type === 'array'? originalSchema.items && originalSchema.items.$ref: originalSchema.$ref) 
     };
@@ -164,7 +192,9 @@ async function main() { // jshint ignore:line
     const parser = new $RefParser();
     const originalSchema = loadJSON(program.args[0]);
     let jsonSchema = await parser.dereference(loadJSON(program.args[0])); // jshint ignore:line
-    const apiTs = createApi(describe('', jsonSchema, originalSchema), program.exclude, parseInt(program.maxDepth, 10));
+    const apiTs = createApi(describe('', jsonSchema, originalSchema), 
+        program.exclude, program.usePromise?'Promise':'Observable',
+        parseInt(program.maxDepth, 10));
     if (program.outputFile) {
         fs.writeFileSync(program.outputFile, apiTs);
     } else {
@@ -177,9 +207,10 @@ program
   .description('Example json editor')
   .arguments('<jsonfile>')
   .option('-o, --output-file [output.ts]', 'Output to file', 'output.ts')
-  .option('-c, --class-Name [name]', 'Class name', 'BaseApi')
+  .option('-c, --class-name [name]', 'Class name', 'BaseApi')
   .option('-e, --exclude [values]', 'Types to exclude', (val) => val.split(','), ['string','number','boolean'])
   .option('-d, --max-depth [value]', 'Max depth', 6)
+  .option('-p, --use-promise', 'Use Promise', false)
   .parse(process.argv);
 
 if (program.args.length < 1) {
