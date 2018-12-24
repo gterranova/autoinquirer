@@ -1,9 +1,11 @@
 // tslint:disable:no-any
 // tslint:disable:no-reserved-keywords
+export { IQuery } from './query';
 
 export const enum Action {
     BACK='back',
     EXIT='exit',
+    GET='get',
     PUSH='push',
     SET='set',
     UPDATE='update',

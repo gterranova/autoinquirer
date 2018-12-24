@@ -6,32 +6,13 @@ var program = require('commander');
 const inquirer = require('inquirer');
 
 const Subject = require('rxjs').Subject;
-const { Dispatcher, MongoDataSource, AutoInquirer, PromptBuilder } = require('./build/src');
+const { createDatasource } = require('./datasource');
+const { AutoInquirer, PromptBuilder } = require('./build/src');
 
 async function main() { // jshint ignore:line
+
     const prompts = new Subject();
-    process.on('unhandledRejection', (err, p) => {
-        console.log('An unhandledRejection occurred');
-        console.log(`Rejected Promise: ${p}`);
-        console.log(`Rejection:`, err);
-        prompts.complete();
-    });
-
-    const mongoDataSource = new MongoDataSource({ 
-        uri: 'mongodb+srv://gianpaolo:*****@cluster0-wrvuf.mongodb.net?retryWrites=true', 
-        databaseName: 'my-transmission',
-        collectionName: 'test'
-    });
-    
-    const dispatcher = new Dispatcher(
-        program.args[0], 
-        program.args[1] || mongoDataSource,
-        new PromptBuilder()
-    );
-    dispatcher.registerProxy('mongodb', mongoDataSource);
-
-    await dispatcher.connect(); // jshint ignore:line
-
+    const dispatcher = await createDatasource(program.args[0], program.args[1], new PromptBuilder()); // jshint ignore:line
     const autoInquirer = new AutoInquirer(dispatcher);
 
     //autoInquirer.inquire(inquirer.prompt).then(() => console.log('') );

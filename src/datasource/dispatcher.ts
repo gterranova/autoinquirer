@@ -5,6 +5,7 @@ import { absolute, getType } from '../utils';
 import { DataRenderer, DataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
+import { Query } from './query';
 
 declare type IEntryPoints = { [key: string]: IProxyInfo};
 
@@ -75,6 +76,11 @@ export class Dispatcher extends DataSource {
     public async set(itemPath?: string, propertySchema?: IProperty, value?: any) {
         // tslint:disable-next-line:no-return-await
         return await this.dispatch('set', itemPath, propertySchema, value);
+    }
+
+    public async update(itemPath?: string, propertySchema?: IProperty, value?: any) {
+        // tslint:disable-next-line:no-return-await
+        return await this.dispatch('update', itemPath, propertySchema, value);
     }
 
     public async push(itemPath?: string, propertySchema?: IProperty, value?: any) {
