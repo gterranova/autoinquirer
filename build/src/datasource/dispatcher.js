@@ -52,6 +52,11 @@ class Dispatcher extends datasource_1.DataSource {
             return yield this.dispatch('set', itemPath, propertySchema, value);
         });
     }
+    update(itemPath, propertySchema, value) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return yield this.dispatch('update', itemPath, propertySchema, value);
+        });
+    }
     push(itemPath, propertySchema, value) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return yield this.dispatch('push', itemPath, propertySchema, value);
@@ -109,7 +114,7 @@ class Dispatcher extends datasource_1.DataSource {
                     }
                 }
             }
-            for (const proxy of this.getProxyForPath(itemPath).reverse()) {
+            for (const proxy of this.getProxyForPath(`/${itemPath}`).reverse()) {
                 const { objPath, parentPath, proxyInfo } = proxy;
                 const dataSource = this.getProxy(proxyInfo);
                 if (dataSource && dataSource[methodName]) {

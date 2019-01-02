@@ -13,6 +13,7 @@ export declare class Dispatcher extends DataSource {
     getSchema(itemPath?: string): Promise<IProperty>;
     get(itemPath?: string, propertySchema?: IProperty): Promise<any>;
     set(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
+    update(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
     push(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
     del(itemPath?: string, propertySchema?: IProperty): Promise<any>;
     registerProxy(name: string, dataSource: DataSource): void;

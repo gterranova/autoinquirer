@@ -6,14 +6,12 @@ import { DataSource } from './datasource';
 export class Query implements IQuery {
     private ds: DataSource;
     private promise: Promise<any>;
-    private schema: IProperty;
 
     constructor(ds: DataSource) {
         this.ds = ds;
     }
 
     public query(itemPath?: string, propertySchema?: IProperty): IQuery {
-        this.schema = propertySchema;
         this.promise = this.ds.dispatch('get', itemPath, propertySchema);
         
         return this;

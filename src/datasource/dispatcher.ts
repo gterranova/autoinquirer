@@ -5,7 +5,6 @@ import { absolute, getType } from '../utils';
 import { DataRenderer, DataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
-import { Query } from './query';
 
 declare type IEntryPoints = { [key: string]: IProxyInfo};
 
@@ -149,7 +148,7 @@ export class Dispatcher extends DataSource {
             }
         }
         
-        for (const proxy of this.getProxyForPath(itemPath).reverse()) {
+        for (const proxy of this.getProxyForPath(`/${itemPath}`).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
             const { objPath, parentPath, proxyInfo } = proxy;

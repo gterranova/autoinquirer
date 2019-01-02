@@ -1,6 +1,8 @@
+export { IQuery } from './query';
 export declare const enum Action {
     BACK = "back",
     EXIT = "exit",
+    GET = "get",
     PUSH = "push",
     SET = "set",
     UPDATE = "update",

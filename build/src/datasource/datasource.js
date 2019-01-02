@@ -26,6 +26,14 @@ class DataSource {
                         }
                         idx = currentObj.indexOf(item).toString();
                     }
+                    else {
+                        const item = currentObj.find((itemObj) => {
+                            return itemObj && itemObj.slug === key;
+                        });
+                        if (item) {
+                            idx = currentObj.indexOf(item).toString();
+                        }
+                    }
                     converted.push(idx);
                     currentObj = currentObj[idx];
                     continue;

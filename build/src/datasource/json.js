@@ -29,10 +29,10 @@ class JsonDataSource extends datasource_1.DataSource {
     }
     get(itemPath) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const schemaPath = !itemPath ? '' : yield this.convertObjIDToIndex(itemPath);
             if (!itemPath) {
                 return this.jsonDocument;
             }
+            const schemaPath = yield this.convertObjIDToIndex(itemPath);
             return object_path_1.default.get(this.jsonDocument, schemaPath.split('/'));
         });
     }
@@ -89,6 +89,7 @@ class JsonDataSource extends datasource_1.DataSource {
             if (!itemPath) {
                 this.jsonDocument = undefined;
                 this.save();
+                return;
             }
             const schemaPath = yield this.convertObjIDToIndex(itemPath);
             object_path_1.default.del(this.jsonDocument, schemaPath.split('/'));
