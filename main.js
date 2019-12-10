@@ -6,8 +6,22 @@ var program = require('commander');
 const inquirer = require('inquirer');
 
 const Subject = require('rxjs').Subject;
-const { createDatasource } = require('./datasource');
-const { AutoInquirer, PromptBuilder } = require('./build/src');
+const { AutoInquirer, PromptBuilder, Dispatcher } = require('./build/src');
+
+//const DIST_FOLDER = join(process.cwd(), 'dist/apps/client');
+
+const createDatasource = async function (
+  schemaFile,
+  dataFile,
+  renderer
+) {
+  // jshint ignore:line
+
+  const dispatcher = new Dispatcher(schemaFile, dataFile, renderer);
+  //dispatcher.registerProxy('filesystem', new FileSystemDataSource(DIST_FOLDER));
+  await dispatcher.connect(); // jshint ignore:line
+  return dispatcher;
+};
 
 async function main() { // jshint ignore:line
 
@@ -36,7 +50,7 @@ async function main() { // jshint ignore:line
 program
   .version('1.0.0')
   .description('Example json editor')
-  .arguments('<jsonfile>')
+  .arguments('<schemaFile> <dataFile>')
   .parse(process.argv);
 
 if (program.args.length < 1) {
