@@ -12,12 +12,12 @@ describe('JsonSchema', () => {
     it('to be defined', () => {
         expect(schema).toBeDefined();
     });
-    it('schemaData to be undefined', () => {
-        expect(schema.schemaData).not.toBeDefined();
-    });
-    it('validator to be defined', () => {
-        expect(schema.validator).toBeDefined();
-    });
+    //it('schemaData to be undefined', () => {
+    //    expect(schema.schemaData).not.toBeDefined();
+    //});
+    //it('validator to be defined', () => {
+    //    expect(schema.validator).toBeDefined();
+    //});
     it('abstract members to be defined', () => {
         expect(schema.connect).toBeDefined();
         expect(schema.get).toBeDefined();
@@ -29,9 +29,9 @@ describe('JsonSchema', () => {
 });
 
 describe('constructor', () => {
-    it('constructor to accept object', () => {
+    it('constructor to accept object', async () => {
         const schema = new JsonSchema({ type: 'string' });
-        expect(schema.schemaData).toEqual({ type: 'string' });
+        expect(await schema.get()).toEqual({ type: 'string' });
     });
     it('schemaData to undefined on not existent json file', () => {
         let schema;
@@ -45,10 +45,9 @@ describe('constructor', () => {
         expect(schema.schemaData).not.toBeDefined();
     });
     it('constructor to throw on malformed json file', () => {
-        let schema;
         let exception;
         try {
-            schema = new JsonSchema(path.join(process.cwd(), '__tests__', 'malformed.json'));
+            new JsonSchema(path.join(process.cwd(), '__tests__', 'malformed.json'));
         } catch (e) {
             exception = e;
         }

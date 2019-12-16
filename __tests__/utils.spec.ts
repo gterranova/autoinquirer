@@ -91,6 +91,9 @@ describe('getType', () => {
       constructor() {
         this.x = 'test';
       }
+      getX() {
+        return this.x;
+      }
     };
     const inst = new Test();
     expect(getType(Test)).toBe(`function`);

@@ -114,7 +114,7 @@ class Dispatcher extends datasource_1.DataSource {
                     }
                 }
             }
-            for (const proxy of this.getProxyForPath(`/${itemPath}`).reverse()) {
+            for (const proxy of this.getProxyForPath(itemPath).reverse()) {
                 const { objPath, parentPath, proxyInfo } = proxy;
                 const dataSource = this.getProxy(proxyInfo);
                 if (dataSource && dataSource[methodName]) {
@@ -146,7 +146,7 @@ class Dispatcher extends datasource_1.DataSource {
             }
             if (schema.properties) {
                 Object.keys(schema.properties).map((key) => {
-                    paths = Object.assign({}, paths, this.findEntryPoints(key, schema.properties[key]));
+                    paths = Object.assign(Object.assign({}, paths), this.findEntryPoints(key, schema.properties[key]));
                 });
             }
             else {
@@ -157,7 +157,7 @@ class Dispatcher extends datasource_1.DataSource {
             if (schema.$proxy) {
                 paths[p] = schema.$proxy;
             }
-            return Object.assign({}, paths, this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items));
+            return Object.assign(Object.assign({}, paths), this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items));
         }
         return Object.keys(paths).reduce((acc, key) => {
             const fixedObjKey = key.replace(/\\\/$/, '');
@@ -171,7 +171,7 @@ class Dispatcher extends datasource_1.DataSource {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey) => {
             const objPath = schemaPath.replace(RegExp(foundKey), '');
-            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length);
+            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1);
             return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath: objPath.replace(/^\//, '') };
         });
     }

@@ -83,7 +83,7 @@ class JsonSchema extends datasource_1.DataSource {
         if (schema === undefined) {
             return;
         }
-        schema = Object.assign({}, schema, { $ref: undefined });
+        schema = Object.assign(Object.assign({}, schema), { $ref: undefined });
         const value = this.coerce(schema, data !== undefined ? data : schema.default);
         if (value !== schema.default && value !== undefined && (data !== undefined || schema.default !== undefined) && value.toString() !== (data !== undefined ? data : schema.default).toString()) {
             throw new Error(`Error: expecting an ${schema.type}`);

@@ -51,7 +51,7 @@ export interface IProperty {
     oneOf?: IProperty[];
     anyOf?: IProperty[];
     title?: string;
-    type?: string;
+    type?: string | string[];
     definitions?: {
         [key: string]: IProperty;
     };

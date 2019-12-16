@@ -17,4 +17,11 @@ module.exports = {
         'src/**/*.{ts,tsx,js,jsx}',
         '!src/**/*.d.ts',
     ],
+    globals: {
+        'ts-jest': {
+            diagnostics: {
+                pathRegex: /\.(spec|test)\.ts$/
+            }
+        }
+    }
 };

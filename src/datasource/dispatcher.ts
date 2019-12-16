@@ -148,7 +148,7 @@ export class Dispatcher extends DataSource {
             }
         }
         
-        for (const proxy of this.getProxyForPath(`/${itemPath}`).reverse()) {
+        for (const proxy of this.getProxyForPath(itemPath).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
             const { objPath, parentPath, proxyInfo } = proxy;
@@ -215,7 +215,7 @@ export class Dispatcher extends DataSource {
             return k.length? RegExp(k).test(schemaPath): true;
         }).map( (foundKey: string) => {
             const objPath = schemaPath.replace(RegExp(foundKey), ''); 
-            const parentPath = schemaPath.slice(0, schemaPath.length-objPath.length);
+            const parentPath = schemaPath.slice(0, schemaPath.length-objPath.length+1);
             
             return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath: objPath.replace(/^\//, '')};
         });        

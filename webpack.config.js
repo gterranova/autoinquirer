@@ -1,5 +1,5 @@
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin')
 const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
@@ -31,9 +31,15 @@ module.exports = {
     libraryTarget: 'commonjs2',
     path: path.resolve(__dirname, 'dist')
   },
-  plugins: [new DtsBundlePlugin(), new UglifyJsPlugin({
-    sourceMap: true
-  })]
+  plugins: [
+    new DtsBundlePlugin(), 
+    new TerserPlugin({
+      parallel: true,
+      terserOptions: {
+        ecma: 6,
+      },
+    }),
+  ]
 };
 
 function DtsBundlePlugin(){}

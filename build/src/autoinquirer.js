@@ -22,7 +22,7 @@ class AutoInquirer extends events_1.EventEmitter {
             catch (e) {
                 if (e instanceof Error) {
                     const nextPath = state.type !== "push" ? utils_1.backPath(state.path) : state.path;
-                    this.answer = { state: Object.assign({}, state, { path: nextPath, errors: e.message }) };
+                    this.answer = { state: Object.assign(Object.assign({}, state), { path: nextPath, errors: e.message }) };
                     this.emit('error', this.answer.state);
                     return this.next();
                 }
@@ -32,7 +32,7 @@ class AutoInquirer extends events_1.EventEmitter {
     }
     onAnswer(data) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.answer = Object.assign({}, this.answer, { [data.name]: data.answer });
+            this.answer = Object.assign(Object.assign({}, this.answer), { [data.name]: data.answer });
             yield this.performActions(this.answer);
         });
     }
@@ -48,7 +48,7 @@ class AutoInquirer extends events_1.EventEmitter {
                 }
                 catch (e) {
                     if (e instanceof Error) {
-                        this.answer = { state: Object.assign({}, state, { errors: e.message }) };
+                        this.answer = { state: Object.assign(Object.assign({}, state), { errors: e.message }) };
                         this.emit('error', this.answer.state);
                     }
                 }

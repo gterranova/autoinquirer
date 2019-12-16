@@ -1,0 +1,1640 @@
+{
+  "users": [
+    {
+      "email": "admin@sazalex.com",
+      "password": "$2a$05$qaGotWP.9cACnvgKtuFF7.SVINWcDlth/QpgCEwHOpIqlnWHLPdTq",
+      "_id": "5be344dcde05930630191187",
+      "name": "Gianpaolo",
+      "surname": "Terranova",
+      "superuser": true
+    },
+    {
+      "email": "e.sani@sazalex.com",
+      "password": "testtesttest",
+      "name": "Emilio",
+      "superuser": true,
+      "_id": "5be876a3de059319c4313ff6",
+      "surname": "Sani"
+    }
+  ],
+  "it": {
+    "pages": [
+      {
+        "type": "home-page",
+        "title": "Home",
+        "slug": "home-page",
+        "navigationAction": "menu",
+        "logo": "assets/logo.png",
+        "icon": "home",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c239671dd0d6023502901a1",
+        "metaDescription": "",
+        "metaKeywords": "",
+        "backLink": "",
+        "columns": []
+      },
+      {
+        "type": "default-page",
+        "title": "Chi siamo",
+        "slug": "about-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "university",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2396cadd0d602350153103",
+        "columns": []
+      },
+      {
+        "type": "people-page",
+        "title": "Professionisti",
+        "slug": "people-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "users",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": true,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c23970add0d602350199200",
+        "columns": [
+          {
+            "name": "position",
+            "label": "Position"
+          },
+          {
+            "name": "name",
+            "label": "Name"
+          },
+          {
+            "name": "surname",
+            "label": "Surname"
+          },
+          {
+            "name": "role",
+            "label": "Role"
+          }
+        ]
+      },
+      {
+        "type": "people-detail",
+        "title": "Professionisti",
+        "slug": "people-detail",
+        "navigationAction": "arrow_back",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c23972add0d6023501f68e7",
+        "logo": "assets/logo.png",
+        "backLink": "/people",
+        "icon": "users",
+        "columns": [],
+        "form": {
+          "type": "flex",
+          "fxLayoutGap": "20px",
+          "flex-flow": "row",
+          "items": [
+            {
+              "type": "flex",
+              "fxFlex": "40%",
+              "flex-flow": "column",
+              "items": [
+                {
+                  "type": "flex",
+                  "fxLayoutGap": "20px",
+                  "flex-flow": "row wrap",
+                  "items": [
+                    {
+                      "key": "name",
+                      "type": "text",
+                      "title": "Name"
+                    },
+                    {
+                      "key": "surname",
+                      "type": "text",
+                      "title": "Surname"
+                    }
+                  ]
+                },
+                "role",
+                {
+                  "type": "flex",
+                  "fxLayoutGap": "20px",
+                  "flex-flow": "row wrap",
+                  "items": [
+                    {
+                      "key": "email",
+                      "type": "email",
+                      "title": "Email"
+                    },
+                    "phone"
+                  ]
+                },
+                "image",
+                {
+                  "key": "practices",
+                  "add": "Add",
+                  "items": {
+                    "key": "practices[]",
+                    "type": "text"
+                  }
+                },
+                {
+                  "type": "flex",
+                  "fxLayoutGap": "20px",
+                  "flex-flow": "row wrap",
+                  "items": [
+                    "slug",
+                    "position"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "fxFlex": "60%",
+              "flex-flow": "column",
+              "items": [
+                {
+                  "key": "bio",
+                  "type": "textarea"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "practices-page",
+        "title": "Rami d'attività",
+        "slug": "practices-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "briefcase",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": true,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c239785dd0d6023503a8424",
+        "columns": [
+          {
+            "name": "name",
+            "label": "Name"
+          }
+        ]
+      },
+      {
+        "type": "practices-detail",
+        "title": "Rami d'attività",
+        "slug": "practices-detail",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/practices",
+        "icon": "briefcase",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2397acdd0d6023502daaf8",
+        "columns": [],
+        "form": {
+          "type": "flex",
+          "fxLayoutGap": "20px",
+          "flex-flow": "column",
+          "items": [
+            {
+              "key": "name",
+              "type": "text",
+              "title": "Name"
+            },
+            {
+              "key": "header",
+              "type": "text",
+              "title": "Header Image"
+            },
+            {
+              "key": "content",
+              "type": "textarea",
+              "title": "Description"
+            },
+            {
+              "key": "slug",
+              "type": "text",
+              "title": "Slug"
+            }
+          ]
+        }
+      },
+      {
+        "type": "news-page",
+        "title": "Eventi e pubblicazioni",
+        "slug": "news-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "info",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": true,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2397cedd0d6023508356b4",
+        "columns": [
+          {
+            "name": "date",
+            "label": "Date"
+          },
+          {
+            "name": "title",
+            "label": "Title"
+          },
+          {
+            "name": "slug",
+            "label": "Slug"
+          },
+          {
+            "name": "featured",
+            "label": "On Homepage?"
+          },
+          {
+            "name": "category",
+            "label": "Category"
+          }
+        ],
+        "metaDescription": "",
+        "metaKeywords": ""
+      },
+      {
+        "type": "news-detail",
+        "title": "Eventi e pubblicazioni",
+        "slug": "news-detail",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/news",
+        "icon": "info",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2397efdd0d6023501ef2f8",
+        "columns": [],
+        "form": {
+          "type": "flex",
+          "fxLayoutGap": "20px",
+          "flex-flow": "column",
+          "items": [
+            {
+              "key": "date",
+              "type": "date",
+              "title": "Date"
+            },
+            {
+              "key": "category",
+              "type": "text",
+              "title": "Category"
+            },
+            {
+              "key": "title",
+              "type": "text",
+              "title": "Title"
+            },
+            {
+              "key": "excerpt",
+              "type": "text",
+              "title": "Excerpt"
+            },
+            {
+              "key": "content",
+              "type": "textarea",
+              "title": "Full Text (leave blank if not necessary)"
+            },
+            {
+              "key": "attachments",
+              "add": "Add",
+              "items": [
+                {
+                  "key": "attachments[].label",
+                  "type": "text",
+                  "notitle": true,
+                  "placeholder": "Label"
+                },
+                {
+                  "key": "attachments[].path",
+                  "type": "text",
+                  "notitle": true,
+                  "placeholder": "File path"
+                }
+              ]
+            },
+            {
+              "key": "featured",
+              "type": "boolean",
+              "title": "Show on Homepage"
+            },
+            {
+              "key": "slug",
+              "type": "text",
+              "title": "Slug"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Contatti",
+        "slug": "contacts-page",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2cf6e7dd0d6072031c2ae1",
+        "type": "contacts-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "contacts",
+        "columns": []
+      },
+      {
+        "type": "page-not-found-page",
+        "title": "Pagina non trovata!",
+        "slug": "page-not-found-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "info",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c389b85dd0d600ee4290d3e",
+        "columns": []
+      },
+      {
+        "type": "pages-page",
+        "title": "Pages",
+        "metaDescription": "",
+        "metaKeywords": "",
+        "slug": "pages-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "columns": [
+          {
+            "name": "title",
+            "label": "Title"
+          },
+          {
+            "name": "slug",
+            "label": "Slug"
+          },
+          {
+            "name": "type",
+            "label": "Type"
+          }
+        ],
+        "form": {
+          "type": ""
+        },
+        "_id": "5cc588a74192f146582d1a2d"
+      },
+      {
+        "type": "pages-detail",
+        "title": "Pages",
+        "metaDescription": "",
+        "metaKeywords": "",
+        "slug": "pages-detail",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/pages",
+        "icon": "",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "columns": [
+          {
+            "name": "",
+            "label": ""
+          }
+        ],
+        "form": {
+          "type": "flex",
+          "fxLayoutGap": "20px",
+          "flex-flow": "column",
+          "items": [
+            {
+              "key": "title",
+              "type": "text",
+              "title": "Title"
+            },
+            {
+              "key": "slug",
+              "type": "text",
+              "title": "Slug"
+            },
+            {
+              "key": "metaDescription",
+              "type": "text",
+              "title": "Meta Description"
+            },
+            {
+              "key": "metaKeywords",
+              "type": "text",
+              "title": "Meta Keywords"
+            },
+            {
+              "key": "type",
+              "type": "text",
+              "title": "Type"
+            },
+            {
+              "key": "navigationAction",
+              "type": "text",
+              "title": "Navigation Action"
+            },
+            {
+              "key": "logo",
+              "type": "text",
+              "title": "logo"
+            },
+            {
+              "key": "backLink",
+              "type": "text",
+              "title": "Back Link"
+            },
+            {
+              "key": "icon",
+              "type": "text",
+              "title": "Icon"
+            },
+            {
+              "key": "showAsPopupActionItem",
+              "type": "boolean",
+              "title": "Show as Popup Action"
+            },
+            {
+              "key": "showAsDrawerItem",
+              "type": "boolean",
+              "title": "Show as Drawer Item"
+            },
+            {
+              "key": "actionBarHidden",
+              "type": "boolean",
+              "title": "Actionbar Hidden"
+            },
+            {
+              "key": "actionItemsHidden",
+              "type": "boolean",
+              "title": "Action Items Hidden"
+            },
+            {
+              "key": "opacityTopScrollPosition",
+              "type": "integer",
+              "title": "Opacity Top Scroll Position"
+            },
+            {
+              "key": "columns",
+              "add": "Add",
+              "items": [
+                {
+                  "key": "columns[].name",
+                  "type": "text",
+                  "title": "Name"
+                },
+                {
+                  "key": "columns[].label",
+                  "type": "text",
+                  "title": "Label"
+                }
+              ]
+            }
+          ]
+        },
+        "_id": "5cc588e84192f14658f1de04"
+      }
+    ],
+    "people": [
+      {
+        "name": "Emilio",
+        "surname": "Sani",
+        "role": "Avvocato",
+        "slug": "emilio-sani",
+        "phone": "+39 02 87046190",
+        "email": "e.sani@sazalex.com",
+        "image": "assets/people/emilio-sani.jpg",
+        "bio2": "## Aree di specializzazione\n\nAmministrativo ed appalti\nEnergia e risorse naturali\n\n## Esperienza professionale\n\nHa maturato una specifica esperienza nei settori dell’Energia, delle Costruzioni e del Diritto Amministrativo sia comunitario che nazionale. Assiste società italiane e straniere nel settore del diritto commerciale e amministrativo con particolare attenzione all’area dell’energia. Ha vasta esperienza nel campo del contenzioso amministrativo e di recente ha dedicato parte importante dell’attività allo sviluppo ed alla costruzione di impianti di produzione di energia elettrica da fonti rinnovabili\n\n## Lingue\n\nItaliano, Inglese\n\n## Formazione\n\nLaurea in Giurisprudenza cum laude pressi l’Università degli Studi di Milano (1993).\n\n## Albi e Associazioni\n\nAmmesso all’esercizio della professione forense nel 1997.\nE’ membro della Società Lombarda degli Avvocati Amministrativi e dell’Ordine Internazionale degli Avvocati. E’ stato inoltre Co-Presidente del Young Construction Lawyers Conference dell’International Association nel 2004.",
+        "position": 1,
+        "_id": "5be5f79ede059314a4247db6",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": "Avvocato abilitato al patrocinio nelle giurisdizioni superiori, iscritto all’albo degli Avvocati di Milano\nAmmesso all’esercizio della professione forense nel 1997\n\n\n## Aree di attività\nEnergia e Ambiente \nAmministrativo e appalti\n\nSvolge attività di consulenza ed assistenza legale alle imprese italiane ed estere per quanto riguarda gli aspetti amministrativi e regolamentari, con particolare enfasi al settore energetico e ambientale, nonché all'edilizia e al diritto dei contratti pubblici. In particolare, si è focalizzato su sviluppo di impianti a fonti rinnovabili, progetti di efficienza energetica, contratti di rendimento energetico, gestione di problematiche relative a siti di interesse nazionale per la bonifica, sviluppo di reti di distribuzione per autoconsumo e contratti per il collegamento alla rete pubblica di tali sistemi. \n\nDal 2008 assiste molti dei maggiori operatori sul mercato italiano nello sviluppo di progetti per l’efficienza energetica e l’autoconsumo di energia. In particolare ha sviluppato form di largo utilizzo per la locazione operativa, i contratti di rendimento energetico in ambito industriale e la cessione di energia in autoconsumo e ha una ampia esperienza su tutte le tematiche di carattere regolatorio connesse all’approvvigionamento di energia per la mobilità elettrica e alla gestione e installazione di colonnine elettriche.\n\nHa una ampia esperienza nel settore del contenzioso amministrativo in particolare avanti al TAR Lazio.\n\nHa dato assistenza legale per lo sviluppo e la costruzione di più di 400 Mws di impianti alimentati da fonte rinnovabile.\n\nHa una esperienza molto importante con riferimento a tutta la contrattualistica di carattere industriale, ivi compresi contratti di engineering procurement construction, contratti di lavorazione per conto, contratti di gestione operativa, contratti di manutenzione, contratti di fornitura a lungo termine e contratti di servizi di outsourcing. Ha seguito anche lo sviluppo e la costruzione di grandi infrastrutture industriali in America Latina.\n \nHa assistito primari operatori nel settore ambientale soprattutto per lo sviluppo e la incentivazione di impianti per la termovalorizzazione di rifiuti, la cessione di società titolari di impianti di termovalorizzazione dei rifiuti e contenziosi civili e amministrativi al riguardo, ivi inclusi i rapporti con il territorio. Ha poi maturato una significativa esperienza nella gestione delle problematiche connesse alla approvazione di piani operativi di bonifica in siti di interesse nazionale e nella gestione dei rifiuti da parte di imprese industriali nonchè nella tematica di gestione dei rapporti con il territorio e dei relativi contenziosi in relazione alle emissioni acustiche di grossi impianti industriali in zone urbanizzate. Negli ultimi anni ha approfondito anche in contesti internazionali e di diritto comparato la gestione delle tematiche ambientali, ivi inclusa la gestione dei rifiuti e dell’approvvigionamento idrico, nelle piccole isole. \n\nNel settore idrico ha seguito il finanziamento di grandi infrastrutture di trasmissione e in via stragiudiziale le problematiche relative alla assegnazione di concessioni per la distribuzione dell’acqua.\n\n\n## Esperienze professionali e incarichi\n\nHa collaborato sino al 2000 con il Professor Guido Greco\n\nDal 2003 al 2018 Socio di Macchi di Cellere Gangemi\n\nDocente per l’anno 2013 al Master in Giurista dell'Economia e Manager Pubblico, Facoltà di Giurisprudenza dell’ Università di Pisa su \"Rassegna degli ausili pubblici alle imprese”. \n\nDocente presso il Politecnico di Milano nell’anno 2016 nel corso di Laurea Magistrale in Ingegneria Elettrica al seminario sulla “Regolamentazione del sistema elettrico nella sezione del corso relativa alle tariffe elettriche e ai sistemi efficienti di utenza”. \n\nDocente presso la Luiss Business School di Roma nell’anno 2018 su “Mercato delle risorse energetiche e regolamentazione”.\n\nConsigliere dell’Associazione Italia Solare \n\nPresidente del Comitato di Vigilanza di Sirti Energia S.p.A\n \nConsulente della Presidenza della X Commissione del Senato della Repubblica\n\nConsulente di Greening the Islands associazione per lo sviluppo sostenibile delle piccole isole \n\n## Formazione\n\nLaurea in Giurisprudenza *cum laude* pressi l’Università degli Studi di Milano (1993). \n\n## Associazioni\n\nE’ membro dell’*International Bar Association*. \n\nNel 2004 è stato inoltre Co-Presidente del Young Construction Lawyers Conference dell’International Bar Association.\n\n## Lingue straniere\n\nInglese\n\n## Partecipazione a convegni in qualità di relatore negli ultimi due anni\n\n- [“Digitalizzazione dell'Energia. La normativa sta al passo?”](https://rienergia.staffettaonline.com/articolo/33207/Digitalizzazione+dell%E2%80%99energia:+la+normativa+sta+al+passo/Sani), Rienergia,  8 gennaio 2019\n- “Le opportunità che la digitalizzazione offre a cittadini e imprese. La normativa europea e le strutture contrattuali” Forum Italia Solare 11 Dicembre 2019;\n- “Policies for the sustainability of the islands: benchmarking of the islands within the Observatory Focus Group”, Observatory Greening the Islands, (intervento sulle politiche di Gestione dei rifiuti, dell’approvvigionamento idrico e energetico nelle piccolo isole) Roma 26 Novembre 2018;\n- “Le Comunità energetiche e lo scambio di Energia”, Key Energy, Rimini, 6 Novembre 2018 \n- “Colonnine elettriche I principi della normative vigente e I profile fiscali”, Conferenza nazionale della mobilità elettrica, 27 settembre 2018 \n- “Market parity and grid parity opportunities” Solarplaza webinair, 25 Maggio 2018; \n- “I CLIENTI PRODUTTORI E AGGREGATORI. ASPETTI LEGALI E REGOLAMENTARI”, Roma, 8 maggio 2018 conferenza organizzato nell’ambito del progetto europeo PVP4grid;\n- “I NUOVI INCENTIVI AGLI IMPIANTI FOTOVOLTAICI” Modena, 20 aprile 2018, ITALIA SOLARE tour;\n- “RETI PRIVATE, SISTEMI DI DISTRIBUZIONE CHIUSA E AGGREGATORI”, Milan, 16 marzo 2018 nell’ambito della MCE exhibition; \n- THE CAPACITY MARKET, Verona, 16 novembre 2017, conferenza organizzata dall'Associazione degli Ingegneri di Verona; \n- AUTOCONSUMO E LEASING OPERATIVO, 8 novembre 2017 presso il workshop organizzato da Key Solar Salone Internazionale dell'Energia dei Prodotti a Rimini;\n- IL DECRETO FEEDING TARIFF PER CONCEDERE INCENTIVI ALLE RINNOVABILI SULLE ISOLE MINORI presso il GREENING THE ISLANDS INTERNATIONAL & NATIONAL CONFERENCE il 3 e il 4 novembre 2017, Isola di Favignana (Sicilia): \n- ACCORDI PER L'ACQUISTO DI ENERGIA presso il seminario sulle opportunità per il fotovoltaico in Italia e all'estero, organizzato da Dupont l'11 ottobre 2017 a Roma; \n- L'AUTOPRODUZIONE E GLI SCENARI DEL PACCHETTO DI ENERGIA PULITA DELL'UE Legambiente, Roma, maggio 2017; \n- TARIFFE ELETTRICHE PER CLIENTI INDUSTRIALI, Firenze, marzo 2017FV: leasing operativo e SEU. Webinar QualEnergia.it PRO – 20 febbraio 2017;\n- FV: leasing operativo e SEU. Webinar QualEnergia.it PRO – 20 febbraio 2017; \n- ACCUMULO, IL FUTURO PROTAGONISTA DEL FOTOVOLTAICO IN ITALIA - Workshop Tecnico di Qualenergia.It, Roma, 1 dicembre 2016;\n\n\n## Pubblicazioni sul web ed articoli negli ultimi due anni:\n\n- Auto-consumo e fonti rinnovabili, la posizione del Consiglio UE, intervista a Emilio Sani, Qualenergia, 9 gennaio 2018\n- È necessario un sistema distribuito per la produzione di energia, intervista a Emilio Sani su Elementi (documento ufficiale del GSE S.p.A.), n. 42, dicembre 2017\n- Ammortamento fiscale degli impianti fotovoltaici, oltre e iperamortizzazione, Nextville 2017\n- Quali tariffe per le auto elettriche? Staffetta Quotidiana, 27 maggio 2017\n- I punti di ricarica per la mobilità elettrica, le complessità di un nuovo mercato, Energia Media, maggio 2016\n- Quale sistema tariffario per l’auto elettrica, Staffetta Quotidiana, 27 maggio 2016\n- La ricarica dei veicoli elettrici. Principi della normativa comunitaria e nazionale, Quotidiano Energia, 26 febbraio 2016\n- Oneri e alta tensione, altra norma che penalizza efficienza e autoproduzione, QualEnergia, 9 febbraio 2016. \n"
+      },
+      {
+        "name": "Stefano",
+        "surname": "Zangrando",
+        "role": "Avvocato",
+        "slug": "stefano-zangrando",
+        "phone": "+39 02 87046190",
+        "email": "s.zangrando@sazalex.com",
+        "image": "assets/people/stefano-zangrando.jpg",
+        "position": 2,
+        "_id": "5be5f7f0de059314a41472d7",
+        "practices": [
+          "Diritto Societario",
+          "Diritto Commerciale"
+        ],
+        "bio": "Avvocato abilitato al patrocinio nelle giurisdizioni superiori, iscritto all’albo degli Avvocati di Milano. \n\nHa superato l’esame di avvocato presso la Corte d’Appello di Milano nel 1996 \n\nAmmesso come Solicitor in England and Wales nel 1998\n\n## Aree di attività\nDiritto commerciale e societario\nDiritto civile\n\nStefano Zangrando assiste i clienti in importanti operazioni di corporate M&A e transazioni sul mercato italiano rappresentando società multinazionali e fondi di private equity. \n\nTra i clienti industriali annovera primarie multinazionali operanti nel settore farmaceutico, delle “smartcities”, veicoli ibridi, società di noleggio abiti da lavoro, igienizzazione di ambienti, “webhosting”, creazione di piattoforme digitali. \n\nNell’ambito delle attività di M&A si occupa di fusioni, acquisizioni, disinvestimenti e joint venture. Più in particolare si occupa di \n\n- Assistenza continuativa alle sedi italiane di svariate società multinazionali \n- Accordi commerciali, tra cui distribuzione, fornitura, affitto, agenzia, consulenza, cooperazione, per clienti industriali\n- Acquisizioni (domestiche e transnazionali) \n- Accordi di joint venture per conto di clienti italiani e stranieri e problematiche correlate (patti parasociali, redazione degli statuti, ecc.)\n- IPO sull’AIM di Milano di una società di webhosting \n- Start-up \n- Accordi di consorzio\n- Contratti di finanziamento in relazione ad acqusizioni societarie, project finance e cartolarizzazioni; problematiche societarie connesse\n- Contenzioso di diritto civile e commerciale, anche in sede arbitrale, anche in lingua inglese \n\n## Esperienze professionali \n\nStudio Legale Giliberti Triscornia e Associati (già Colesanti e Giliberti) di Milano (dal 1994 al 2014)\nEunomia – Studio di Avvocati: dal 2014 al 2018\n\n## Formazione\n\n- Liceo Classico G.Berchet di Milano - 1988  (58/60)\n- City of London Polytechnic (ora Guildhall University) a Londra nel 1991\n- Corso di diritto privato comparato presso l’Università di Strasburgo (con borsa di studio) (aprile 1992)\n- Laurea in Giurisprudenza cum laude pressi l’Università degli Studi di Milano (1993). (Tesi in diritto privato comparato con il prof. A. Gambaro su “Remoteness of damage”) \n- “European Young Lawyers Scheme” 1998 (con borsa di studio del British Council, tre persone selezionate per l’Italia) \n\n## Associazioni\n\nE’ membro della European Lawyers Association\n\n## Lingue straniere\n\nInglese: ottimo\nSpagnolo discreto (B2 DELE)\nFrancese sufficiente\n"
+      },
+      {
+        "name": "Gianpaolo",
+        "surname": "Terranova",
+        "role": "Avvocato",
+        "slug": "gianpaolo-terranova",
+        "phone": "+39 02 87046190",
+        "email": "g.terranova@sazalex.com",
+        "image": "assets/people/gianpaolo-terranova.jpg",
+        "position": 3,
+        "_id": "5be5f7f0de059314a41472d8",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Daniele",
+        "surname": "Salvi",
+        "role": "Avvocato",
+        "slug": "daniele-salvi",
+        "phone": "+39 02 87046190",
+        "email": "d.salvi@sazalex.com",
+        "image": "assets/people/daniele-salvi.jpg",
+        "position": 4,
+        "_id": "5be5f841de059314a42100e5",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": "Avvocato iscritto all’albo degli Avvocati di Milano, ammesso all’esercizio della professione forense dal gennaio 2017\n\nAvvocato amministrativista esperto in diritto dell'energia e diritto ambientale, si occupa in particolare di energie rinnovabili e di efficientamento energetico. \n\nHa acquisito una particolare conoscenza della regolamentazione sui regimi incentivanti per la produzione di energia da fonti rinnovabili e per i progetti di efficientamento energetico (es. Conto Energia, Conto Termico, Certificati Bianchi, altri incentivi per le rinnovabili diverse dal fotovoltaico come eolico, idroelettrico, cogenerazione, biomassa ecc…). \n\nHa assistito svariati operatori nei rapporti con il Gestore dei Servizi Energetici – GSE S.p.A.. Tale attività ha riguardato sia la prestazione di consulenza nel corso delle procedure di controllo condotte dal GSE sugli impianti o sui progetti incentivati, sia la successiva fase di assistenza dinanzi alle competenti Autorità giudiziarie, consentendo al professionista di maturare una significativa esperienza anche nel campo del contenzioso amministrativo.\n\nDa diversi anni fornisce consulenza ad imprese, italiane ed estere, operanti nel settore delle rinnovabili e dell’efficientamento energetico, tra cui diverse Energy Service Company (ESCO), sulla normativa urbanistica ed edilizia, sugli iter autorizzativi ed i titoli abilitativi necessari alla costruzione ed esercizio di impianti di produzione energetica e alla realizzazione di interventi di efficientamento energetico in ambito residenziale, commerciale ed industriale. \n\nIn particolare, l’Avv. Salvi è stato coinvolto per fornire la propria analisi dal punto di vista tecnico-amministrativo in diverse operazioni M&A riguardanti impianti di produzione di energia da fonti rinnovabile.\n\nPossiede una approfondita conoscenza della normativa regolamentare dell’Autorità di Regolazione per Energia Reti e Ambiente (ARERA) in materia di connessione di impianti di produzione di energia alla rete elettrica e di autoproduzione.\n\nL’Avv. Salvi annovera inoltre una particolare competenza in materia di contratti pubblici, avendo avuto modo di seguire complesse procedure di gara, ed in particolare operazioni di parternariato pubblico-privato (es. project financing e contratti di disponibilità) in materia energetica.\n\n## Esperienze professionali e incarichi\n\nHa collaborato nel 2014 con lo Studio Legale Galbiati Sacchi e Associati e dal 2015 a marzo 2016 con lo Studio Legale Zoppolato&Associati, nel campo del diritto amministrativo ed in particolare nel settore degli appalti pubblici.\n\nA marzo 2016 ha intrapreso una collaborazione con lo Studio Legale Macchi di Cellere Gangemi, con l’Avv. Emilio Sani, specializzandosi sui temi delle energie rinnovabili, dell’efficientamento energetico e sul diritto ambientale.\n\n## Formazione\n\nLaurea in Giurisprudenza presso l’Università Commerciale “Luigi Bocconi” di Milano nell’aprile 2014 con voto di 108/110.\n\n## Lingue straniere\n\nInglese\n\n## Partecipazione a convegni in qualità di relatore negli ultimi due anni\n\n- RISCALDAMENTO E RAFFREDDAMENTO DEGLI EDIFICI \n  L’incontro ha trattato delle nuove normative sulla contabilizzazione del calore. I contratti per la gestione dei servizi condominiali e aziendali di raffreddamento e riscaldamento. La nuova disciplina del teleriscaldamento e i diritti degli utenti nelle reti di teleriscaldamento.\n  *Studio Macchi di Cellere Gangemi, Milano, 5 luglio 2017*\n\n- SOLAR GOES DIGITAL: AGGREGATORI, SDC E RETI ELETTRICHE PRIVATE\n  La recente evoluzione della regolamentazione del sistema elettrico in Italia verso un modello di generazione elettrica distribuita, e le nuove opportunità che questo comporta per il fotovoltaico.\n  *Convegno Italia Solare, 18 maggio 2018, Hotel Crown Plaza Via Po 197 Padova*\n\n- LE NUOVE DISCIPLINE IN MATERIA DI RAPPORTO FRA UTENTI E SOMMINISTRATORI DEL SERVIZIO NEL SETTORE IDRICO, DEI RIFIUTI E DEL TELERISCALDAMENTO. LA TUTELA DEL CONSUMATORE E LE DISCIPLINE SPECIALI IN MATERIA DI ACQUA, CALORE E RIFIUTI. \n  L’incontro ha trattato della recente normativa regolamentare dell’Autorità per Energia Reti e Ambiente nel settore idrico, dei rifiuti e del teleriscaldamento, con particolare riferimento agli standard minimi di qualità che le Società operanti nei predetti settori saranno tenute a rispettare nei confronti dei propri utenti, delle sanzioni conseguenti ad eventuali violazioni di tali standard, e delle possibilità dei consumatori di tutelarsi, anche tramite metodi di risoluzione stragiudiziale delle controversie. \n  *Studio Macchi di Cellere Gangemi, Milano, 3 luglio 2018*\n\n- I nuovi incentivi al fotovoltaico\n  Presentazione sul nuovo Decreto per l’incentivazione della produzione di energia da fonti rinnovabili in corso di pubblicazione\n  *Convegno Italia Solare, Pescara, 23 novembre 2018*\n"
+      },
+      {
+        "name": "Anna",
+        "surname": "Castelli",
+        "role": "Avvocato",
+        "slug": "anna-castelli",
+        "phone": "+39 02 87046190",
+        "email": "a.castelli@sazalex.com",
+        "image": "assets/people/anna-castelli3.jpg",
+        "position": 5,
+        "_id": "5be5f87ade059314a422deee",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Laura",
+        "surname": "Ballarin",
+        "role": "Avvocato",
+        "slug": "laura-ballarin",
+        "phone": "+39 02 87046190",
+        "email": "l.ballarin@sazalex.com",
+        "image": "assets/people/laura-ballarin.jpg",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": "",
+        "position": 6,
+        "_id": "5c7f9bdd4419ac0a52232331"
+      },
+      {
+        "name": "Maria Giovanna",
+        "surname": "Laurenzana",
+        "role": "Avvocato",
+        "slug": "maria-laurenzana",
+        "phone": "+39 02 87046190",
+        "email": "m.laurenzana@sazalex.com",
+        "image": "assets/people/default-placeholder-businesswoman.jpg",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": "",
+        "position": 6,
+        "_id": "5c7f9cf54419ac0a5211f1d1"
+      },
+      {
+        "name": "Simona",
+        "surname": "De Nicolò",
+        "role": "Praticante",
+        "slug": "simona-denicolo",
+        "phone": "+39 02 87046190",
+        "email": "s.denicolo@sazalex.com",
+        "image": "assets/people/simona-denicolo.jpg",
+        "position": 7,
+        "_id": "5be5f91cde059314a425ae00",
+        "practices": [
+          "Diritto Societario",
+          "Diritto Commerciale"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Giorgia",
+        "surname": "Scarlata",
+        "role": "Praticante",
+        "slug": "giorgia-scarlata",
+        "phone": "+39 02 87046190",
+        "email": "g.scarlata@sazalex.com",
+        "image": "assets/people/giorgia-scarlata.jpg",
+        "position": 8,
+        "_id": "5be5f96ade059314a420573b",
+        "practices": [
+          "Diritto Societario",
+          "Diritto Commerciale"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Alessandro",
+        "surname": "Lo Giudice",
+        "role": "Praticante",
+        "slug": "alessandro-logiudice",
+        "phone": "+39 02 87046190",
+        "email": "a.logiudice@sazalex.com",
+        "image": "assets/people/alessandro-logiudice.jpg",
+        "practices": [
+          "Diritto Societario",
+          "Diritto Commerciale"
+        ],
+        "bio": "",
+        "position": 9,
+        "_id": "5c5d92804419ac0a502f1153"
+      },
+      {
+        "name": "Vittoria",
+        "surname": "Musardo",
+        "role": "Praticante",
+        "slug": "vittoria-musardo",
+        "phone": "+39 02 87046190",
+        "email": "v.musardo@sazalex.com",
+        "image": "assets/people/vittoria-musardo.jpg",
+        "practices": [
+          "Diritto dell’energia",
+          "Servizi pubblici",
+          "Appalti"
+        ],
+        "bio": "",
+        "position": 7,
+        "_id": "5c7f9c934419ac0a52198239"
+      },
+      {
+        "name": "Gianalberto",
+        "surname": "Tuzzato",
+        "role": "Avvocato, Of Counsel",
+        "slug": "gianalberto-tuzzato",
+        "phone": "+39 02 87046190",
+        "email": "",
+        "image": "assets/people/gianalberto-tuzzato.jpg",
+        "practices": [
+          "Diritto Commerciale",
+          "Contenzioso Civile"
+        ],
+        "bio": "",
+        "position": 10,
+        "_id": "5c3c5f024419ac03d619638d"
+      },
+      {
+        "name": "Valerio",
+        "surname": "Locatelli",
+        "role": "Dottore Commercialista, Of Counsel",
+        "slug": "valerio-locatelli",
+        "phone": "+39 02 87046190",
+        "email": "",
+        "image": "assets/people/valerio-locatelli.jpg",
+        "practices": [
+          "Assistenza Fiscale e Societaria"
+        ],
+        "bio": "",
+        "position": 10,
+        "_id": "5c3c5f484419ac03d6195342"
+      },
+      {
+        "name": "Francesco",
+        "surname": "Pezone",
+        "role": "Avvocato, Of Counsel",
+        "slug": "francesco-pezone",
+        "phone": "+39 02 87046190",
+        "email": "info@sazalex.com",
+        "image": "assets/people/francesco-pezone.jpg",
+        "practices": [
+          "Diritto Societario",
+          "Diritto Commerciale",
+          "Diritto dell'energia"
+        ],
+        "bio": "Giurista di impresa, si occupa ad ampio spettro di diritto societario e commerciale, ed è specializzato nel settore delle energie rinnovabili e di consulenza legale e strategica alle Start Up. \n\nIn materia di energie rinnovabili, in particolare, l'avv. Pezone ha maturato un'esperienza in anni di pratica diretta sul territorio locale, nazionale e internazionale, con piena consapevolezza delle variabili che muovono il mercato, nonché del continuo evolversi della  normativa rilevante, che gli consentono una visione d'insieme del settore.\n\n## Esperienze professionali e incarichi\n\nAvvocato dal 2002 in Italia, è stato ammesso al New York Bar nel 2008. L'avv. Pezone ha lavorato in primari studi legali italiani e internazionali e, in particolare, dapprima per lo studio Grande Stevens Associazione Professionale di Torino e poi come Foreign Associate per lo studio Paul, Weiss, Rifkind, Wharton & Garrison LLP di New York (U.S.A.). Attualmente è Partner di Eunomia Studio di Avvocati e ne gestisce la sede di Torino.\nConsigliere dell’Associazione Italia Solare.\nConsulente di Greening the Islands associazione per lo sviluppo sostenibile delle piccole isole.\n\n## Formazione\n\nLaureato cum laude alla LUISS Guido Carli di Roma nel 1999, ha ottenuto il titolo di dottore di ricerca in “Economia, politica e legislazione delle istituzioni e dei mercati finanziari internazionali” presso La Sapienza di Roma nel 2005, ed ha conseguito un master (LL.M.) in diritto commerciale internazionale alla Columbia University di New York nel 2008.\n\n## Associazioni\n\nÈ membro del New York State Bar Association.\n\n## Pubblicazioni sul web ed articoli\n- Spalmaincentivi, rinvio pregiudiziale alla Corte di Giustizia Ue: una buona notizia per gli operatori del settore fotovoltaico\n- L’Agenzia delle Entrate chiarisce il trattamento fiscale dei corrispettivi derivanti dalla costituzione del diritto reale di superficie\n- Isole Minori: l’ARERA ha ricevuto le osservazioni dei soggetti interessati. Si attende la delibera\n- La Corte Costituzionale dichiara legittima la Legge Regionale Puglia in merito alla fideiussione per l’inizio lavori di impianto fotovoltaico\n- Il GSE sospende gli effetti delle verifiche per gli impianti fotovoltaici con moduli non certificati o con certificazioni non rispondenti alla normativa di riferimento\n- Interventi di manutenzione e ammodernamento tecnologico su impianti fotovoltaici in esercizio: il GSE emette il Nuovo DTR\n- Riforma delle tariffe elettriche per i clienti domestici\n- Spalma-Incentivi, depositata la sentenza 16/2017: sintesi delle motivazioni\n\n",
+        "position": 10,
+        "_id": "5c5c43454419ac0a50325b47"
+      },
+      {
+        "name": "Lucia",
+        "surname": "Balistreri",
+        "role": "Avvocato, Of Counsel",
+        "slug": "lucia-balistreri",
+        "phone": "+39 02 87046190",
+        "email": "",
+        "image": "assets/people/default-placeholder-businesswoman.jpg",
+        "practices": [
+          "Diritto Societario",
+          "Diritto Commerciale"
+        ],
+        "bio": "",
+        "position": 10,
+        "_id": "5c3c60574419ac03d627ae0e"
+      }
+    ],
+    "news": [
+      {
+        "category": "NEWS",
+        "date": "2018-12-11",
+        "title": "Forum di Italia Solare 2018",
+        "excerpt": "Più di 300 persone hanno seguito la terza edizione del forum annuale di Italia Solare. L’Avvocato Emilio Sani al Forum 2018 è intervenuto su digitalizzazione dei consumi, Contratti di rendimento energetico, PPA a prezzo dinamico e comunità energetiche, clean energy package e nuove direttiva RED II, spiegando come la tecnologia digitale stia influendo su struttura e convenienza di tali contratti",
+        "slug": "forum-italia-solare-2018",
+        "_id": "5be879b7de059319c42f0eef",
+        "content": "",
+        "attachments": [
+          {
+            "label": "Clicca qui per la presentazione",
+            "path": "assets/uploads/digitalenglish.pdf"
+          }
+        ],
+        "featured": true
+      },
+      {
+        "category": "APPROFONDIMENTI",
+        "title": "Market and Grid parity",
+        "excerpt": "Webinair 6 Novembre 2018. Una breve introduzione al mercato italiano dell’autoconsumo di energia SEU, Comunità energetiche e contratti di vendita di energia a lungo termine per investitori nazionali e internazionali. Phisical PPAs, virtual PPAs una breve analisi della loro convenienza e Clicca qui per la presentazione.",
+        "_id": "5c2cf3cadd0d6072032d7b29",
+        "attachments": [
+          {
+            "label": "Clicca qui per la presentazione",
+            "path": "assets/uploads/market opportunities.pdf"
+          }
+        ],
+        "slug": "market-and-grid-parity",
+        "date": "2018-11-07",
+        "content": "",
+        "featured": true
+      },
+      {
+        "title": "Colonnine elettriche e regolamentazione vigente",
+        "excerpt": "L’intervento alla conferenza nazionale sulla mobilità elettrica sulla normativa in materia di colonnine elettriche e principi della regolazione vigente anche fiscale. Il diritto alla ricarica. Il D. Lgs. 257/2016 e la direttiva 2014/94.",
+        "_id": "5c2cf3dddd0d6072033319a7",
+        "date": "2018-09-26",
+        "attachments": [
+          {
+            "label": "Clicca qui per la presentazione",
+            "path": "assets/uploads/Template ppt EMOB.pdf"
+          }
+        ],
+        "category": "APPROFONDIMENTI",
+        "content": "",
+        "featured": true,
+        "slug": "colonnine-elettriche-e-regolamentazione-vigente"
+      },
+      {
+        "title": "Il nuovo DM in materia di FER Elettriche",
+        "excerpt": "L’intervento di Daniele Salvi a Pescara sul nuovo DM Fer elettriche.",
+        "_id": "5c2cf3f0dd0d607203280b6c",
+        "attachments": [
+          {
+            "label": "Clicca qui per la presentazione",
+            "path": "assets/uploads/Presentazione DM FER.pdf"
+          }
+        ],
+        "content": "",
+        "slug": "il-nuovo-dm-in-materia-di-fer-elettriche",
+        "category": "APPROFONDIMENTI",
+        "date": "2018-11-22",
+        "featured": true
+      },
+      {
+        "title": "Politiche a confronto per le piccole isole",
+        "excerpt": "La presentazione su gestione servizio idrico, rifiuti, elettrico e termico nelle piccole isole alla riunione del greening the Islands Observatory Meeting: Policies for the sustainability of the islands: benchmarking of the islands within the Observatory Focus Group",
+        "_id": "5c2cf403dd0d607203145d15",
+        "date": "2018-11-25",
+        "attachments": [
+          {
+            "label": "Clicca qui per la presentazione",
+            "path": "assets/uploads/Presentazione.pdf"
+          }
+        ],
+        "slug": "politiche-a-confronto-per-le-piccole-isole",
+        "category": "APPROFONDIMENTI",
+        "content": "",
+        "featured": true
+      },
+      {
+        "title": "Seguiteci",
+        "excerpt": "I prossimi appuntamenti con noi: 17 Gennaio 2019  Setting your solar PV Project up for success in the large-scale italian market webinair di ATA Insight , 15.00 CET 8 Febbraio 2019, Presentazione Decreto Fer, Brunello (VA). Maggiori dettagli seguiranno. 15 Aprile 2019 Future Solar Energy Summit a Milano ",
+        "_id": "5c2cf424dd0d6072034efd7c",
+        "category": "",
+        "date": "",
+        "content": "",
+        "attachments": [
+          {
+            "label": "",
+            "path": ""
+          }
+        ],
+        "featured": false,
+        "slug": ""
+      },
+      {
+        "title": "Controlli GSE e nuova disciplina di sanatoria",
+        "excerpt": "In occasione della formazione di SOLOM è stata presentata una analisi della giurisprudenza in materia di controlli da parte del Gestore Servizi Energetici",
+        "attachments": [
+          {
+            "label": "Clicca qui per approfondimenti",
+            "path": "assets/uploads/Le nuova discipline  di sanatoria per le violazioni Ripristinato.pdf"
+          }
+        ],
+        "slug": "controlli-gse-e-nuova-disciplina-di-sanatoria",
+        "_id": "5c2f6ed1dd0d6099f230940d",
+        "category": "APPROFONDIMENTI",
+        "date": "",
+        "content": "",
+        "featured": true
+      },
+      {
+        "category": "APPROFONDIMENTI",
+        "date": "2019-01-07",
+        "title": "Digitalizzazione dell’energia: la normativa sta al passo?",
+        "excerpt": "L'intervento dell'Avv. Emilio Sani sullo stato della regolamentazione sulle smart grid, i prezzi dinamici e la digitalizzazione dell'energia, pubblicato su Rienergia 8 gennaio 2018.",
+        "content": "",
+        "attachments": [
+          {
+            "label": "Link all'articolo (esterno)",
+            "path": "https://rienergia.staffettaonline.com/articolo/33207/Digitalizzazione+dell%E2%80%99energia:+la+normativa+sta+al+passo/Sani"
+          }
+        ],
+        "featured": true,
+        "slug": "digitalization-of-energy",
+        "_id": "5c3c64f14419ac03d62e64ab"
+      }
+    ],
+    "practices": [
+      {
+        "name": "Diritto dell'energia e dei servizi pubblici",
+        "content": "I professionisti dello Studio svolgono attività di consulenza ed assistenza legale alle imprese italiane ed estere nel settore energetico e ambientale, nonché nel settore dei contratti pubblici. \n\n#### Energia\n\nIn particolare, i professionisti dello Studio si sono focalizzato nella assistenza legale per:\n- impianti a fonti rinnovabili (PPAs contratti per la vendita di energia, studi di fattibilità del progetto, contratti per la disponibilità dei terreni, contratti di sviluppo, contratti di engineering procurement construction o di fornitura impianti, contratti di manutenzione, contratti di finanziamento o di locazione finanziaria, cessione dei rami d’azienda o delle società di progetto, gestione verifiche e rapporti con il GSE). I professionisti dello Studio hanno dato assistenza nello sviluppo di più di 400 MWS di impianti a fonte rinnovabile;\n- progetti di efficienza energetica (contratti di rendimento energetico con ESCO o contratto di locazione operativa, studi di fattibilità, verifica della compatibilità con i meccanismi di certificato bianco e conto termico, gestione della procedura per l’ottenimento dei certificati bianchi o degli eventuali contributi di conto termico, finanziamento del progetto, gestione procedure con GSE)\n- progetti per lo sviluppo di autoconsumo e efficienza energetica a favore di pubbliche amministrazioni in particolare in relazione a climatizzazione, illuminazione e sviluppo di sistemi di autoconsumo di energia elettrica per Comuni enti pubblici, concessionari di pubblici servizi ed ospedali, anche con il ricorso a procedure di finanza di progetto. \n- Assistenza nella definizione del modello industriale e negli aspetti contrattuali e regolatori a società che intendono lavorare nel settore della installazione e gestione di colonnine per la mobilità elettrica\n- Tutti i tipi di procedure avanti a ARERA, GSE e Ministero dello Sviluppo Economico. In particolare in materia di controlli e verifiche per incentivi e di procedimenti sanzionatori e tariffari.\nI professionisti dello Studio si occupano da metà degli anni 2000 di contratti pluriennali di vendita di energia cosidetti PPAs. Nel settore dell’autoconsumo sono stati fra i primi in Italia a creare modelli di contratto di vendita di energia elettrica a medio/lungo termine.\nI facsimili predisposti dai professionisti dello Studio di “PPA” contratto di vendita di energia pluriennale in autoconsumo e di contratto di locazione operativa per impianti fotovoltaici cogeneratori e impianti di illuminazione sono di largo utilizzo all’interno del mercato e per quanto riguarda gli impianti fotovoltaici sono stati individuati come modelli di riferimento all’interno di un progetto europeo finanziato dall’Unione Europea. \n\n#### Diritto ambientale e dei servizi pubblici\n\nNel settore ambientale e dei servizi pubblici i professionisti dello Studio hanno:\n- assistito primari operatori nel settore ambientale soprattutto per lo sviluppo e la incentivazione di impianti per lo smaltimento di rifiuti, la cessione di società titolari di impianti di smaltimento dei rifiuti e contenziosi civili e amministrativi al riguardo, ivi inclusi i rapporti con il territorio. \n- maturato una significativa esperienza nella gestione delle problematiche connesse alla approvazione di piani operativi di bonifica in siti di interesse nazionale e nella gestione dei rifiuti da parte di imprese industriali \n- approfondito anche in contesti internazionali e di diritto comparato la gestione nelle piccole isole e nei luoghi remoti delle tematiche ambientali, ivi inclusa la gestione dei rifiuti e dell’approvvigionamento idrico ed energetico; \n- seguito il finanziamento di grandi infrastrutture di trasmissione dell’acqua \n- seguito la contrattualistica e lo sviluppo di reti di teleriscaldamento\n- dato assistenza in molte procedure di per la concessione di servizi pubblici in particolare di pubblica illuminazione e servizio energia\n",
+        "_id": "5be99dbfde059305ec21da53",
+        "slug": "diritto-energia-e-servizi-pubblici",
+        "header": "assets/practices/sz-header-a1-rami-energia.jpg"
+      },
+      {
+        "name": "Assistenza legale ad imprese industriali",
+        "content": "Molto significativa è l’esperienza dei professionisti dello studio nel settore degli appalti di costruzione di impianti e infrastrutture. I professionisti hanno seguito la costruzione di importanti infrastrutture industriali sia in Europa che in America Latina.\n\nI professionisti dello Studio hanno poi consolidata esperienza nei servizi di assistenza legale continuativa a operatori industriali, in particolare nei confronti di società farmaceutiche, energetiche, chimiche, minerarie, agroalimentari, impiantistiche, verso i produttori di impianti ibridi per auto, nel settore *fashion* e nel settore del noleggio di divise da lavoro, “*pest management*” e per associazioni che aggregano imprese operanti in tali settori.\n\nI professionisti dello Studio:\n- forniscono supporto continuativo in materia societaria e commerciale \n- seguono la contrattualistica commerciale per forniture di impianti e servizi\n- curano le relazioni contrattuali con distributori fornitori e clienti in Italia e all’estero\n- danno assistenza per tutti i contratti di appalto necessari allo sviluppo di nuovi progetti e aree di business\n- seguono l’apertura di società controllate in Italia e all’estero \n- seguono i processi di acquisizione e/o vendita di società controllate o rami d’azienda\n- seguono il contenzioso ordinario civile e amministrativo\n- seguono i procedimenti amministrativi e di controllo di cui le società sono parte da parte degli enti preposti redigendo le memorie ed osservazioni nel procedimento\n- assistono per tutto quanto riguarda la gestione dei pagamenti e la coerenza con la normativa generale e di settore sui termini di pagamento\n- controllano la coerenza dei contratti e politiche commerciali con il codice del consumo\n- supportano nei contratti per l’approvvigionamento delle utilities (acqua, energia, gas, calore, gestione rifiuti, scarichi e fognature) e nei relativi procedimenti amministrativi\n- seguono le operazioni di finanziamento, locazione operativa e locazione finanziaria\n- supportano nella conformità su privacy e responsabilità penale delle imprese (legge 231)\n- con il supporto degli studi partner garantiscono consulenza su tutti gli aspetti di diritto fiscale\n",
+        "_id": "5be99dd9de059305ec2c2c84",
+        "slug": "assistenza-legale-ad-imprese-industriali",
+        "header": "assets/practices/sz-header-a1-rami-industria.jpg"
+      },
+      {
+        "name": "Contenzioso civile, amministrativo e tributario ed arbitrati",
+        "content": "I professionisti dello Studio danno assistenza continuativa in contenziosi avanti al giudice amministrativo civile e tributario e al Tribunale delle Acque Pubbliche, anche davanti alle Giurisdizioni superiori.\n\nIn particolare lo Studio ha una significativa esperienza nel contenzioso avanti al TAR Lazio e al TAR Lombardia per procedimenti in materia di tariffe e incentivi alle imprese nel campo dell’energia.\n\nUna notevole esperienza è stata maturata dai professionisti dello Studio nel settore civile specialmente in relazione a controversie anche di notevole importanza per contratti di fornitura impiantistica e/o di manutenzione impianti.\n\nAltro settore nel quale frequentemente i professionisti dello Studio hanno reso assistenza è stato il rapporto delle infrastrutture industriali con il territorio. Una importante esperienza è stata maturata in contenziosi con cittadini riguardo le interferenze di carattere ambientale degli impianti industriali.\n\nNel settore degli appalti e dell’energia i professionisti dello Studio hanno anche assistito i clienti in molti arbitrati e svolto la funzione di arbitro.\n\nNel settore del contenzioso tributario i professionisti dello Studio si sono occupati principalmente di tematiche relative al cumulo degli incentivi e al pagamento di tasse per l’occupazione di suolo pubblico.\n",
+        "_id": "5be99e14de059305ec37c1a5",
+        "slug": "contenzioso-civile-amministrativo-tributario-e-arbitrati",
+        "header": "assets/practices/sz-header-a1-rami-contenzioso.jpg"
+      }
+    ]
+  },
+  "en": {
+    "pages": [
+      {
+        "type": "home-page",
+        "title": "Home",
+        "slug": "home-page",
+        "navigationAction": "menu",
+        "logo": "assets/logo.png",
+        "icon": "home",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c239671dd0d6023502901a1",
+        "metaDescription": "",
+        "metaKeywords": "",
+        "backLink": "",
+        "columns": []
+      },
+      {
+        "type": "default-page",
+        "title": "Chi siamo",
+        "slug": "about-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "university",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2396cadd0d602350153103",
+        "columns": []
+      },
+      {
+        "type": "people-page",
+        "title": "People",
+        "slug": "people-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "users",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": true,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c23970add0d602350199200",
+        "columns": [
+          {
+            "name": "position",
+            "label": "Position"
+          },
+          {
+            "name": "name",
+            "label": "Name"
+          },
+          {
+            "name": "surname",
+            "label": "Surname"
+          },
+          {
+            "name": "role",
+            "label": "Role"
+          }
+        ]
+      },
+      {
+        "type": "people-detail",
+        "title": "People",
+        "slug": "people-detail",
+        "navigationAction": "arrow_back",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c23972add0d6023501f68e7",
+        "logo": "assets/logo.png",
+        "backLink": "/people",
+        "icon": "users",
+        "columns": []
+      },
+      {
+        "type": "practices-page",
+        "title": "Practice areas",
+        "slug": "practices-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "briefcase",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": true,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c239785dd0d6023503a8424",
+        "columns": [
+          {
+            "name": "name",
+            "label": "Name"
+          }
+        ]
+      },
+      {
+        "type": "practices-detail",
+        "title": "Practice areas",
+        "slug": "practices-detail",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/practices",
+        "icon": "briefcase",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2397acdd0d6023502daaf8",
+        "columns": [],
+        "form": {
+          "type": "flex",
+          "fxLayoutGap": "20px",
+          "flex-flow": "column",
+          "items": [
+            {
+              "key": "name",
+              "type": "text",
+              "title": "Name"
+            },
+            {
+              "key": "header",
+              "type": "text",
+              "title": "Header Image"
+            },
+            {
+              "key": "content",
+              "type": "textarea",
+              "title": "Description"
+            },
+            {
+              "key": "slug",
+              "type": "text",
+              "title": "Slug"
+            }
+          ]
+        }
+      },
+      {
+        "type": "news-page",
+        "title": "Events and publications",
+        "slug": "news-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "info",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": true,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2397cedd0d6023508356b4",
+        "columns": [
+          {
+            "name": "date",
+            "label": "Date"
+          },
+          {
+            "name": "title",
+            "label": "Title"
+          },
+          {
+            "name": "slug",
+            "label": "Slug"
+          },
+          {
+            "name": "featured",
+            "label": "On Homepage?"
+          },
+          {
+            "name": "category",
+            "label": "Category"
+          }
+        ]
+      },
+      {
+        "type": "news-detail",
+        "title": "Events and publications",
+        "slug": "news-detail",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/news",
+        "icon": "info",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2397efdd0d6023501ef2f8",
+        "columns": [],
+        "form": {
+          "type": "flex",
+          "fxLayoutGap": "20px",
+          "flex-flow": "column",
+          "items": [
+            {
+              "key": "date",
+              "type": "date",
+              "title": "Date"
+            },
+            {
+              "key": "category",
+              "type": "text",
+              "title": "Category"
+            },
+            {
+              "key": "title",
+              "type": "text",
+              "title": "Title"
+            },
+            {
+              "key": "excerpt",
+              "type": "text",
+              "title": "Excerpt"
+            },
+            {
+              "key": "content",
+              "type": "textarea",
+              "title": "Full Text (leave blank if not necessary)"
+            },
+            {
+              "key": "attachments",
+              "add": "Add",
+              "items": [
+                {
+                  "key": "attachments[].label",
+                  "type": "text",
+                  "notitle": true,
+                  "placeholder": "Label"
+                },
+                {
+                  "key": "attachments[].path",
+                  "type": "text",
+                  "notitle": true,
+                  "placeholder": "File path"
+                }
+              ]
+            },
+            {
+              "key": "featured",
+              "type": "boolean",
+              "title": "Show on Homepage"
+            },
+            {
+              "key": "slug",
+              "type": "text",
+              "title": "Slug"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Contacts",
+        "slug": "contacts-page",
+        "showAsPopupActionItem": true,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c2cf6e7dd0d6072031c2ae1",
+        "type": "contacts-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "contacts",
+        "columns": []
+      },
+      {
+        "type": "page-not-found-page",
+        "title": "Page not found!",
+        "slug": "page-not-found-page",
+        "navigationAction": "arrow_back",
+        "logo": "assets/logo.png",
+        "backLink": "/",
+        "icon": "info",
+        "showAsPopupActionItem": false,
+        "showAsDrawerItem": false,
+        "actionBarHidden": false,
+        "actionItemsHidden": false,
+        "opacityTopScrollPosition": 0,
+        "_id": "5c389beedd0d600ee4363d17",
+        "columns": []
+      }
+    ],
+    "people": [
+      {
+        "name": "Emilio",
+        "surname": "Sani",
+        "role": "Lawyer",
+        "slug": "emilio-sani",
+        "phone": "+39 02 87046190",
+        "email": "e.sani@sazalex.com",
+        "image": "assets/people/emilio-sani.jpg",
+        "bio2": "## Aree di specializzazione\n\nAmministrativo ed appalti\nEnergia e risorse naturali\n\n## Esperienza professionale\n\nHa maturato una specifica esperienza nei settori dell’Energia, delle Costruzioni e del Diritto Amministrativo sia comunitario che nazionale. Assiste società italiane e straniere nel settore del diritto commerciale e amministrativo con particolare attenzione all’area dell’energia. Ha vasta esperienza nel campo del contenzioso amministrativo e di recente ha dedicato parte importante dell’attività allo sviluppo ed alla costruzione di impianti di produzione di energia elettrica da fonti rinnovabili\n\n## Lingue\n\nItaliano, Inglese\n\n## Formazione\n\nLaurea in Giurisprudenza cum laude pressi l’Università degli Studi di Milano (1993).\n\n## Albi e Associazioni\n\nAmmesso all’esercizio della professione forense nel 1997.\nE’ membro della Società Lombarda degli Avvocati Amministrativi e dell’Ordine Internazionale degli Avvocati. E’ stato inoltre Co-Presidente del Young Construction Lawyers Conference dell’International Association nel 2004.",
+        "position": 1,
+        "_id": "5be5f79ede059314a4247db6",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": "**Emilio Sani** born in Milan, in 1969.  Lawyer qualified to the High Court (Corte di Cassazione). \n\nFounder of the Law Firm Sani Zangrando Avvocati (Sazalex)\n\n## Expertise \n  \nHe advises both Italian and foreign clients. His clients are producers of energy, utilities, investment funds, developers of energy projects, traders of energy, big customers of energy (as chemical plants) and are both Italian and overseas companies.     \nHe is advisor of the Chairman of X Commission of the Parliament (Senato della Repubblica) for energy matters.\n\nHe has been teacher on:\n(i)\t\"Public Grants\" at the Faculty of Law of University of Pisa, Master for Public Bodies Managers (\"Giurista dell'Economia e Manager Pubblico\");\n(ii)\tSelf-consumption Systems and Electric Tariffs at the Politecnico of Milan, Department of Electrical Engineer. \n(iii)\tItalian Energy Market and relevant Regulations, at the Luiss Business School. \n\nIn 2015 he has been one of the co-founder of the no profit Association Italia Solare for the development of renewable energy. As director of the Association Italia Solare he has periodical meetings with GSE S.p.A. and with the political and administrative bodies of the Ministry for Economic Development, Authority for Energy (ARERA), Commissions for the Productive Activities of the Parliament.  \n\nHe is chairman of the Surveillance Committee of Sirti Energia.\n\n## Professional experience\n\nIn his professional career he has acquired experience in all sort of energy matters under Italian and European law.\nIn particular most recent activity has been in:\n- Advising on sale of SPVs owning  power plants fueled by renewable sources or authorizations for the construction of power plants;\n- Development, construction, financing  and subsequent sale of power plants fueled by renewable sources (more than 400 MWs in aggregate in the last years) for international and domestic groups;\n- Development, construction, financing of projects for energy efficiency: development of cogeneration plants and district heating projects, projects for trading of the incentives for energy efficiency – the so called: white certificates, 10 concessions for renewal of public lighting infrastructures;  \n- Draft of PPA agreements for both producers and traders;\n- Development of direct lines for self-consumption of energy. He drafted forms of PPAs and operational lease agreements for self-consumption as well forms of energy performance contracts. These forms are adopted as the Italian standard of the market. He has a unique and recognized know how on all  matters concerning self-consumption of energy;\n- Assistance to the beneficiaries of incentives for energy efficiency (white certificates), renewable energy (Conto Energia, grin convention, green certificates), in the administrative relations with the authority of control (GSE S.p.A.) and  in the related disputes before the administrative courts;\n- Assistance to the traders of energy in the administrative relations with the Italian Energy Regulatory Authority (ARERA) and in the related disputes before the administrative Court, as well in their relations with customers;\n- Arbitrations (both as arbitrator and attorney) and civil court proceedings concerning acquisition of projects or disputes with the contractor of the construction or maintenance of the power plants or with bordering landowners; \n- Advising  big consumers of energy on electricity tariffs and on exemptions from surcharges for support to the renewables.\n\nHe also accrued material experience in the sector of wastes and water. In particular \n\nfor the wastes:\n\n(i)\tin the development and construction of plants for the disposal of wastes and\n(ii)\t in the procedures for the approval of remediation plans also in sites of national interest\n(iii)\tIn all matters concerning the relation with the citizens living in the bordering areas and related disputes\n\nFor the water\n\n(i)\tDevelopment of pipelines for the transmission and the distribution of the water\n(ii)\taward of the concessions for the integrated service\n(iii)\trelated financing arrangements\n\n## Education\n\nHe obtained his Law degree magna cum laude at the University of Milan (1993). From 1994 to 2000 he worked in the Law firm of Professor Guido Greco specialized in energy and construction law.\n\n## Memberships\n\nAdmitted to Bar and to the Superior Courts. \nHe is member of the Bar of Milan from 1997.\nHe is member  of the International Bar Association (member of the International Construction Projects Committee). \nHe has also been co-chair of the Young Construction Lawyers Conference of the International Bar Association in 2004.\n\n## Languages \n\nItalian, English.\n\n## Conferences and seminars:\n\n- [“Digitalization of Energy. Is the regulation updated?”](https://rienergia.staffettaonline.com/articolo/33207/Digitalizzazione+dell%E2%80%99energia:+la+normativa+sta+al+passo/Sani), Rinergia, January 8, 2019\n- “Digitalization an opportunity for customers and business. The Eu rules and the contractual structures” Forum Italia Solare December 11, 2019;\n- “Policies for the sustainability of the islands: benchmarking of the islands within the Observatory Focus Group”, Observatory Greening the Islands, Rome November 6, 2018;\n- “Electric charges, the principles of the regulation and tax profiles”, National Conference on Electric Mobility, September 27, 2018\n-  “Market parity and grid parity opportunities” Solarplaza webinair, 25 Maggio 2018; \n- “Energy Communities”, Enostra, Rimini, November 6th, 2018;\n-  “Prosumers and aggregators. Legal and regulatory aspects”, Rome, May 8, 2018 conference organized in the context of the European project PVP4grid\n- “The new incentives to PV Plants” Modena, April 20, 2018, ITALIA SOLARE tour\n-  “Private Grids, Closed distribution systems and aggregators”, Milan, March 16, 2018 in the context of the MCE exhibition  \n- “The  Capacity Market”, Verona, November 16th 2017,  conference organized by the Association of Engineers of Verona\n- “Self-consumption and operational Lease”,  November 8th, 2017 at the workshop  organized by Key Solar International Exhibition for Energy Products in Rimini\n- “The Feed in Tariff decree to grant incentives to renewables on small islands” at the GREENING THE ISLANDS INTERNATIONAL & NATIONAL CONFERENCE on November 3rd - 4th 201, Island of Favignana (Sicily)\n- “Power Purchase Agreements”  at the seminary on  Opportunities for Photovoltaic in Italy and Overseas, organized by Dupont on October 11th, 2017 in Rome\n- “The self-production and the scenarios of clean energy package of EU” Legambiente, Rome, May, 2017\n- “Electric tariffs for industrial clients”, Florence, March 2017 \n- “PV: Operational Lease and self-consumption”. Webinar by QualEnergia.it – February, 20th 2017\n- Storage, the future of PV in Italy” - Workshop organized by Qualenergia.It,  Rome, December 1st, 2016\n- “Incentives to renewable energy” - Business International, Milan, September 21st, 2016; \n- “E-MOBILITY: the open access  to the chargers”, Milan,  Aprii 21st, 2016\n- “The new incentives to the production of thermal energy from renewable sources”, Atiqual, Trento, April 14th, 2016\n- “Electric mobility for corporations, the advantages” — Gruppo Italia Energia at GSE Rome,  March 3rd, 2016\n- “Lesson on electric self-consumption”, Laurea Magistrale in Electrical Engineering — Smart Grids, Politecnico Milan, January 26th, 2016\n- “How to operate in the Italian PV market in 2016” — Qualenergia, Rome, December 2nd, 2015\n- “Reduction of energy cost in the industry”—Confindustria, Brescia, 23rd October 2015\n- “Self-consumption systems”, Business International - Rome, October 8th, 2015\n- “Saving with self-consumption systems” in collaboration with Area Energia & Ambiente of TIS Innovation Park —Bolzano, September 11th, 2015\n- “Cogeneration and self-consumption systems”, Business International- Rome, July 15, 2015\n- “Energy performance of buildings” - Milan, July 14th, 2015\n- “How to safeguard incentives and Pv Plants”, QualEnergia - Rome, July 1st, 2015\n- “Storage systems”, Business International - Rome, June 25th, 2015\n- M2M Forum- “The self-consumption systems”,— Milan, Aprii 29th, 2015\n- “The self-consumptions systems”, SolarExpo — Milan, April 8th and 10th, 2015\n- “The economic and contractual relations between the provider of the storage service and the beneficiary” Milan, March 2015, Business International\n- \"PPA between producer and customers in the self-consumption Systems: price duration, feasibility\", Milan, February 24th, 2015, INVEX\n- “As to improve the investment in the PV Plants”, Rome December 2014, Qualenergia;\n- “Practically how to develop a self-consumption system”, Politecnico di Milano, November 5th, 2014\n- “Self-consumption systems” Solarplaza, Milan, 2014\n- “PPAs between producer and customer in the self-consumption systems”, Business International Milan, October 23rd, 2014\n- “Obstacles to the development of the ESCO business”, Verona, July 2014, Quotidiano Energia;\n- “Contractual relations in the self-consumption systems”, Rome, May 21st, 2014, Business International\n- “PPA between producer and consumer in the self-consumption systems”, Milan, Solarexpo, May 8th, 2014\n- “PV and self-consumption systems”, organized by Business International, Milan,  March 26th, 2014\n- “Export credit opportunities”, Milan,  January 23rd 2014\n- “Distributed generation of energy new opportunities”. Milan,  November 26th, 2013\n- “New rules for start up””, Milan,  November 20th, 2013\n- “Energy efficiency, opportunities and financial instruments”, Modena, 19 November 2013\n- “Self-consumption the future of PV in Italy”, Milan,  October 8th, 2013\n- “Support to energy efficiency, Analysis of regulations and contractual and commercial proposals”, Milan, Aprii 2013\n- “New trends for PV Plants”, yearly APER meeting on photovoltaic source, February 14, 2013\n- “Incentive to the renewables: instructions”, — In-depth seminars — APER. Milan, November 12th, 2012\n- “The new decrees and the incentive systems for renewables. The opportunities given by the energy efficiency regulations. The incentive system in Romania”. Milan, October 12, 2012\n- “Renewable sources and energy efficiency”,  Palazzo Banca D'Alba. Alba, Cuneo, June 2012\n- “Opportunities of the distributed generation”, Meeting Aper organized by Solarexpo, Fiera di Verona, May, 2012\n- “Lawyer Course on Renewable Energies Law”, Milan - APER, April 2011\n- “Foreign investments: focus on renewable energy”, Roundtable organized by Invitalia, Agenzia nazionale per l'attrazione degli investimenti e lo sviluppo d'impresa SpA.. Rome, December 2010\n- “Lawyer Course on Renewable Energies Law”, Milan - APER, November 2010\n- “Which future for renewables energy”. Toplegal. Milan, October 2010\n- \"Contractual instruments concerning the realization of plants and its relative guarantees\". Italian Photovoltaic Academy, Bari, March 2010\n- “Developments in the bioenergy sector, An opportunity of cooperation among Italian and Danish Companies”, a conference organised by the Trade Council of Denmark. Milan, March 2010\n- “Round table renewable sources: from project acquisition to financing and development”: Regulatory, tax and financial issues. Roundtable Toplegal. Milan, October 2009\n- “The new Decree on renewable sources: news and practical issues”, Milan, January 2009\n- Project finance and renewable energies: who determines the trends? The new role of sponsors and banks”: Roundtable. Toplegal. Milan, February 2008\n\n## Articles and publications:\n\n- “Digitalization of Energy. Is the regulation updated?”, Rinergia, January 8, 2019\n- “Self-consumption and renewables, the position of EU Council”, interview to Emilio Sani, Qualenergia, January 9th, 2018 \n- “A distributed system for production of energy is necessary” Interview to Emilio Sani on Elementi (official paper of GSE S.p.A.), n. 42, December 2017\n- “Tax amortization of PV Plants, over and iperamortization”, Nextville 2017\n- “What tariffs for electric cars?” Staffetta Quotidiana, May, 27th 2016\n- “Charging points for electric cars, the issues of a new market”, Energia Media, May 2016\n- \"The charge of electric cars. The Italian and EU regulation”, Quotidiano Energia, February 26, 2016\n- “The payment of the surcharges on the bill of electricity for high tension clients”, QualEnergia, February 9th, 2016\n- “How to operate in the PV market in Italy in 2016- Analysis of the current regulation and of the necessary changes\", Qualenergia, Speciale Tecnico, December 17th, 2015\n- “The increase of efficiency in the incentivized PV Plant, the role of the provider of maintenance services”, Qualenergia, December 2014\n- “Energy performance contracts. Looking for solutions.” Quotidiano Energia July 2014\n- “The new rules on self-consumption”, Staffetta Quotidiana, January 10th, 2014\n- “Self-consumption technical manual for use”, Qualenergia, March 2014\n- “Self-consumption systems, the support to the distributed generation of energy”, Staffetta Quotidiana, June 2012\n- Interview to Emilio Sani, Panorama Economy, Aprii 2012\n- Interview to Emilio Sani on Quarto Conto energia, TopLegal, September 2011\n- “New decree on renewables a manual”, Staffetta Quotidiana, June 2011\n- “Insurance on renewable projects”, Assicura, March 2011\n- “Regulator aspects and incentives of the bioenergy market in Italy”, December 2010\n- “Commercial contracts (maintenance supply and construction)  for photovoltaic plants and wind farms”, November 2010\n- “Photovoltaic incentives: the new ministerial decree of August 6, 2010 on incentives”, October 2010\n- “Feed-in Tariff, the new decree regulation. The explanatory note by Emilio Sani”, Staffetta Quotidiana, July 2010\n- “New opportunities for the renewable sources market: regulator aspects and incentives of the bioenergy market in Italy”, Toplegal e Toplegal International, May 2010\n- “Bioenergy, Denmark proposes its techniques to Italy. Parade of North Europe Companies in Milan attracted by business opportunities. High technology for biomass plants. Focus on facilities. Interview by Emilio Sani”, ItaliaOggi, March 2010\n- “Bioenergy, the regulatory framework and the incentives”, Staffetta Quotidiana, March 2010\n- “The new Decree on renewable sources”,  September 2009;\n- “Structure of commercial contracts for wind farms in a project finance structure”, Aper; November 2008\n- “Contracts and safety at work”,  November 2008\n- He has contributed the Italian chapter to the PLC Cross-border \"Environment Handbook\" both in its first (2006/2007) and second (2007/2008) and third edition (2008/2009).\n\n"
+      },
+      {
+        "name": "Stefano",
+        "surname": "Zangrando",
+        "role": "Lawyer",
+        "slug": "stefano-zangrando",
+        "phone": "+39 02 87046190",
+        "email": "s.zangrando@sazalex.com",
+        "image": "assets/people/stefano-zangrando.jpg",
+        "position": 2,
+        "_id": "5be5f7f0de059314a41472d7",
+        "practices": [
+          "Corporate Law",
+          "Cammercial Law"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Gianpaolo",
+        "surname": "Terranova",
+        "role": "Lawyer",
+        "slug": "gianpaolo-terranova",
+        "phone": "+39 02 87046190",
+        "email": "g.terranova@sazalex.com",
+        "image": "assets/people/gianpaolo-terranova.jpg",
+        "position": 3,
+        "_id": "5be5f7f0de059314a41472d8",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Daniele",
+        "surname": "Salvi",
+        "role": "Lawyer",
+        "slug": "daniele-salvi",
+        "phone": "+39 02 87046190",
+        "email": "d.salvi@sazalex.com",
+        "image": "assets/people/daniele-salvi.jpg",
+        "position": 4,
+        "_id": "5be5f841de059314a42100e5",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": "Daniele started his career as a Lawyer in January 2017.\nFrom the beginning of his professional experience, and during his training period before 2017, he specialised in Administrative and Public Contracts Law.\nAfterwards, he started working in the energy sector, with Companies operating in the renewables and in the area of energy efficiency.\nHe has acquired a deep knowledge of the Italian Legislation related to the construction and operating of energy plants from renewables and on the State incentives to produce energy from natural resources and to promote energy efficiency interventions on buildings.\n\n## Professional experience\n\nIn his recent experience, he has been involved in different kind of activities:\n- assisting Italian and foreign Companies that operate Plants from renewables or have developed energy efficiency interventions and have obtained State incentives from Gestore dei Servizi Energetici – GSE S.p.A. (the Authority who dispenses the incentive and makes controls on the operators) during the verification procedures conducted by GSE;\n- participating in litigation procedures against GSE on behalf of many operators and Energy Service Companies (ESCO) in front of the competent Administrative Authority;\n- advising Companies of any size on the regulation in force, also at a Regional and Local level, regarding the construction and operation of Energy Plants and the conduction of energy efficiency interventions on industrial and residential buildings;\n- conducting due diligence activities on energy plants, especially PV plants, about their compliance with technical and administrative regulation; \n- offering legal opinions and advice to Firms involved in tenders or project financing procedures with Public Administrations related to the production of energy or the renovation of public buildings.\n\n\n## Education\n\nHe obtained his Law degree at “Luigi Bocconi” University in Milan in 2014.\n\n## Language\n\nItalian, English\n"
+      },
+      {
+        "name": "Anna",
+        "surname": "Castelli",
+        "role": "Lawyer",
+        "slug": "anna-castelli",
+        "phone": "+39 02 87046190",
+        "email": "a.castelli@sazalex.com",
+        "image": "assets/people/anna-castelli3.jpg",
+        "position": 5,
+        "_id": "5be5f87ade059314a422deee",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Laura",
+        "surname": "Ballarin",
+        "role": "Lawyer",
+        "slug": "laura-ballarin",
+        "phone": "+39 02 87046190",
+        "email": "l.ballarin@sazalex.com",
+        "image": "assets/people/laura-ballarin.jpg",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": "",
+        "position": 6,
+        "_id": "5c7f9c144419ac0a52b6318d"
+      },
+      {
+        "name": "Maria Giovanna",
+        "surname": "Laurenzana",
+        "role": "Lawyer",
+        "slug": "maria-laurenzana",
+        "phone": "+39 02 87046190",
+        "email": "m.laurenzana@sazalex.com",
+        "image": "assets/people/default-placeholder-businesswoman.jpg",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": "",
+        "position": 6,
+        "_id": "5c7f9d184419ac0a52f2fdb0"
+      },
+      {
+        "name": "Simona",
+        "surname": "De Nicolò",
+        "role": "Trainee",
+        "slug": "simona-denicolo",
+        "phone": "+39 02 87046190",
+        "email": "s.denicolo@sazalex.com",
+        "image": "assets/people/simona-denicolo.jpg",
+        "position": 7,
+        "_id": "5be5f91cde059314a425ae00",
+        "practices": [
+          "Corporate Law",
+          "Commercial Law"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Giorgia",
+        "surname": "Scarlata",
+        "role": "Trainee",
+        "slug": "giorgia-scarlata",
+        "phone": "+39 02 87046190",
+        "email": "g.scarlata@sazalex.com",
+        "image": "assets/people/giorgia-scarlata.jpg",
+        "position": 8,
+        "_id": "5be5f96ade059314a420573b",
+        "practices": [
+          "Corporate Law",
+          "Commercial Law"
+        ],
+        "bio": ""
+      },
+      {
+        "name": "Alessandro",
+        "surname": "Lo Giudice",
+        "role": "Trainee",
+        "slug": "alessandro-logiudice",
+        "phone": "+39 02 87046190",
+        "email": "a.logiudice@sazalex.com",
+        "image": "assets/people/alessandro-logiudice.jpg",
+        "practices": [
+          "Corporate Law",
+          "Commercial Law"
+        ],
+        "bio": "",
+        "position": 9,
+        "_id": "5c5d92414419ac0a50252b9c"
+      },
+      {
+        "name": "Vittoria",
+        "surname": "Musardo",
+        "role": "Trainee",
+        "slug": "vittoria-musardo",
+        "phone": "+39 02 87046190",
+        "email": "v.musardo@sazalex.com",
+        "image": "assets/people/vittoria-musardo.jpg",
+        "practices": [
+          "Energy Law",
+          "Public Services",
+          "Contract Works"
+        ],
+        "bio": "",
+        "position": 7,
+        "_id": "5c7f9c634419ac0a5218d47b"
+      },
+      {
+        "name": "Gianalberto",
+        "surname": "Tuzzato",
+        "role": "Lawyer, Of Counsel",
+        "slug": "gianalberto-tuzzato",
+        "phone": "+39 02 87046190",
+        "email": "",
+        "image": "assets/people/gianalberto-tuzzato.jpg",
+        "practices": [
+          "Company Law",
+          "Civil Litigation"
+        ],
+        "bio": "",
+        "position": 10,
+        "_id": "5c3c5f854419ac03d62fead4"
+      },
+      {
+        "name": "Valerio",
+        "surname": "Locatelli",
+        "role": "Registered Accountant",
+        "slug": "valerio-locatelli",
+        "phone": "+39 02 87046190",
+        "email": "",
+        "image": "assets/people/valerio-locatelli.jpg",
+        "practices": [
+          "Tax and Company Law"
+        ],
+        "bio": "",
+        "position": 10,
+        "_id": "5c3c5fac4419ac03d61f1038"
+      },
+      {
+        "name": "Francesco",
+        "surname": "Pezone",
+        "role": "Lawyer, Of Counsel",
+        "slug": "francesco-pezone",
+        "phone": "+39 02 87046190",
+        "email": "info@sazalex.com",
+        "image": "assets/people/francesco-pezone.jpg",
+        "practices": [
+          "Corporate Law",
+          "Commercial Law",
+          "Energy Law"
+        ],
+        "bio": "As corporate lawyer, he works in a broad spectrum of corporate and commercial law, and specializes in the renewable energy sector and legal and strategic consulting for Start Up.\nIn the field of renewable energy, in particular, Mr. Pezone has gained experience in years of direct practice at local, national and international level, with full awareness of the variables that move the market, as well as the continuous evolution of the relevant legislation.\n\n## Professional experiences and assignments\n\nLawyer since 2002 in Italy, he has been admitted to the New York Bar in 2008. Mr. Pezone has worked in leading Italian and international law firms and, in particular, with Grande Stevens in Turin, and then as a Foreign Associate with Paul, Weiss, Rifkind, Wharton & Garrison LLP in New York (U.S.A.). He is currently Partner at Eunomia Law Firm and manages the Turin firm.\nMember of the Board of Italia Solare.\n\n## Education\n\nGraduated cum laude at LUISS Guido Carli in Rome in 1999, he received the PhD in \"Economics, politics and legislation of international institutions and financial markets\" at La Sapienza University in Rome in 2005, and obtained his master's degree (LL .M.) In international commercial law at Columbia University in New York in 2008.\n\n## Associations\n\nHe is a member of the New York State Bar Association (NYSBA).\n\n## Web publications and articles\n- Spalmaincentivi, preliminary ruling to the EU Court of Justice: good news for operators in the photovoltaic sector\n- The Revenue Agency clarifies the tax treatment of the fees deriving from the constitution of the real land right\n- Minor Islands: ARERA received comments from interested parties. The resolution is awaited\n- The Constitutional Court declares the Regional Law of Puglia legitimate with regard to the bonds for the start of work on a photovoltaic system\n- The GSE suspends the effects of the verifications for photovoltaic systems with non-certified modules or with certifications that do not comply with the reference legislation\n- Maintenance operations and technological modernization of photovoltaic plants in operation: the GSE issues the New DTR\n- Reform of electricity tariffs for domestic customers\n- Spalma-Incentivi, sentence 16/2017 deposited: summary of the reasonings\n",
+        "position": 10,
+        "_id": "5c5c438f4419ac0a5027d724"
+      },
+      {
+        "name": "Lucia",
+        "surname": "Balistreri",
+        "role": "Lawyer, Of Counsel",
+        "slug": "lucia-balistreri",
+        "phone": "+39 02 87046190",
+        "email": "",
+        "image": "assets/people/default-placeholder-businesswoman.jpg",
+        "practices": [
+          "Corporate Law",
+          "Commercial Law"
+        ],
+        "bio": "",
+        "position": 10,
+        "_id": "5c3c60854419ac03d6662377"
+      }
+    ],
+    "news": [
+      {
+        "category": "NEWS",
+        "date": "2018-12-11",
+        "title": "Forum Italia Solare 2018, PPA digitalization of energy",
+        "excerpt": "More than 300 persons followed the third edition of the yearly forum of italia Solare. Emilio Sani focused on the impact of the digitalization on energy erformance contracts, PPAs, dinamic price, energy communities, clean energy package and new directive RED II.",
+        "slug": "forum-italia-solare-2018",
+        "_id": "5be879b7de059319c42f0eef",
+        "content": "",
+        "attachments": [
+          {
+            "label": "Download the presentation",
+            "path": "assets/uploads/digitalenglish.pdf"
+          }
+        ],
+        "featured": true
+      },
+      {
+        "category": "PUBLICATIONS",
+        "title": "Market and Grid parity",
+        "excerpt": "Webinair November 6, 2018. A short introduction to the Italian market, self-consumption of energy, Phisical PPAs, Virtual PPAs a short test of their convenience. ",
+        "_id": "5c2cf3cadd0d6072032d7b29",
+        "attachments": [
+          {
+            "label": "Download the presentation",
+            "path": "assets/uploads/market opportunities.pdf"
+          }
+        ],
+        "slug": "market-and-grid-parity",
+        "date": "2018-11-07",
+        "content": "",
+        "featured": true
+      },
+      {
+        "title": "E-Mobility chargers and existing regulation",
+        "excerpt": "The paper presented at the National conference on emobility. The principles of the existing Regulation on e mobility chargers  including tax aspects. The right to charge the electric cars. The Legislative Decree 257/2016 and the Eu Directive  2014/94.",
+        "_id": "5c2cf3dddd0d6072033319a7",
+        "date": "2018-09-26",
+        "attachments": [
+          {
+            "label": "Download the presentation",
+            "path": "assets/uploads/Template ppt EMOB.pdf"
+          }
+        ],
+        "category": "PUBLICATIONS",
+        "content": "",
+        "featured": true,
+        "slug": "e-mobility-chargers-and-existing-regulation"
+      },
+      {
+        "title": "The New Decree for the incentives to the renewables",
+        "excerpt": "The focus of Daniele salvi on the draft of new Decree for the support to power plants fuelled by renewable sources.",
+        "_id": "5c2cf3f0dd0d607203280b6c",
+        "attachments": [
+          {
+            "label": "Download the presentation",
+            "path": "assets/uploads/Presentazione DM FER.pdf"
+          }
+        ],
+        "content": "",
+        "slug": "the-new-decree-for-the-incentives-to-renewables",
+        "category": "PUBLICATIONS",
+        "date": "2018-11-22",
+        "featured": true
+      },
+      {
+        "title": "Sustainability of the islands",
+        "excerpt": "The management of water, heating, waste, energy services in the small islands Policies for the sustainability of the islands: benchmarking of the islands within the Observatory Focus Group of Greening the Islands. ",
+        "_id": "5c2cf403dd0d607203145d15",
+        "date": "2018-11-25",
+        "attachments": [
+          {
+            "label": "Download the presentation",
+            "path": "assets/uploads/Presentazione.pdf"
+          }
+        ],
+        "slug": "sustainability-of-the-islands",
+        "category": "PUBLICATIONS",
+        "content": "",
+        "featured": true
+      },
+      {
+        "title": "Follow us",
+        "excerpt": "The next meetings are: January 17, 2019 ATA Insight webinair: Setting your solar PV Project up for success in the large-scale italian market webinair February 8, 2019 Introduction to the new decree for the support to renewable sources April 15 2019 Future Solar Energy Summit, Milan",
+        "_id": "5c2cf424dd0d6072034efd7c",
+        "category": "",
+        "date": "",
+        "content": "",
+        "attachments": [],
+        "featured": false,
+        "slug": ""
+      },
+      {
+        "title": "Verifications on PV plants",
+        "excerpt": "A short review of the case law concerning the controls by GSE.",
+        "attachments": [
+          {
+            "label": "Download the presentation",
+            "path": "assets/uploads/Le nuova discipline  di sanatoria per le violazioni Ripristinato.pdf"
+          }
+        ],
+        "slug": "verifications-on-pv-plants",
+        "_id": "5c2f6ed1dd0d6099f230940d",
+        "category": "PUBLICATIONS",
+        "date": "",
+        "content": "",
+        "featured": true
+      },
+      {
+        "category": "PUBLICATIONS",
+        "date": "2019-01-07",
+        "title": "Digitalization of Energy. Is the regulation updated?",
+        "excerpt": "The short paper of Emilio Sani concerning Italian regulation on smart grids and dynamic prices, published on Rienergia, January 8th, 2019.",
+        "content": "",
+        "attachments": [
+          {
+            "label": "Link to the article (external)",
+            "path": "https://rienergia.staffettaonline.com/articolo/33207/Digitalizzazione+dell%E2%80%99energia:+la+normativa+sta+al+passo/Sani"
+          }
+        ],
+        "featured": true,
+        "slug": "digitalization-of-energy",
+        "_id": "5c3c658d4419ac03d6368fab"
+      }
+    ],
+    "practices": [
+      {
+        "name": "Energy and Public Services Law",
+        "content": "The lawyers of the firm have a material experience in advise and assistance to Italian and foreing companies in the field of Energy, Public Services and Environmental Law\n\n#### Energy \n\nThe lawyers are strongly focused in the legal assistance for:\n- renewable energy (PPAs long term agreements for the sale of energy, feasibility studies, land agreements, development agreements, engineering procurement construction agreements, supply agreements, maintenance agreements, loan agreements, financial lease, sale of business, or of SPVs owning the plant, management of the relation with GSE). The lawyers followed the development of more than 400 MWs of new renewable plants.\n- Energy efficiency (energy performance contracts, operating leases, feasibility studies, test of the compliance with white certificates or Thermal Account (Conto Termico) mechanisms and assistance in the obtainment of such incentives, relations with GSE)\n- Projects for development of self-consumption and energy efficiency in favor of public bodies for heating systems, lighting, Photovoltaic self-consumption of Municipalities, public service-companies, hospitals, also through procedures of project finance.\n- Assistance to operators in the installation of energy distributors for e- mobility.\n- Any kind of procedure before GSE, ARERA and Ministry of Economic Development, in particular in the field of incentives, sanctions and approval of tariffs.\n- From 2000 the lawyers draft PPAs agreements. In the field of self-consumption of energy they have been among the first to develop drafts of long term PPAs for self-consumption. The forms of PPAs and Operating lease agreements for PV plants, cogenerators. - Lighting systems are widely used in the Italian market and for PV Plant have been used as reference form in a project financed by Eu.\n\n#### Environmental and public service law\n\nIn the field of Environmental and public service law the lawyers of the firm supported primary operators in:\n- the development and obtainment of incentives of plants for the disposal of wastes and relation with the local communities; \n- procedures for the approval of clean up plan in site of national interest for the remediation of the soil and of the groundwater;\n- the study of the best ways to manage public services (water, wastes, energy, heating) in the small islands and in the remote locations; \n- financing of big infrastructures for the transportation of water;\n- development of public heating systems and agreements with the customers;\n- award of public services in particular public lighting and local heating.\n",
+        "_id": "5be99dbfde059305ec21da53",
+        "slug": "energy-and-public-services-law",
+        "header": "assets/practices/sz-header-a1-rami-energia.jpg"
+      },
+      {
+        "name": "Assistance to Industrial operators",
+        "content": "The lawyers of the firm have a very important experience in the engineering procurement contruction agreements for big industrial infrastructures in Europe and Latin America, both. \n\nThe lawyers of the Firm have strong experience and know how in rendering continuative legal services to industrial operators, in particular in the pharmaceutica, chemical, energy, mining, food, fashion  sector and for associations that aggregate companies operating in such sectors.\n\nIn particular the lawyers of the firm render the following services:\n- company law compliance\n- agreements for the supply of goods and services\n- contractual relations with distributors, suppliers and customers\n- contract for the development of new businesses and new projects  (including engineering procurement contracts)\n- opening of new subsidiaries in Italy and abroad \n- sale and purchase of businesses and companies\n- ordinary litigation in civil and  administrative matters\n- support in the filing of notes and documents in administrative procedures \n- check of the compliance with the rules and procedures concerning the terms of payment\n- check of the compliance of the agreements and  commercial procedures with the the Code for the protection of the customers\n- agreements and procedures for the supply of utilities (water, energy, gas, wastes, sewage systems)\n- financing operations, operating leases and financial leases\n- compliance with  privacy codes of conduct and criminal liability of the companies (231 Law) \n- tax matters with the support of the off counsels of the Firm\n",
+        "_id": "5be99dd9de059305ec2c2c84",
+        "slug": "assistance-to-industrial-operators",
+        "header": "assets/practices/sz-header-a1-rami-industria.jpg"
+      },
+      {
+        "name": "Administrative, Civil and Tax litigation and arbitration",
+        "content": "The lawyers of the Firm render their services before the Administrative, Civil and Tax Courts and the Water Court.\n\nIn particular the lawyers have a broad experience before the Administrative Court of Lazio and the Administrative Court of Lombardy for disputes concerning tariffs and incentives especially in the field of energy.\n\nAn important know how has been developed also in the field of  civil disputes before Civil Courts and arbitration panels for the supply of industrial equipment and  maintenance of plants. \n\nSignificanti is also the activity carried out in disputes concerning the interferences of industrial plants with the surrounding territory. \n\nIn the tax disputes the activity of the lawyers has been focused in claims concerning the entitlement to the obtainment of tax credits and other tax incentives or in disputes concerning the taxes to be paid for the use  of public soil.",
+        "_id": "5be99e14de059305ec37c1a5",
+        "slug": "administrative-civil-tax-litigation-and-arbitration",
+        "header": "assets/practices/sz-header-a1-rami-contenzioso.jpg"
+      }
+    ]
+  },
+  "files": []
+}

@@ -72,11 +72,11 @@ class JsonDataSource extends datasource_1.DataSource {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (value !== undefined) {
                 if (!itemPath) {
-                    this.jsonDocument = Object.assign({}, this.jsonDocument, value);
+                    this.jsonDocument = Object.assign(Object.assign({}, this.jsonDocument), value);
                 }
                 else {
                     const schemaPath = yield this.convertObjIDToIndex(itemPath);
-                    value = Object.assign({}, object_path_1.default.get(this.jsonDocument, schemaPath.split('/')), value);
+                    value = Object.assign(Object.assign({}, object_path_1.default.get(this.jsonDocument, schemaPath.split('/'))), value);
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
                 }
                 this.save();
@@ -94,6 +94,11 @@ class JsonDataSource extends datasource_1.DataSource {
             const schemaPath = yield this.convertObjIDToIndex(itemPath);
             object_path_1.default.del(this.jsonDocument, schemaPath.split('/'));
             this.save();
+        });
+    }
+    delCascade(itemPath) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            itemPath;
         });
     }
     dispatch(methodName, itemPath, schema, value, parentPath, params) {

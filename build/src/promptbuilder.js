@@ -19,18 +19,23 @@ class PromptBuilder extends datasource_1.DataRenderer {
     }
     getActions(itemPath, propertySchema) {
         const actions = [];
-        if (defaultActions[propertySchema.type]) {
-            defaultActions[propertySchema.type].map((name) => {
-                if (name === "back") {
-                    if (itemPath) {
-                        actions.push({ name: 'Back', value: { path: utils_1.backPath(itemPath) } });
-                    }
+        const types = !Array.isArray(propertySchema.type) ? [propertySchema.type] : propertySchema.type;
+        let defaultTypeActions = [];
+        types.map(type => {
+            if (defaultActions[type]) {
+                defaultTypeActions = defaultTypeActions.concat(defaultActions[type].filter((item) => defaultTypeActions.indexOf(item) < 0));
+            }
+        });
+        defaultTypeActions.map((name) => {
+            if (name === "back") {
+                if (itemPath) {
+                    actions.push({ name: 'Back', value: { path: utils_1.backPath(itemPath) } });
                 }
-                else if (propertySchema.readOnly !== true || name === "exit") {
-                    actions.push({ name: (name.slice(0, 1).toUpperCase() + name.slice(1)), value: { path: itemPath, type: name } });
-                }
-            });
-        }
+            }
+            else if (propertySchema.readOnly !== true || name === "exit") {
+                actions.push({ name: (name.slice(0, 1).toUpperCase() + name.slice(1)), value: { path: itemPath, type: name } });
+            }
+        });
         return actions;
     }
     checkAllowed(propertySchema, parentPropertyValue) {
@@ -61,7 +66,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
             const choices = yield this.getOptions(propertySchema);
             return {
                 name: `value`,
-                message: `Enter ${propertySchema.type ? propertySchema.type.toLowerCase() : 'value'}:`,
+                message: `Enter ${propertySchema.type ? propertySchema.type.toString().toLowerCase() : 'value'}:`,
                 default: defaultValue,
                 disabled: !!propertySchema.readOnly,
                 type: propertySchema.type === 'boolean' ? 'confirm' :

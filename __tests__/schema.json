@@ -1,0 +1,381 @@
+{
+  "$id": "http://json-schema.org/draft-06/schema#",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "Page": {
+      "type": "object",
+      "title": "Page",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "Type"
+        },
+        "title": {
+          "type": "string",
+          "title": "Title"
+        },
+        "metaDescription": {
+          "type": "string",
+          "title": "Meta Description",
+          "default": ""
+        },
+        "metaKeywords": {
+          "type": "string",
+          "title": "Meta Keywords",
+          "default": ""
+        },
+        "slug": {
+          "type": "string",
+          "title": "Slug",
+          "default": ""
+        },
+        "navigationAction": {
+          "type": "string",
+          "title": "Navigation Action"
+        },
+        "logo": {
+          "type": "string",
+          "title": "Logo"
+        },
+        "backLink": {
+          "type": "string",
+          "title": "Back Link"
+        },
+        "icon": {
+          "type": "string",
+          "title": "Icon"
+        },
+        "showAsPopupActionItem": {
+          "type": "boolean",
+          "title": "Show as Popup Action",
+          "default": false
+        },
+        "showAsDrawerItem": {
+          "type": "boolean",
+          "title": "Show as Drawer Item",
+          "default": false
+        },
+        "actionBarHidden": {
+          "type": "boolean",
+          "title": "Actionbar Hidden",
+          "default": false
+        },
+        "actionItemsHidden": {
+          "type": "boolean",
+          "title": "Action Items Hidden",
+          "default": false
+        },
+        "opacityTopScrollPosition": {
+          "type": "integer",
+          "title": "Opacity Top Scroll Position",
+          "default": 150
+        },
+        "columns": {
+          "type": "array",
+          "title": "Columns",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {    
+                "type": "string",
+                "title": "Name"
+              },
+              "label": {    
+                "type": "string",
+                "title": "Label"
+              }
+            }
+          }
+        },
+        "form": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "User": {
+      "type": "object",
+      "title": "Items",
+      "properties": {
+        "email": {
+          "type": "string",
+          "title": "Email",
+          "pattern": "^\\S+@\\S+$"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password",
+          "minLength": 8
+        },
+        "name": {
+          "type": "string",
+          "title": "Name"
+        },
+        "surname": {
+          "type": "string",
+          "title": "Surname"
+        },
+        "superuser": {
+          "type": "boolean",
+          "title": "Superuser",
+          "default": false
+        }
+      }
+    },
+    "FileElement": {
+      "type": "object",
+      "title": "File",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name"
+        },
+        "slug": {
+          "type": "string",
+          "title": "Slug"
+        },
+        "parent": {
+          "type": "string",
+          "title": "Parent"
+        },
+        "isFolder": {
+          "type": "boolean",
+          "title": "isFolder"
+        }
+      }
+    },
+    "News": {
+      "type": "object",
+      "title": "Items",
+      "properties": {
+        "category": {
+          "type": "string",
+          "title": "Category",
+          "default": ""
+        },
+        "date": {  
+          "type": "string",
+          "title": "Date",
+          "default": ""
+        },
+        "title": {
+          "type": "string",
+          "title": "Title",
+          "default": "" 
+        },
+        "excerpt": {
+          "type": "string",
+          "title": "Excerpt",
+          "default": ""
+        },
+        "content": {
+          "type": "string",
+          "title": "Full text",
+          "default": ""
+        },
+        "attachments": {
+          "type": "array",
+          "title": "Attachments",
+          "items": {    
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "path": { "type": "string" }
+            }
+          }
+        },
+        "featured": {
+          "type": "boolean",
+          "title": "Show on homepage",
+          "default": false
+        },
+        "slug": {
+          "type": "string",
+          "title": "Slug",
+          "default": ""
+        }
+      }
+    },
+    "Person": {
+      "type": "object",
+      "title": "Items",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "default": ""
+        },
+        "surname": {
+          "type": "string",
+          "title": "Surname",
+          "default": ""
+        },
+        "role": {
+          "type": "string",
+          "title": "Role",
+          "default": ""
+        },
+        "slug": {
+          "type": "string",
+          "title": "Slug",
+          "default": ""
+        },
+        "phone": {
+          "type": "string",
+          "title": "Phone",
+          "default": ""
+        },
+        "email": {
+          "type": "string",
+          "title": "Email",
+          "default": ""
+        },
+        "image": {
+          "type": "string",
+          "title": "Image",
+          "default": ""
+        },
+        "practices": {
+          "type": "array",
+          "title": "Practices",
+          "items": {    
+            "type": "string",
+            "title": "Items"
+          }
+        },
+        "bio": {
+          "type": "string",
+          "title": "Bio",
+          "default": ""
+        },
+        "position": {
+          "type": "integer",
+          "title": "Position #"
+        }
+      }
+    },
+    "Practice": {
+      "type": "object",
+      "title": "Items",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "default": ""
+        },
+        "header": {
+          "type": "string",
+          "title": "Header Image",
+          "default": ""
+        },
+        "slug": {
+          "type": "string",
+          "title": "Slug",
+          "default": ""
+        },
+        "content": {  
+          "type": "string",
+          "title": "Content",
+          "default": ""
+        }
+      }
+    }
+  },
+  "type": "object",
+  "title": "Root",
+  "properties": {
+    "users": {
+      "type": "array",
+      "title": "Users",
+      "items": {
+        "$ref": "#/definitions/User"
+      }
+    },
+    "it": {
+      "type": "object",
+      "title": "Lang IT",
+      "properties": {
+        "pages": {
+          "type": "array",
+          "title": "Pages",
+          "items": {
+            "$ref": "#/definitions/Page"
+          }
+        },    
+        "news": {
+          "type": "array",
+          "title": "News",
+          "items": {
+            "$ref": "#/definitions/News"
+          }
+        },
+        "people": {
+          "type": "array",
+          "title": "People",
+          "items": {
+            "$ref": "#/definitions/Person"
+          }
+        },
+        "practices": {
+          "type": "array",
+          "title": "Practices",
+          "items": {
+            "$ref": "#/definitions/Practice"
+          }
+        }    
+      }
+    },
+    "en": {
+      "type": "object",
+      "title": "Lang EN",
+      "properties": {
+        "pages": {
+          "type": "array",
+          "title": "Pages",
+          "items": {
+            "$ref": "#/definitions/Page"
+          }
+        },    
+        "news": {
+          "type": "array",
+          "title": "News",
+          "items": {
+            "$ref": "#/definitions/News"
+          }
+        },
+        "people": {
+          "type": "array",
+          "title": "People",
+          "items": {
+            "$ref": "#/definitions/Person"
+          }
+        },
+        "practices": {
+          "type": "array",
+          "title": "Practices",
+          "items": {
+            "$ref": "#/definitions/Practice"
+          }
+        }    
+      }
+    },
+    "files": {
+      "type": "array",
+      "title": "Files",
+      "items": {
+        "$ref": "#/definitions/FileElement"
+      },
+      "$proxy": {
+        "proxyName": "filesystem",
+        "params": {
+          "rootDir": ""
+        }
+      }  
+    }
+  }
+}

@@ -30,7 +30,7 @@ describe('constructor', () => {
         const ds0 = new JsonDataSource({ test: 1 });
         const value = await ds0.get();
         expect(value).toEqual({ test: 1 });
-        expect(ds0.dataFile).not.toBeDefined(); 
+        //expect(ds0.dataFile).not.toBeDefined(); 
     });
     it('jsonDocument is udefined on not existent json file', async () => {
         let ds;
@@ -46,10 +46,9 @@ describe('constructor', () => {
         expect(newValue).toEqual(undefined);
     });
     it('constructor to throw on malformed json file', () => {
-        let ds;
         let exception;
         try {
-            ds = new JsonDataSource(path.join(process.cwd(), '__tests__', 'malformed.json'));
+            new JsonDataSource(path.join(process.cwd(), '__tests__', 'malformed.json'));
         } catch (e) {
             exception = e;
         }

@@ -25,17 +25,23 @@ export class PromptBuilder extends DataRenderer {
     
     private getActions(itemPath: string, propertySchema: IProperty): INameValueState[] {
         const actions: INameValueState[] = [];
-        if (defaultActions[propertySchema.type]) {
-            defaultActions[propertySchema.type].map( (name: string) => {
-                if (name === Action.BACK) {
-                    if (itemPath) {
-                        actions.push({ name: 'Back', value: { path: backPath(itemPath) }});
-                    }
-                } else if (propertySchema.readOnly !== true || name === Action.EXIT) {
-                    actions.push({ name: (name.slice(0,1).toUpperCase()+name.slice(1)), value: { path: itemPath, type: name }});
+        const types = !Array.isArray(propertySchema.type)? [propertySchema.type] : propertySchema.type;
+        let defaultTypeActions = [];
+        types.map( type => {
+            if (defaultActions[type]) {
+                defaultTypeActions = defaultTypeActions.concat(defaultActions[type].filter(
+                    (item) => defaultTypeActions.indexOf(item) < 0));
+            }
+        });
+        defaultTypeActions.map( (name: string) => {
+            if (name === Action.BACK) {
+                if (itemPath) {
+                    actions.push({ name: 'Back', value: { path: backPath(itemPath) }});
                 }
-            });
-        }
+            } else if (propertySchema.readOnly !== true || name === Action.EXIT) {
+                actions.push({ name: (name.slice(0,1).toUpperCase()+name.slice(1)), value: { path: itemPath, type: name }});
+            }
+        });
 
         return actions;
     } 
@@ -68,7 +74,7 @@ export class PromptBuilder extends DataRenderer {
 
         return {
             name: `value`,
-            message: `Enter ${propertySchema.type ? propertySchema.type.toLowerCase(): 'value'}:`,
+            message: `Enter ${propertySchema.type ? propertySchema.type.toString().toLowerCase(): 'value'}:`,
             default: defaultValue,
             disabled: !!propertySchema.readOnly,
             type: propertySchema.type==='boolean'? 'confirm': 

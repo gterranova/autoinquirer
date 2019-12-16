@@ -96,7 +96,12 @@ export class JsonDataSource extends DataSource {
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
         this.save();
     }
-
+    
+    public async delCascade(itemPath?: string) {
+        // Nothing to do
+        itemPath;
+    }
+    
     public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
         if (!this[methodName]) {
             throw new Error(`Method ${methodName} not implemented`);
