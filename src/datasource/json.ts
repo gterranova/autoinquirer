@@ -6,6 +6,7 @@ import objectPath from 'object-path';
 import { IProperty } from '../interfaces';
 import { getType, loadJSON, objectId } from '../utils';
 import { DataSource } from './datasource';
+import { JsonSchema } from './jsonschema';
 
 export class JsonDataSource extends DataSource {
     private jsonDocument: any;
@@ -29,6 +30,11 @@ export class JsonDataSource extends DataSource {
         if (this.dataFile) { fs.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2)); }
     }
 
+    // tslint:disable-next-line:no-reserved-keywords
+    public getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
+        throw new Error("Method not implemented.");
+    }
+    
     // tslint:disable-next-line:no-reserved-keywords
     public async get(itemPath?: string) {
         if (!itemPath) { return this.jsonDocument; }

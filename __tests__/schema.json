@@ -373,7 +373,7 @@
       "$proxy": {
         "proxyName": "filesystem",
         "params": {
-          "rootDir": ""
+          "rootDir": "autoinquirer"
         }
       }  
     }

@@ -32,10 +32,12 @@ export interface IPrompt {
     pageSize?: number;
     disabled?: boolean;
     errors?: any;
+    path?: string;
 }
 export interface IFeedBack {
     name: string;
     answer: any;
+    value?: any;
 }
 export declare type PrimitiveType = number | boolean | string | null;
 export interface IProxyInfo {

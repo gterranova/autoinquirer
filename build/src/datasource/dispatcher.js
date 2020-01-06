@@ -5,6 +5,7 @@ const utils_1 = require("../utils");
 const datasource_1 = require("./datasource");
 const json_1 = require("./json");
 const jsonschema_1 = require("./jsonschema");
+const path = require('path');
 ;
 class Dispatcher extends datasource_1.DataSource {
     constructor(schema, data, renderer) {
@@ -36,9 +37,17 @@ class Dispatcher extends datasource_1.DataSource {
             yield Promise.all(this.proxies.map((proxy) => proxy.dataSource.close()));
         });
     }
-    getSchema(itemPath) {
+    getSchema(itemPath, schemaSource) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const schema = yield this.schemaSource.get(itemPath);
+            for (const proxy of this.getProxyForPath(itemPath).reverse()) {
+                const { parentPath, proxyInfo } = proxy;
+                const dataSource = this.getProxy(proxyInfo);
+                if (dataSource) {
+                    return yield dataSource.getSchema(itemPath, schemaSource || this.schemaSource, parentPath, proxyInfo.params);
+                }
+            }
+            ;
+            const schema = yield (schemaSource || this.schemaSource).get(itemPath);
             return schema;
         });
     }
@@ -160,8 +169,8 @@ class Dispatcher extends datasource_1.DataSource {
             return Object.assign(Object.assign({}, paths), this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items));
         }
         return Object.keys(paths).reduce((acc, key) => {
-            const fixedObjKey = key.replace(/\\\/$/, '');
-            acc[`${p}\\/${fixedObjKey}`] = paths[key];
+            const fixedObjKey = key.replace(/\/$/, '');
+            acc[`${path.join(p, fixedObjKey)}`] = paths[key];
             return acc;
         }, {});
     }
@@ -178,7 +187,7 @@ class Dispatcher extends datasource_1.DataSource {
     getProxyWithinPath(itemPath) {
         const schemaPath = itemPath !== undefined ? itemPath : '';
         const comparisonPath = schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
-            .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})').replace('/', '\\/');
+            .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})');
         return Object.keys(this.entryPoints).filter((k) => {
             return k.indexOf(comparisonPath) !== -1;
         }).map((foundKey) => {

@@ -33,6 +33,9 @@ class AutoInquirer extends events_1.EventEmitter {
     onAnswer(data) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.answer = Object.assign(Object.assign({}, this.answer), { [data.name]: data.answer });
+            if (data.hasOwnProperty('value')) {
+                this.answer.value = data.value;
+            }
             yield this.performActions(this.answer);
         });
     }

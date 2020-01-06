@@ -114,4 +114,8 @@ export class JsonSchema extends DataSource {
         // tslint:disable-next-line:no-return-await
         return await this[methodName].call(this, itemPath, schema, value, parentPath, params);
     }
+
+    public getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
+        throw new Error("Method not implemented.");
+    }
 }

@@ -27,6 +27,9 @@ class JsonDataSource extends datasource_1.DataSource {
             }
         });
     }
+    getSchema(_itemPath, _schemaSource, _parentPath, _params) {
+        throw new Error("Method not implemented.");
+    }
     get(itemPath) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!itemPath) {

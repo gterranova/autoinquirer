@@ -55,11 +55,12 @@ class PromptBuilder extends datasource_1.DataRenderer {
                 type: 'list',
                 message: this.getName(propertySchema, null, propertySchema),
                 choices: [...choices, ...this.getActions(itemPath, propertySchema)],
-                pageSize: 20
+                pageSize: 20,
+                path: itemPath
             };
         });
     }
-    makePrompt(propertySchema, propertyValue) {
+    makePrompt(itemPath, propertySchema, propertyValue) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const defaultValue = propertyValue !== undefined ? propertyValue : propertySchema.default;
             const isCheckbox = this.isCheckBox(propertySchema);
@@ -73,7 +74,8 @@ class PromptBuilder extends datasource_1.DataRenderer {
                     (isCheckbox ? 'checkbox' :
                         (choices && choices.length ? 'list' :
                             'input')),
-                choices
+                choices,
+                path: itemPath,
             };
         });
     }
@@ -121,12 +123,12 @@ class PromptBuilder extends datasource_1.DataRenderer {
                     case 'array':
                         const arrayItemSchema = propertySchema.items;
                         return Array.isArray(propertyValue) && propertyValue.map((arrayItem, idx) => {
-                            const myId = (arrayItem && arrayItem._id) || idx;
+                            const myId = (arrayItem && (arrayItem.slug || arrayItem._id)) || idx;
                             const readOnly = (!!propertySchema.readOnly || !!arrayItemSchema.readOnly);
                             const writeOnly = (!!propertySchema.writeOnly || !!arrayItemSchema.writeOnly);
                             const item = {
-                                name: this.getName(arrayItem, myId, arrayItemSchema),
                                 disabled: this.isPrimitive(arrayItemSchema) && readOnly && !writeOnly,
+                                name: this.getName(arrayItem, ~[arrayItem.name, arrayItem.title].indexOf(myId) ? null : myId, arrayItemSchema),
                                 value: {
                                     path: `${basePath}${myId}`
                                 }
@@ -199,7 +201,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
     }
     evaluate(_, itemPath, propertySchema, propertyValue) {
         if (this.isPrimitive(propertySchema)) {
-            return this.makePrompt(propertySchema, propertyValue);
+            return this.makePrompt(itemPath, propertySchema, propertyValue);
         }
         return this.makeMenu(itemPath, propertySchema, propertyValue);
     }

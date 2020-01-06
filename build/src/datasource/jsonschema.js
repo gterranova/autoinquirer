@@ -102,6 +102,9 @@ class JsonSchema extends datasource_1.DataSource {
             return yield this[methodName].call(this, itemPath, schema, value, parentPath, params);
         });
     }
+    getSchema(_itemPath, _schemaSource, _parentPath, _params) {
+        throw new Error("Method not implemented.");
+    }
 }
 exports.JsonSchema = JsonSchema;
 //# sourceMappingURL=jsonschema.js.map

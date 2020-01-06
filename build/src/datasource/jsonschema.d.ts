@@ -11,4 +11,5 @@ export declare class JsonSchema extends DataSource {
     coerce(schema: IProperty, value?: any): any;
     validate(schema?: IProperty, data?: any): any;
     dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any): Promise<any>;
+    getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty>;
 }

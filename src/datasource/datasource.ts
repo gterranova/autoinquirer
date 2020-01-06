@@ -1,5 +1,6 @@
 import { IProperty } from '../interfaces';
 import { getType } from '../utils';
+import { JsonSchema } from './jsonschema';
 
 // tslint:disable:no-console
 
@@ -17,6 +18,7 @@ export abstract class DataSource {
     public async abstract close(): Promise<void>; 
 
     // tslint:disable-next-line:no-reserved-keywords
+    public async abstract getSchema(itemPath?: string, schemaSource?: JsonSchema, parentPath?: string, params?: Param): Promise<IProperty>;
     public async abstract get(itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param): Promise<Item>;
     public async abstract dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param);
 

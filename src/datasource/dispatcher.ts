@@ -6,6 +6,8 @@ import { DataRenderer, DataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
 
+const path = require('path');
+
 declare type IEntryPoints = { [key: string]: IProxyInfo};
 
 interface IEntryPointInfo { 
@@ -58,9 +60,21 @@ export class Dispatcher extends DataSource {
     } 
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(itemPath?: string): Promise<IProperty> {
+    public async getSchema(itemPath?: string, schemaSource?: JsonSchema): Promise<IProperty> {
+        //console.log(`DISPATCH getSchema(itemPath?: ${itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
-        const schema = await this.schemaSource.get(itemPath);
+        for (const proxy of this.getProxyForPath(itemPath).reverse()) {
+            // tslint:disable-next-line:no-console
+            //console.log("REFS", collectionRefs);
+            const { parentPath, proxyInfo } = proxy;
+            const dataSource = this.getProxy(proxyInfo);
+            if (dataSource) {
+                // tslint:disable-next-line:no-return-await
+                //console.log(`DISPATCH DELEGATE getSchema(itemPath?: ${itemPath})`);
+                return await dataSource.getSchema(itemPath, schemaSource || this.schemaSource, parentPath, proxyInfo.params);
+            }
+        };
+        const schema = await (schemaSource || this.schemaSource).get(itemPath);
         
         return schema;
     }
@@ -99,7 +113,7 @@ export class Dispatcher extends DataSource {
     // tslint:disable-next-line:cyclomatic-complexity
     public async dispatch(methodName: string, itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any> {
         // tslint:disable-next-line:no-console
-        //console.log(`DISPATCH ${methodName}:`, itemPath, value)
+        //console.log(`DISPATCH dispatch(methodName: ${methodName}, itemPath?: ${itemPath}, propertySchema?: ${propertySchema}, value?: ${value})`)
         // tslint:disable-next-line:no-parameter-reassignment
         itemPath = itemPath !== undefined? itemPath: '';
         const schema = propertySchema || await this.getSchema(itemPath);
@@ -175,6 +189,7 @@ export class Dispatcher extends DataSource {
     }
     
     private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {
+        //console.log(`DISPATCH findEntryPoints(p: string = ${p}, schema: ${schema})`)
         let paths: IEntryPoints = {};
         if (!schema) { return {}; }
 
@@ -199,8 +214,8 @@ export class Dispatcher extends DataSource {
         } 
 
         return Object.keys(paths).reduce( (acc: IEntryPoints, key: string) => {
-            const fixedObjKey = key.replace(/\\\/$/, '');
-            acc[`${p}\\/${fixedObjKey}`] = paths[key];
+            const fixedObjKey = key.replace(/\/$/, '');
+            acc[`${path.join(p, fixedObjKey)}`] = paths[key];
             // tslint:disable-next-line:no-console
             //console.log(p,key,`${p}${p?'\\/':''}${key}`)
             
@@ -209,6 +224,7 @@ export class Dispatcher extends DataSource {
     }
 
     private getProxyForPath(itemPath?: string): IEntryPointInfo[] {
+        //console.log(`DISPATCH getProxyForPath(itemPath?: ${itemPath})`)
         const schemaPath = itemPath !== undefined && itemPath !== null? itemPath: '';
         
         return Object.keys(this.entryPoints).filter( (k: string) => {
@@ -225,8 +241,9 @@ export class Dispatcher extends DataSource {
         const schemaPath = itemPath !== undefined? itemPath: '';
         // tslint:disable-next-line:prefer-template
         const comparisonPath = schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
-            .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})').replace('/', '\\/')
-        
+            .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})') //.replace('/', '\\/')
+
+        //console.log(`DISPATCH getProxyWithinPath(itemPath?: ${itemPath})`, schemaPath, comparisonPath)        
         return Object.keys(this.entryPoints).filter( (k: string) => {
             return k.indexOf(comparisonPath) !== -1;
         }).map( (foundKey: string) => {
@@ -235,6 +252,8 @@ export class Dispatcher extends DataSource {
     }
 
     private getProxy(proxyInfo: IProxyInfo): DataSource {
+        //console.log(`DISPATCH getProxy(proxyInfo: ${proxyInfo})`)
+        
         const proxy = this.proxies.find( (p: IProxy) => p.name === proxyInfo.proxyName);
         
         return proxy && proxy.dataSource;

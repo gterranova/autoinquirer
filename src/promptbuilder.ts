@@ -63,11 +63,12 @@ export class PromptBuilder extends DataRenderer {
             type: 'list',
             message: this.getName(propertySchema, null, propertySchema),
             choices: [...choices, ...this.getActions(itemPath, propertySchema)],
-            pageSize: 20
+            pageSize: 20,
+            path: itemPath
         };
     }
     
-    private async makePrompt(propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {        
+    private async makePrompt(itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {        
         const defaultValue = propertyValue!==undefined ? propertyValue : propertySchema.default;
         const isCheckbox = this.isCheckBox(propertySchema);
         const choices = await this.getOptions(propertySchema);
@@ -81,7 +82,8 @@ export class PromptBuilder extends DataRenderer {
                 (isCheckbox? 'checkbox':
                     (choices && choices.length? 'list':
                         'input')),
-            choices
+            choices,
+            path: itemPath,
         };
     }
 
@@ -139,12 +141,12 @@ export class PromptBuilder extends DataRenderer {
                     const arrayItemSchema: IProperty = propertySchema.items;
 
                     return Array.isArray(propertyValue) && propertyValue.map( (arrayItem: Item, idx: number) => {
-                        const myId = (arrayItem && arrayItem._id) || idx;
+                        const myId = (arrayItem && (arrayItem.slug || arrayItem._id)) || idx;
                         const readOnly = (!!propertySchema.readOnly || !!arrayItemSchema.readOnly);
                         const writeOnly = (!!propertySchema.writeOnly || !!arrayItemSchema.writeOnly);
                         const item: INameValueState = { 
-                            name: this.getName(arrayItem, myId, arrayItemSchema), 
                             disabled: this.isPrimitive(arrayItemSchema) && readOnly && !writeOnly,
+                            name: this.getName(arrayItem, ~[arrayItem.name, arrayItem.title].indexOf(myId)? null : myId, arrayItemSchema), 
                             value: {  
                                 path: `${basePath}${myId}`
                             } 
@@ -223,7 +225,7 @@ export class PromptBuilder extends DataRenderer {
         
     private evaluate(_: string, itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {
         if (this.isPrimitive(propertySchema)) {
-            return this.makePrompt(propertySchema, propertyValue);
+            return this.makePrompt(itemPath, propertySchema, propertyValue);
         }
 
         return this.makeMenu(itemPath, propertySchema, propertyValue);

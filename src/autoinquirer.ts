@@ -41,6 +41,11 @@ export class AutoInquirer extends EventEmitter {
 
     public async onAnswer(data: IFeedBack) {
         this.answer = {...this.answer, [data.name]: data.answer};
+        if (data.hasOwnProperty('value')) {
+            this.answer.value = data.value;
+        }
+        //console.log("DATA:", JSON.stringify(data));
+        //console.log("RECEIVED:", JSON.stringify(this.answer));
         await this.performActions(this.answer);
     }
 

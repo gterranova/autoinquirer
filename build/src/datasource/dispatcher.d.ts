@@ -10,7 +10,7 @@ export declare class Dispatcher extends DataSource {
     constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer);
     connect(): Promise<void>;
     close(): Promise<void>;
-    getSchema(itemPath?: string): Promise<IProperty>;
+    getSchema(itemPath?: string, schemaSource?: JsonSchema): Promise<IProperty>;
     get(itemPath?: string, propertySchema?: IProperty): Promise<any>;
     set(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
     update(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
