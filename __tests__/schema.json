@@ -376,6 +376,18 @@
           "rootDir": "autoinquirer"
         }
       }  
+    },
+    "testProperties": {
+      "type": "object",
+      "properties": {
+        "checkbox": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["test1", "test2", "test3"]  
+          }
+        }
+      }
     }
   }
 }
