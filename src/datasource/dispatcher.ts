@@ -198,9 +198,13 @@ export class Dispatcher extends DataSource {
                 paths[''] = schema.$proxy;
             }
             if (schema.properties) {
-                Object.keys(schema.properties).map((key: string) => {
-                    paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
-                });        
+                try {
+                    Object.keys(schema.properties).map((key: string) => {
+                        paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
+                    });            
+                } catch {
+                    // RangeError: Maximum call stack size exceeded
+                }
             } else {
                 // tslint:disable-next-line:no-console
                 console.warn("Malformed schema: object missing properties:", schema);
@@ -209,8 +213,11 @@ export class Dispatcher extends DataSource {
             if (schema.$proxy) {
                 paths[p] = schema.$proxy;
             }
-            
-            return {...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items)}
+            try {
+                return {...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items)};
+            } catch {
+                // RangeError: Maximum call stack size exceeded
+            }
         } 
 
         return Object.keys(paths).reduce( (acc: IEntryPoints, key: string) => {

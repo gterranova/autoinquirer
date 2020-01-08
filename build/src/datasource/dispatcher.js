@@ -154,9 +154,13 @@ class Dispatcher extends datasource_1.DataSource {
                 paths[''] = schema.$proxy;
             }
             if (schema.properties) {
-                Object.keys(schema.properties).map((key) => {
-                    paths = Object.assign(Object.assign({}, paths), this.findEntryPoints(key, schema.properties[key]));
-                });
+                try {
+                    Object.keys(schema.properties).map((key) => {
+                        paths = Object.assign(Object.assign({}, paths), this.findEntryPoints(key, schema.properties[key]));
+                    });
+                }
+                catch (_a) {
+                }
             }
             else {
                 console.warn("Malformed schema: object missing properties:", schema);
@@ -166,7 +170,11 @@ class Dispatcher extends datasource_1.DataSource {
             if (schema.$proxy) {
                 paths[p] = schema.$proxy;
             }
-            return Object.assign(Object.assign({}, paths), this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items));
+            try {
+                return Object.assign(Object.assign({}, paths), this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items));
+            }
+            catch (_b) {
+            }
         }
         return Object.keys(paths).reduce((acc, key) => {
             const fixedObjKey = key.replace(/\/$/, '');

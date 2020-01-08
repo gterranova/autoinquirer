@@ -88,10 +88,18 @@ class JsonSchema extends datasource_1.DataSource {
         if (value !== schema.default && value !== undefined && (data !== undefined || schema.default !== undefined) && value.toString() !== (data !== undefined ? data : schema.default).toString()) {
             throw new Error(`Error: expecting an ${schema.type}`);
         }
-        if (!this.validator.validate(schema, value)) {
-            throw new Error(this.validator.errors.map((err) => err.message).join('\n'));
+        try {
+            if (!this.validator.validate(schema, value)) {
+                throw new Error(this.validator.errors.map((err) => err.message).join('\n'));
+            }
+            ;
         }
-        ;
+        catch (error) {
+            if (!~error.message.indexOf("Converting circular structure to JSON")) {
+                throw error;
+            }
+            ;
+        }
         return value;
     }
     dispatch(methodName, itemPath, schema, value, parentPath, params) {

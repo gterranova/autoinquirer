@@ -99,10 +99,16 @@ export class JsonSchema extends DataSource {
             //console.log(schema, value, data);
             throw new Error(`Error: expecting an ${schema.type}`); 
         }
-        if (!this.validator.validate(schema, value)) {
-            throw new Error(this.validator.errors.map( (err: any) => err.message ).join('\n'));
-        };
-        
+        try {
+            if (!this.validator.validate(schema, value)) {
+                throw new Error(this.validator.errors.map( (err: any) => err.message ).join('\n'));
+            };                
+        } catch (error) {
+            // Recursion maybe
+            if (!~error.message.indexOf("Converting circular structure to JSON")) {
+                throw error;
+            };
+        }        
         return value;
     }
 
