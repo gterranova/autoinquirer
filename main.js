@@ -26,7 +26,9 @@ const createDatasource = async function (
 async function main() { // jshint ignore:line
 
     const prompts = new Subject();
-    const dispatcher = await createDatasource(program.args[0], program.args[1], new PromptBuilder()); // jshint ignore:line
+    const promptBuilder = new PromptBuilder();
+    const dispatcher = await createDatasource(program.args[0], program.args[1], promptBuilder); // jshint ignore:line
+    promptBuilder.setDatasource(dispatcher);
     const autoInquirer = new AutoInquirer(dispatcher);
 
     //autoInquirer.inquire(inquirer.prompt).then(() => console.log('') );
