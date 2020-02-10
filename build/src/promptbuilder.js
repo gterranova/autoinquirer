@@ -3,12 +3,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const datasource_1 = require("./datasource");
 const utils_1 = require("./utils");
+const Handlebars = tslib_1.__importStar(require("handlebars"));
 const separatorChoice = { type: 'separator' };
 const defaultActions = {
     'object': ["back", "del", "exit"],
     'array': ["push", "back", "exit"]
 };
+exports.lookupValues = (schemaPath = '', obj, currPath = '') => {
+    const parts = typeof schemaPath === 'string' ? schemaPath.split('/') : schemaPath;
+    const key = parts[0];
+    const converted = currPath.split('/');
+    let output = {};
+    if (Array.isArray(obj)) {
+        obj.map((itemObj) => {
+            if (itemObj && (RegExp(key).test(itemObj._id) || key === itemObj.slug)) {
+                const devPath = [...converted, itemObj._id];
+                output = Object.assign(Object.assign({}, output), exports.lookupValues(parts.slice(1), itemObj, devPath.join('/')));
+            }
+            ;
+        });
+    }
+    else if (obj[key]) {
+        converted.push(key);
+        return exports.lookupValues(parts.slice(1), obj[key], converted.join('/'));
+    }
+    else if (parts.length == 0) {
+        return { [converted.join('/').replace(/^\//, '')]: obj };
+    }
+    return output;
+};
 class PromptBuilder extends datasource_1.DataRenderer {
+    setDatasource(datasource) {
+        this.datasource = datasource;
+        Handlebars.registerHelper("resolve", value => this.datasource.dispatch('get', value) || '');
+    }
     render(methodName, itemPath, propertySchema, propertyValue) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (methodName === "exit") {
@@ -53,7 +81,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
             return {
                 name: 'state',
                 type: 'list',
-                message: this.getName(propertySchema, null, propertySchema),
+                message: yield this.getName(propertyValue, null, propertySchema),
                 choices: [...choices, ...this.getActions(itemPath, propertySchema)],
                 pageSize: 20,
                 path: itemPath
@@ -101,16 +129,17 @@ class PromptBuilder extends datasource_1.DataRenderer {
                                 }
                             }
                         }
-                        return yield Promise.all(Object.keys(propertyProperties).map((key) => {
+                        return yield Promise.all(Object.keys(propertyProperties).map((key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                             const property = propertyProperties[key];
+                            let value = propertyValue && propertyValue[key];
                             if (!property) {
                                 throw new Error(`${schemaPath}/${key} not found`);
                             }
-                            return this.checkAllowed(property, propertyValue).then((allowed) => {
+                            return this.checkAllowed(property, propertyValue).then((allowed) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                                 const readOnly = (!!propertySchema.readOnly || !!property.readOnly);
                                 const writeOnly = (!!propertySchema.writeOnly || !!property.writeOnly);
                                 const item = {
-                                    name: this.getName(propertyValue && propertyValue[key], key, property),
+                                    name: yield this.getName(value, key, property),
                                     value: { path: `${basePath}${key}` },
                                     disabled: !allowed || (this.isPrimitive(property) && readOnly && !writeOnly)
                                 };
@@ -118,17 +147,17 @@ class PromptBuilder extends datasource_1.DataRenderer {
                                     item.value['type'] = "set";
                                 }
                                 return item;
-                            });
-                        }));
+                            }));
+                        })));
                     case 'array':
                         const arrayItemSchema = propertySchema.items;
-                        return Array.isArray(propertyValue) && propertyValue.map((arrayItem, idx) => {
+                        return (yield Promise.all(Array.isArray(propertyValue) && propertyValue.map((arrayItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                             const myId = (arrayItem && (arrayItem.slug || arrayItem._id)) || idx;
                             const readOnly = (!!propertySchema.readOnly || !!arrayItemSchema.readOnly);
                             const writeOnly = (!!propertySchema.writeOnly || !!arrayItemSchema.writeOnly);
                             const item = {
                                 disabled: this.isPrimitive(arrayItemSchema) && readOnly && !writeOnly,
-                                name: this.getName(arrayItem, ~[arrayItem.name, arrayItem.title].indexOf(myId) ? null : myId, arrayItemSchema),
+                                name: yield this.getName(arrayItem, ~[arrayItem.name, arrayItem.title].indexOf(myId) ? null : myId, arrayItemSchema),
                                 value: {
                                     path: `${basePath}${myId}`
                                 }
@@ -137,7 +166,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
                                 item.value['type'] = "set";
                             }
                             return item;
-                        }) || [];
+                        })))) || [];
                     default:
                         return propertyValue && Object.keys(propertyValue).map((key) => {
                             return {
@@ -154,12 +183,31 @@ class PromptBuilder extends datasource_1.DataRenderer {
         });
     }
     getName(value, propertyNameOrIndex, propertySchema) {
-        const head = propertyNameOrIndex !== null ? `${propertyNameOrIndex}: ` : '';
-        const tail = (value !== undefined && value !== null) ?
-            (propertySchema.type !== 'object' && propertySchema.type !== 'array' ? JSON.stringify(value) :
-                (value.title || value.name || `[${propertySchema.type}]`)) :
-            '';
-        return `${head}${tail}`;
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const head = propertyNameOrIndex !== null ? `${propertyNameOrIndex}: ` : '';
+            let tail = '';
+            if (propertySchema && propertySchema.$data && typeof propertySchema.$data === 'string') {
+                propertySchema = yield this.datasource.getSchema(value);
+                value = (yield this.datasource.dispatch('get', value)) || '';
+            }
+            if (propertySchema.hasOwnProperty('$title') && value) {
+                const template = Handlebars.compile(propertySchema.$title);
+                tail = template(value);
+            }
+            else if (propertySchema.type === 'array' && value && value.length) {
+                tail = (yield Promise.all(value.map((i) => tslib_1.__awaiter(this, void 0, void 0, function* () { return yield this.getName(i, null, propertySchema.items); })))).join(', ');
+            }
+            else {
+                tail = (value !== undefined && value !== null) ?
+                    (propertySchema.type !== 'object' && propertySchema.type !== 'array' ? JSON.stringify(value) :
+                        (value.title || value.name || `[${propertySchema.type}]`)) :
+                    '';
+            }
+            if (tail.length > 100) {
+                tail = `${tail.slice(0, 97)}...`;
+            }
+            return `${head}${tail}`;
+        });
     }
     isPrimitive(propertySchema = {}) {
         return ((propertySchema.type !== 'object' &&
@@ -188,13 +236,13 @@ class PromptBuilder extends datasource_1.DataRenderer {
             const property = isCheckBox ? propertySchema.items : propertySchema;
             const $values = property.$values;
             if (utils_1.getType($values) === 'Object') {
-                return Object.keys($values).map((key) => {
+                return yield Promise.all(Object.keys($values).map((key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                     return {
-                        name: utils_1.getType($values[key]) === 'Object' ? this.getName($values[key], null, { type: 'object' }) : $values[key],
+                        name: utils_1.getType($values[key]) === 'Object' ? yield this.getName($values[key], null, { type: 'object' }) : $values[key],
                         value: key,
                         disabled: !!property.readOnly
                     };
-                });
+                })));
             }
             return isCheckBox ? propertySchema.items.enum : propertySchema.enum;
         });

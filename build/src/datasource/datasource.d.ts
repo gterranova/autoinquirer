@@ -3,7 +3,8 @@ import { JsonSchema } from './jsonschema';
 export declare type Item = any;
 export declare type Param = any;
 export declare abstract class DataRenderer {
-    abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item): Promise<Item>;
+    abstract setDatasource(datasource: DataSource): any;
+    abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, datasource?: DataSource): Promise<Item>;
 }
 export declare abstract class DataSource {
     abstract connect(): Promise<void>;

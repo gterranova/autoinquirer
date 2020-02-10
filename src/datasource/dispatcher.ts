@@ -33,6 +33,9 @@ export class Dispatcher extends DataSource {
         this.schemaSource = (typeof schema === 'string')? new JsonSchema(schema): schema;
         this.dataSource = (typeof data === 'string')? new JsonDataSource(data): data;
         this.renderer = renderer;
+        if (this.renderer) {
+            this.renderer.setDatasource(this);
+        }
     }
 
     public async connect() {
@@ -182,7 +185,7 @@ export class Dispatcher extends DataSource {
         const propertyValue = value || await this.dispatch('get', itemPath, propertySchema);
         if (this.renderer) {
             // tslint:disable-next-line:no-return-await
-            return await this.renderer.render(methodName, itemPath, propertySchema, propertyValue);
+            return await this.renderer.render(methodName, itemPath, propertySchema, propertyValue, this);
         }
         
         return propertyValue;

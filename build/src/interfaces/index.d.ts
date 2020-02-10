@@ -76,6 +76,7 @@ export interface IProperty {
     };
     defaultProperties?: string[];
     pattern?: string;
+    $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
     typeof?: "function";

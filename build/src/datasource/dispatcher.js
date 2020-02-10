@@ -15,6 +15,9 @@ class Dispatcher extends datasource_1.DataSource {
         this.schemaSource = (typeof schema === 'string') ? new jsonschema_1.JsonSchema(schema) : schema;
         this.dataSource = (typeof data === 'string') ? new json_1.JsonDataSource(data) : data;
         this.renderer = renderer;
+        if (this.renderer) {
+            this.renderer.setDatasource(this);
+        }
     }
     connect() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -139,7 +142,7 @@ class Dispatcher extends datasource_1.DataSource {
             const propertySchema = schema || (yield this.getSchema(itemPath));
             const propertyValue = value || (yield this.dispatch('get', itemPath, propertySchema));
             if (this.renderer) {
-                return yield this.renderer.render(methodName, itemPath, propertySchema, propertyValue);
+                return yield this.renderer.render(methodName, itemPath, propertySchema, propertyValue, this);
             }
             return propertyValue;
         });

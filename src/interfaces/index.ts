@@ -89,6 +89,7 @@ export interface IProperty {
     defaultProperties?: string[];
     pattern?: string;
     // custom properties
+    $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
     typeof?: "function";

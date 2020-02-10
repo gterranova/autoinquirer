@@ -10,7 +10,8 @@ export declare type Item = any;
 export declare type Param = any;
 
 export abstract class DataRenderer {
-    public async abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item): Promise<Item>; 
+    public abstract setDatasource(datasource: DataSource);
+    public async abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, datasource?: DataSource): Promise<Item>; 
 }
 
 export abstract class DataSource {
