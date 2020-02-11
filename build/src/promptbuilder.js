@@ -90,7 +90,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
     }
     makePrompt(itemPath, propertySchema, propertyValue) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const defaultValue = propertyValue !== undefined ? propertyValue : propertySchema.default;
+            const defaultValue = propertyValue !== undefined ? propertyValue : (propertySchema ? propertySchema.default : undefined);
             const isCheckbox = this.isCheckBox(propertySchema);
             const choices = yield this.getOptions(propertySchema);
             return {
@@ -151,7 +151,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
                         })));
                     case 'array':
                         const arrayItemSchema = propertySchema.items;
-                        return (yield Promise.all(Array.isArray(propertyValue) && propertyValue.map((arrayItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                        return yield Promise.all(Array.isArray(propertyValue) && propertyValue.map((arrayItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                             const myId = (arrayItem && (arrayItem.slug || arrayItem._id)) || idx;
                             const readOnly = (!!propertySchema.readOnly || !!arrayItemSchema.readOnly);
                             const writeOnly = (!!propertySchema.writeOnly || !!arrayItemSchema.writeOnly);
@@ -166,7 +166,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
                                 item.value['type'] = "set";
                             }
                             return item;
-                        })))) || [];
+                        })) || []);
                     default:
                         return propertyValue && Object.keys(propertyValue).map((key) => {
                             return {
@@ -234,11 +234,11 @@ class PromptBuilder extends datasource_1.DataRenderer {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const isCheckBox = this.isCheckBox(propertySchema);
             const property = isCheckBox ? propertySchema.items : propertySchema;
-            const $values = property.$values;
+            const $values = property ? property.$values : [];
             if (utils_1.getType($values) === 'Object') {
                 return yield Promise.all(Object.keys($values).map((key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                     return {
-                        name: utils_1.getType($values[key]) === 'Object' ? yield this.getName($values[key], null, { type: 'object' }) : $values[key],
+                        name: utils_1.getType($values[key]) === 'Object' ? yield this.getName($values[key], null, yield this.datasource.getSchema(key)) : $values[key],
                         value: key,
                         disabled: !!property.readOnly
                     };

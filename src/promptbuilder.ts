@@ -99,7 +99,7 @@ export class PromptBuilder extends DataRenderer {
     }
     
     private async makePrompt(itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {        
-        const defaultValue = propertyValue!==undefined ? propertyValue : propertySchema.default;
+        const defaultValue = propertyValue!==undefined ? propertyValue : (propertySchema ? propertySchema.default : undefined);
         const isCheckbox = this.isCheckBox(propertySchema);
         const choices = await this.getOptions(propertySchema);
 
@@ -188,7 +188,7 @@ export class PromptBuilder extends DataRenderer {
                         }
                     
                         return item;
-                    })) || [];
+                    }) || []);
 
                 default:
                     return propertyValue && Object.keys(propertyValue).map( (key: string) => {
@@ -254,11 +254,11 @@ export class PromptBuilder extends DataRenderer {
         const isCheckBox = this.isCheckBox(propertySchema);
         
         const property = isCheckBox? propertySchema.items : propertySchema;
-        const $values = property.$values; 
+        const $values = property ? property.$values: []; 
         if (getType($values) === 'Object') {
             return await Promise.all(Object.keys($values).map( async (key: string) => {
                 return { 
-                    name: getType($values[key]) === 'Object'? await this.getName($values[key], null, { type: 'object' }): $values[key], 
+                    name: getType($values[key]) === 'Object'? await this.getName($values[key], null, await this.datasource.getSchema(key)): $values[key], 
                     value: key,
                     disabled: !!property.readOnly
                 };
