@@ -98,10 +98,10 @@ class PromptBuilder extends datasource_1.DataRenderer {
                 message: `Enter ${propertySchema.type ? propertySchema.type.toString().toLowerCase() : 'value'}:`,
                 default: defaultValue,
                 disabled: !!propertySchema.readOnly,
-                type: propertySchema.type === 'boolean' ? 'confirm' :
+                type: propertySchema.$widget || (propertySchema.type === 'boolean' ? 'confirm' :
                     (isCheckbox ? 'checkbox' :
                         (choices && choices.length ? 'list' :
-                            'input')),
+                            'input'))),
                 choices,
                 path: itemPath,
             };
@@ -193,6 +193,16 @@ class PromptBuilder extends datasource_1.DataRenderer {
             if (propertySchema.hasOwnProperty('$title') && value) {
                 const template = Handlebars.compile(propertySchema.$title);
                 tail = template(value);
+                if (tail) {
+                    propertySchema = yield this.datasource.getSchema(tail);
+                    if (propertySchema) {
+                        value = (yield this.datasource.dispatch('get', tail)) || '';
+                        return yield this.getName(value, null, propertySchema);
+                    }
+                }
+            }
+            else if ((propertySchema.type === 'object' || propertySchema.type === 'array') && propertySchema.title) {
+                tail = propertySchema.title;
             }
             else if (propertySchema.type === 'array' && value && value.length) {
                 tail = (yield Promise.all(value.map((i) => tslib_1.__awaiter(this, void 0, void 0, function* () { return yield this.getName(i, null, propertySchema.items); })))).join(', ');
@@ -203,7 +213,7 @@ class PromptBuilder extends datasource_1.DataRenderer {
                         (value.title || value.name || `[${propertySchema.type}]`)) :
                     '';
             }
-            if (tail.length > 100) {
+            if (tail && tail.length > 100) {
                 tail = `${tail.slice(0, 97)}...`;
             }
             return `${head}${tail}`;

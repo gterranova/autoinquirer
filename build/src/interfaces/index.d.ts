@@ -86,4 +86,5 @@ export interface IProperty {
         [key: string]: any;
     };
     $proxy?: IProxyInfo;
+    $widget?: string;
 }

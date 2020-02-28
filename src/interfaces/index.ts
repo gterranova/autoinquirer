@@ -97,5 +97,6 @@ export interface IProperty {
     $data?: string;
     $values?: { [key: string]: any};
     $proxy?: IProxyInfo;
+    $widget?: string;
 }
 
