@@ -22,14 +22,3 @@ describe('JsonDataSource', () => {
         expect(Index.JsonDataSource).toBeDefined();
     });
 });
-describe('PromptBuilder', () => {
-    it('to be defined', () => {
-        expect(Index.PromptBuilder).toBeDefined();
-    });
-});
-describe('AutoInquirer', () => {
-    it('to be defined', () => {
-        expect(Index.AutoInquirer).toBeDefined();
-    });
-});
-

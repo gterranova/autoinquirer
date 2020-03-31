@@ -1,3 +1,5 @@
-export { DataSource, Dispatcher, JsonSchema, JsonDataSource } from './datasource';
-export { PromptBuilder } from './promptbuilder';
-export { AutoInquirer } from './autoinquirer';
+export { DataSource, DataRenderer } from './datasource';
+export { Dispatcher } from './dispatcher';
+export { JsonSchema } from './jsonschema';
+export { JsonDataSource } from './json';
+export { Action, PrimitiveType, IProxyInfo, IProperty } from './interfaces';

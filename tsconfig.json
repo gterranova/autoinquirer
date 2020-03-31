@@ -22,11 +22,12 @@
     "noImplicitAny": false,
     "noImplicitThis": false,
     "strictNullChecks": false,
-    "rootDir": ".",
+    "rootDir": "./src",
     "outDir": "build",
     "declarationDir": "build",
     "declaration": true,
-    "removeComments": true
+    "removeComments": true,
+    "declarationMap": true
   },
   "include": [
     "src/**/*"

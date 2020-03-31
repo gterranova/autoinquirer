@@ -1,19 +1,19 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
-import $RefParser from 'json-schema-ref-parser';
+import $RefParser from "@apidevtools/json-schema-ref-parser";
 
 import ajv from 'ajv';
 import path from 'path';
-import { IProperty } from '../interfaces';
-import { findUp, getType, loadJSON } from '../utils';
+import { IProperty } from './interfaces';
+import { findUp, getType, loadJSON } from './utils';
 import { DataSource } from './datasource';
 
 const defaultTypeValue = {
-    'object': (value?: any) => getType(value) === 'Object' ? value: {},
-    'array': (value?: any[]) => Array.isArray(value)? value: [],
-    'string': (value?: any)=> value !== undefined? value.toString(): value,
-    'number': (value?: string)=> parseFloat(value) || 0,
-    'integer': (value?: string)=> parseFloat(value) || 0,
+    'object': (value?: any) => getType(value) === 'Object' ? value : {},
+    'array': (value?: any[]) => Array.isArray(value) ? value : [],
+    'string': (value?: any) => value !== undefined ? value.toString() : value,
+    'number': (value?: string) => parseFloat(value) || 0,
+    'integer': (value?: string) => parseFloat(value) || 0,
     'boolean': (value?: boolean | string | number) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
 };
 
@@ -35,16 +35,16 @@ export class JsonSchema extends DataSource {
         process.chdir(this.basePath);
         this.schemaData = await parser.dereference(this.schemaData);
         process.chdir(currentPath);
-    } 
+    }
 
     public async close() {
         // pass
-    } 
-    
+    }
+
     // tslint:disable-next-line:no-reserved-keywords cyclomatic-complexity
     public async get(itemPath?: string) {
         let definition = this.schemaData;
-        if (!itemPath || !itemPath.length) { 
+        if (!itemPath || !itemPath.length) {
             return definition;
         }
         const parts = itemPath.split('/');
@@ -52,16 +52,16 @@ export class JsonSchema extends DataSource {
         while (definition && parts.length) {
             const key = parts.shift();
 
-            if (definition.type === 'array' && key==='items' || 
+            if (definition.type === 'array' && key === 'items' ||
                 (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) ||
                 (definition.items && definition.items.properties && definition.items.properties.slug)) {
                 definition = definition.items;
             } else if (definition.type === 'object' && definition.properties && definition.properties[key]) {
                 definition = definition.properties[key];
-            } else if (definition.type === 'object' && key==='properties') {
+            } else if (definition.type === 'object' && key === 'properties') {
                 definition = definition.properties;
             } else if (definition.type === 'object' && definition.patternProperties) {
-                const patternFound = Object.keys(definition.patternProperties).find( (pattern: string) => RegExp(pattern).test(key));
+                const patternFound = Object.keys(definition.patternProperties).find((pattern: string) => RegExp(pattern).test(key));
                 if (patternFound) {
                     definition = definition.patternProperties[patternFound];
                 } else {
@@ -74,13 +74,13 @@ export class JsonSchema extends DataSource {
 
         return definition;
     }
-        
+
     public coerce(schema: IProperty, value?: any) {
         if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
             // tslint:disable-next-line:no-parameter-reassignment
-            if (value !== undefined || ((schema.type !== 'number' && schema.type !== 'integer') || 
+            if (value !== undefined || ((schema.type !== 'number' && schema.type !== 'integer') ||
                 /^(\d+|\d*(\.\d+)?)$/.test(value))) {
-                return defaultTypeValue[schema.type](value !== undefined? value: schema.default);                
+                return defaultTypeValue[schema.type](value !== undefined ? value : schema.default);
             }
         }
 
@@ -91,24 +91,24 @@ export class JsonSchema extends DataSource {
         if (schema === undefined) { return; }
         // avoid ajv RangeError: Maximum call stack size exceeded
         // tslint:disable-next-line:no-parameter-reassignment
-        schema = {...schema, $ref: undefined};
-        const value = this.coerce(schema, data !== undefined? data: schema.default);
+        schema = { ...schema, $ref: undefined };
+        const value = this.coerce(schema, data !== undefined ? data : schema.default);
         // tslint:disable-next-line:triple-equals
-        if (value !== schema.default && value !== undefined && (data !== undefined || schema.default  !== undefined) && value.toString() !== (data !== undefined? data: schema.default).toString()) {
+        if (value !== schema.default && value !== undefined && (data !== undefined || schema.default !== undefined) && value.toString() !== (data !== undefined ? data : schema.default).toString()) {
             // tslint:disable-next-line:no-console
             //console.log(schema, value, data);
-            throw new Error(`Error: expecting an ${schema.type}`); 
+            throw new Error(`Error: expecting an ${schema.type}`);
         }
         try {
             if (!this.validator.validate(schema, value)) {
-                throw new Error(this.validator.errors.map( (err: any) => err.message ).join('\n'));
-            };                
+                throw new Error(this.validator.errors.map((err: any) => err.message).join('\n'));
+            };
         } catch (error) {
             // Recursion maybe
             if (!~error.message.indexOf("Converting circular structure to JSON")) {
                 throw error;
             };
-        }        
+        }
         return value;
     }
 

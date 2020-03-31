@@ -3,8 +3,8 @@
 
 import fs from "fs";
 import objectPath from 'object-path';
-import { IProperty } from '../interfaces';
-import { getType, loadJSON, objectId } from '../utils';
+import { IProperty } from './interfaces';
+import { getType, loadJSON, objectId } from './utils';
 import { DataSource } from './datasource';
 import { JsonSchema } from './jsonschema';
 
@@ -14,8 +14,8 @@ export class JsonDataSource extends DataSource {
 
     constructor(data: any) {
         super();
-        this.dataFile = (typeof data === 'string')? data: undefined;
-        this.jsonDocument = this.dataFile !== undefined? loadJSON(this.dataFile): data;
+        this.dataFile = (typeof data === 'string') ? data : undefined;
+        this.jsonDocument = this.dataFile !== undefined ? loadJSON(this.dataFile) : data;
     }
 
     public async connect() {
@@ -34,7 +34,7 @@ export class JsonDataSource extends DataSource {
     public getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
         throw new Error("Method not implemented.");
     }
-    
+
     // tslint:disable-next-line:no-reserved-keywords
     public async get(itemPath?: string) {
         if (!itemPath) { return this.jsonDocument; }
@@ -48,15 +48,15 @@ export class JsonDataSource extends DataSource {
             if (getType(value) === 'Object') {
                 value._id = objectId();
             }
-    
-            if (!itemPath) { 
-                this.jsonDocument.push(value); 
+
+            if (!itemPath) {
+                this.jsonDocument.push(value);
             } else {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
                 objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
             }
             this.save();
-            
+
             return value;
         }
     }
@@ -68,7 +68,7 @@ export class JsonDataSource extends DataSource {
                 this.jsonDocument = value;
             } else {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
-                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);    
+                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
             }
             this.save();
         }
@@ -78,15 +78,15 @@ export class JsonDataSource extends DataSource {
     public async update(itemPath: string, _: IProperty, value: any) {
         if (value !== undefined) {
             if (!itemPath) {
-                this.jsonDocument = {...this.jsonDocument, ...value};
+                this.jsonDocument = { ...this.jsonDocument, ...value };
             } else {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
                 // tslint:disable-next-line:no-parameter-reassignment
-                value = {...objectPath.get(this.jsonDocument, schemaPath.split('/')), ...value};
-                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);    
+                value = { ...objectPath.get(this.jsonDocument, schemaPath.split('/')), ...value };
+                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
             }
             this.save();
-            
+
             return value;
         }
     }
@@ -95,19 +95,19 @@ export class JsonDataSource extends DataSource {
         if (!itemPath) {
             this.jsonDocument = undefined;
             this.save();
-            
+
             return;
         }
         const schemaPath = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
         this.save();
     }
-    
+
     public async delCascade(itemPath?: string) {
         // Nothing to do
         itemPath;
     }
-    
+
     public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
         if (!this[methodName]) {
             throw new Error(`Method ${methodName} not implemented`);

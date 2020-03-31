@@ -1,23 +1,23 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
-import { IProperty, IProxyInfo } from '../interfaces';
-import { absolute, getType } from '../utils';
+import { IProperty, IProxyInfo } from './interfaces';
+import { absolute, getType } from './utils';
 import { DataRenderer, DataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
 
 const path = require('path');
 
-declare type IEntryPoints = { [key: string]: IProxyInfo};
+declare type IEntryPoints = { [key: string]: IProxyInfo };
 
-interface IEntryPointInfo { 
+interface IEntryPointInfo {
     proxyInfo: IProxyInfo;
     parentPath: string;
     objPath: string;
 };
 
 interface IProxy {
-    name: string; 
+    name: string;
     dataSource: DataSource
 }
 
@@ -29,34 +29,34 @@ export class Dispatcher extends DataSource {
 
     constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer) {
         super();
-        this.schemaSource = (typeof schema === 'string')? new JsonSchema(schema): schema;
-        this.dataSource = (typeof data === 'string')? new JsonDataSource(data): data;
+        this.schemaSource = (typeof schema === 'string') ? new JsonSchema(schema) : schema;
+        this.dataSource = (typeof data === 'string') ? new JsonDataSource(data) : data;
         this.setRenderer(renderer);
     }
 
     public async connect() {
         await this.schemaSource.connect();
         await this.dataSource.connect();
-        
+
         const schema = await this.schemaSource.get();
         const rootValue = await this.dataSource.dispatch('get', '');
         const coercedValue = this.schemaSource.coerce({ type: schema.type }, rootValue);
         if (getType(rootValue) !== getType(coercedValue)) {
             // tslint:disable-next-line:no-console
             //console.log({ type: schema.type }, rootValue, coercedValue);
-            this.dataSource.dispatch('set', '', schema, coercedValue);    
+            this.dataSource.dispatch('set', '', schema, coercedValue);
         }
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
         //console.log("ENTRY POINTS:", this.entryPoints)
-        await Promise.all(this.proxies.map( (proxy: IProxy) => proxy.dataSource.connect() ));
-    } 
+        await Promise.all(this.proxies.map((proxy: IProxy) => proxy.dataSource.connect()));
+    }
 
     public async close() {
         await this.schemaSource.close();
         await this.dataSource.close();
-        await Promise.all(this.proxies.map( (proxy: IProxy) => proxy.dataSource.close() ));
-    } 
+        await Promise.all(this.proxies.map((proxy: IProxy) => proxy.dataSource.close()));
+    }
 
     // tslint:disable-next-line:no-reserved-keywords
     public async getSchema(itemPath?: string, schemaSource?: JsonSchema): Promise<IProperty> {
@@ -74,10 +74,10 @@ export class Dispatcher extends DataSource {
             }
         };
         const schema = await (schemaSource || this.schemaSource).get(itemPath);
-        
+
         return schema;
     }
-    
+
     // tslint:disable-next-line:no-reserved-keywords
     public async get(itemPath?: string, propertySchema?: IProperty) {
         // tslint:disable-next-line:no-return-await
@@ -104,7 +104,7 @@ export class Dispatcher extends DataSource {
         // tslint:disable-next-line:no-return-await
         return await this.dispatch('del', itemPath, propertySchema);
     }
-    
+
     public registerProxy(name: string, dataSource: DataSource) {
         this.proxies.push({ name, dataSource });
     }
@@ -114,16 +114,16 @@ export class Dispatcher extends DataSource {
         // tslint:disable-next-line:no-console
         //console.log(`DISPATCH dispatch(methodName: ${methodName}, itemPath?: ${itemPath}, propertySchema?: ${propertySchema}, value?: ${value})`)
         // tslint:disable-next-line:no-parameter-reassignment
-        itemPath = itemPath !== undefined? itemPath: '';
+        itemPath = itemPath !== undefined ? itemPath : '';
         const schema = propertySchema || await this.getSchema(itemPath);
         // tslint:disable-next-line:no-bitwise
-        if (schema === undefined || (schema.readOnly === true && (~['set','push','del'].indexOf(methodName)))) {
+        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
             return;
-        } 
+        }
         // tslint:disable-next-line:no-bitwise
-        else if (~['set','push'].indexOf(methodName)) {
+        else if (~['set', 'push'].indexOf(methodName)) {
             // tslint:disable-next-line:no-parameter-reassignment
-            value = this.schemaSource.validate(methodName === 'push'? schema.items : schema, value);
+            value = this.schemaSource.validate(methodName === 'push' ? schema.items : schema, value);
         } else if (methodName === 'del') {
             const promises: Promise<any>[] = [];
             for (const proxyInfo of this.getProxyWithinPath(itemPath)) {
@@ -140,27 +140,27 @@ export class Dispatcher extends DataSource {
                 promises.push(this.dataSource.dispatch('delCascade', itemPath));
             }
 
-            await Promise.all(promises);            
+            await Promise.all(promises);
         } else if (methodName === 'get') {
-            const property = (schema.type === 'array')? schema.items: schema;
+            const property = (schema.type === 'array') ? schema.items : schema;
             if (property && property.$data && typeof property.$data === 'string') {
                 const absolutePath = absolute(property.$data, itemPath);
                 const values: any[] = await this.dispatch('get', absolutePath) || [];
 
-                property.$values = values.reduce( (acc: any, curr: any, idx: number) => {
+                property.$values = values.reduce((acc: any, curr: any, idx: number) => {
                     if (property.type === 'integer' || property.type === 'number') {
                         acc[idx] = curr;
                     } else {
-                        acc[`${absolutePath}/${curr._id||idx}`] = curr;
+                        acc[`${absolutePath}/${curr._id || idx}`] = curr;
                     }
-                    
+
                     return acc;
-                }, {});    
+                }, {});
             } else {
                 if (schema.writeOnly === true) { return; }
             }
         }
-        
+
         for (const proxy of this.getProxyForPath(itemPath).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
@@ -183,24 +183,24 @@ export class Dispatcher extends DataSource {
             // tslint:disable-next-line:no-return-await
             return await this.renderer.render(methodName, itemPath, propertySchema, propertyValue, this);
         }
-        
+
         return propertyValue;
     }
-    
+
     private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {
         //console.log(`DISPATCH findEntryPoints(p: string = ${p}, schema: ${schema})`)
         let paths: IEntryPoints = {};
         if (!schema) { return {}; }
 
-        if (schema.type=== 'object') {
+        if (schema.type === 'object') {
             if (schema.$proxy) {
                 paths[''] = schema.$proxy;
             }
             if (schema.properties) {
                 try {
                     Object.keys(schema.properties).map((key: string) => {
-                        paths = {...paths, ...this.findEntryPoints(key, schema.properties[key])};
-                    });            
+                        paths = { ...paths, ...this.findEntryPoints(key, schema.properties[key]) };
+                    });
                 } catch {
                     // RangeError: Maximum call stack size exceeded
                 }
@@ -213,56 +213,56 @@ export class Dispatcher extends DataSource {
                 paths[p] = schema.$proxy;
             }
             try {
-                return {...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items)};
+                return { ...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items) };
             } catch {
                 // RangeError: Maximum call stack size exceeded
             }
-        } 
+        }
 
-        return Object.keys(paths).reduce( (acc: IEntryPoints, key: string) => {
+        return Object.keys(paths).reduce((acc: IEntryPoints, key: string) => {
             const fixedObjKey = key.replace(/\/$/, '');
             acc[`${path.join(p, fixedObjKey)}`] = paths[key];
             // tslint:disable-next-line:no-console
             //console.log(p,key,`${p}${p?'\\/':''}${key}`)
-            
-            return acc; 
+
+            return acc;
         }, {});
     }
 
     private getProxyForPath(itemPath?: string): IEntryPointInfo[] {
         //console.log(`DISPATCH getProxyForPath(itemPath?: ${itemPath})`)
-        const schemaPath = itemPath !== undefined && itemPath !== null? itemPath: '';
-        
-        return Object.keys(this.entryPoints).filter( (k: string) => {
-            return k.length? RegExp(k).test(schemaPath): true;
-        }).map( (foundKey: string) => {
-            const objPath = schemaPath.replace(RegExp(foundKey), ''); 
-            const parentPath = schemaPath.slice(0, schemaPath.length-objPath.length+1);
-            
-            return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath: objPath.replace(/^\//, '')};
-        });        
+        const schemaPath = itemPath !== undefined && itemPath !== null ? itemPath : '';
+
+        return Object.keys(this.entryPoints).filter((k: string) => {
+            return k.length ? RegExp(k).test(schemaPath) : true;
+        }).map((foundKey: string) => {
+            const objPath = schemaPath.replace(RegExp(foundKey), '');
+            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1);
+
+            return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath: objPath.replace(/^\//, '') };
+        });
     }
 
     private getProxyWithinPath(itemPath?: string): IProxyInfo[] {
-        const schemaPath = itemPath !== undefined? itemPath: '';
+        const schemaPath = itemPath !== undefined ? itemPath : '';
         // tslint:disable-next-line:prefer-template
         const comparisonPath = schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
             .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})') //.replace('/', '\\/')
 
         //console.log(`DISPATCH getProxyWithinPath(itemPath?: ${itemPath})`, schemaPath, comparisonPath)        
-        return Object.keys(this.entryPoints).filter( (k: string) => {
+        return Object.keys(this.entryPoints).filter((k: string) => {
             return k.indexOf(comparisonPath) !== -1;
-        }).map( (foundKey: string) => {
+        }).map((foundKey: string) => {
             return this.entryPoints[foundKey];
-        });        
+        });
     }
 
     private getProxy(proxyInfo: IProxyInfo): DataSource {
         //console.log(`DISPATCH getProxy(proxyInfo: ${proxyInfo})`)
-        
-        const proxy = this.proxies.find( (p: IProxy) => p.name === proxyInfo.proxyName);
-        
+
+        const proxy = this.proxies.find((p: IProxy) => p.name === proxyInfo.proxyName);
+
         return proxy && proxy.dataSource;
     }
-    
+
 }

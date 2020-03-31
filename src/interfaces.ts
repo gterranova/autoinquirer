@@ -1,49 +1,22 @@
-export { IQuery } from './query';
-export declare const enum Action {
-    BACK = "back",
-    EXIT = "exit",
-    GET = "get",
-    PUSH = "push",
-    SET = "set",
-    UPDATE = "update",
-    DEL = "del"
+// tslint:disable:no-any
+// tslint:disable:no-reserved-keywords
+export const enum Action {
+    BACK = 'back',
+    EXIT = 'exit',
+    GET = 'get',
+    PUSH = 'push',
+    SET = 'set',
+    UPDATE = 'update',
+    DEL = 'del'
 }
-export interface IState {
-    path: string;
-    type?: Action | string;
-    errors?: string;
-}
-export interface INameValueState {
-    name: string;
-    value: IState | string;
-    disabled?: boolean;
-}
-export interface IAnswer {
-    state: IState;
-    value?: any;
-}
-export interface IPrompt {
-    name: string;
-    type: string;
-    message: string;
-    when?: any | (IAnswer);
-    default?: any | (IAnswer);
-    choices?: any | (IAnswer);
-    pageSize?: number;
-    disabled?: boolean;
-    errors?: any;
-    path?: string;
-}
-export interface IFeedBack {
-    name: string;
-    answer: any;
-    value?: any;
-}
+
 export declare type PrimitiveType = number | boolean | string | null;
+
 export interface IProxyInfo {
     proxyName: string;
     params: any;
 }
+
 export interface IProperty {
     $ref?: string;
     $schema?: string;
@@ -76,15 +49,15 @@ export interface IProperty {
     };
     defaultProperties?: string[];
     pattern?: string;
+    // custom properties
     $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
     typeof?: "function";
     depends?: string;
     $data?: string;
-    $values?: {
-        [key: string]: any;
-    };
+    $values?: { [key: string]: any };
     $proxy?: IProxyInfo;
     $widget?: string;
 }
+
