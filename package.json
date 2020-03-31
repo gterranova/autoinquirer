@@ -8,7 +8,7 @@
   },
   "main": "build/src/index.js",
   "scripts": {
-    "start": "tsc -p tsconfig.json && node main.js schema.json",
+    "start": "tsc -p tsconfig.json && node main.js ..\\autoinquirer-composer\\examples\\schema.json ..\\autoinquirer-composer\\examples\\data.json",
     "clean": "rimraf coverage build tmp dist",
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -w -p tsconfig.json",
