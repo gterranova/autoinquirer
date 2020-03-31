@@ -33,10 +33,6 @@ exports.lookupValues = (schemaPath = '', obj, currPath = '') => {
     return output;
 };
 class PromptBuilder extends datasource_1.DataRenderer {
-    setDatasource(datasource) {
-        this.datasource = datasource;
-        Handlebars.registerHelper("resolve", value => this.datasource.dispatch('get', value) || '');
-    }
     render(methodName, itemPath, propertySchema, propertyValue) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (methodName === "exit") {

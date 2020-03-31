@@ -26,16 +26,12 @@ export class Dispatcher extends DataSource {
     private proxies: IProxy[] = [];
     private schemaSource: JsonSchema;
     private dataSource: DataSource;
-    private renderer: DataRenderer;
 
     constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer) {
         super();
         this.schemaSource = (typeof schema === 'string')? new JsonSchema(schema): schema;
         this.dataSource = (typeof data === 'string')? new JsonDataSource(data): data;
-        this.renderer = renderer;
-        if (this.renderer) {
-            this.renderer.setDatasource(this);
-        }
+        this.setRenderer(renderer);
     }
 
     public async connect() {

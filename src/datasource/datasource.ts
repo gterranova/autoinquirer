@@ -10,11 +10,12 @@ export declare type Item = any;
 export declare type Param = any;
 
 export abstract class DataRenderer {
-    public abstract setDatasource(datasource: DataSource);
     public async abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, datasource?: DataSource): Promise<Item>; 
 }
 
 export abstract class DataSource {
+    protected renderer: DataRenderer;
+
     public async abstract connect(): Promise<void>; 
     public async abstract close(): Promise<void>; 
 
@@ -22,6 +23,10 @@ export abstract class DataSource {
     public async abstract getSchema(itemPath?: string, schemaSource?: JsonSchema, parentPath?: string, params?: Param): Promise<IProperty>;
     public async abstract get(itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param): Promise<Item>;
     public async abstract dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param);
+
+    public setRenderer(renderer: DataRenderer) {
+        this.renderer = renderer;
+    }
 
     public async convertObjIDToIndex(path: string | string[], basePath: string='', obj?: Item, ...others: Param[]): Promise<string> {
         if (!path) { return ''; }

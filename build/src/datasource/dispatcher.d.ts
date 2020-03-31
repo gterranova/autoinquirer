@@ -6,7 +6,6 @@ export declare class Dispatcher extends DataSource {
     private proxies;
     private schemaSource;
     private dataSource;
-    private renderer;
     constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer);
     connect(): Promise<void>;
     close(): Promise<void>;

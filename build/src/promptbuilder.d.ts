@@ -1,10 +1,9 @@
 import { IPrompt, IProperty } from './interfaces';
-import { DataRenderer, DataSource } from './datasource';
+import { DataRenderer } from './datasource';
 export declare type Item = any;
 export declare const lookupValues: (schemaPath: string | string[], obj: any, currPath?: string) => any;
 export declare class PromptBuilder extends DataRenderer {
     private datasource;
-    setDatasource(datasource: DataSource): void;
     render(methodName: string, itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt>;
     private getActions;
     private checkAllowed;

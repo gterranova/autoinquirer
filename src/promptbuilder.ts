@@ -41,12 +41,6 @@ export const lookupValues = (schemaPath: string | string[] = '', obj: any, currP
 export class PromptBuilder extends DataRenderer {
     private datasource: DataSource;
 
-    public setDatasource(datasource: DataSource) {
-        this.datasource = datasource;
-        // TODO: fix async helpers
-        Handlebars.registerHelper("resolve", value => this.datasource.dispatch('get', value) || '');
-    }
-
     public async render(methodName: string, itemPath: string, propertySchema: IProperty, propertyValue: Item): Promise<IPrompt> {
         if (methodName === Action.EXIT) { return null; }
 

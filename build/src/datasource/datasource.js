@@ -6,6 +6,9 @@ class DataRenderer {
 }
 exports.DataRenderer = DataRenderer;
 class DataSource {
+    setRenderer(renderer) {
+        this.renderer = renderer;
+    }
     convertObjIDToIndex(path, basePath = '', obj, ...others) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!path) {

@@ -14,10 +14,7 @@ class Dispatcher extends datasource_1.DataSource {
         this.proxies = [];
         this.schemaSource = (typeof schema === 'string') ? new jsonschema_1.JsonSchema(schema) : schema;
         this.dataSource = (typeof data === 'string') ? new json_1.JsonDataSource(data) : data;
-        this.renderer = renderer;
-        if (this.renderer) {
-            this.renderer.setDatasource(this);
-        }
+        this.setRenderer(renderer);
     }
     connect() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {

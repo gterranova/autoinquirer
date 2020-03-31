@@ -1,7 +1,7 @@
 // tslint:disable-next-line:no-unused-expression
 import fs from 'fs';
 import path from 'path';
-import { Dispatcher, JsonDataSource, JsonSchema } from '../../src/datasource/index';
+import { Dispatcher, JsonDataSource, JsonSchema, DataRenderer, DataSource } from '../../src/datasource/index';
 
 const mockWrite = jest.spyOn(fs, 'writeFileSync');
 let dispatcher;
@@ -374,7 +374,14 @@ describe('proxies', () => {
 
 describe('render', () => {
     it('calls renderer if provided', async () => {
-        const renderer = { render: jest.fn()};
+        class MockRenderer extends DataRenderer {
+            public setDatasource(_datasource: DataSource) {
+                throw new Error("Method not implemented.");
+            }
+            render = jest.fn();
+
+        }
+        const renderer = new MockRenderer();
         const ds = new Dispatcher(
             new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json')),
             new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json')),
