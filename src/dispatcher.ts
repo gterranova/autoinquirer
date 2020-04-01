@@ -1,12 +1,12 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
 import { IProperty, IProxyInfo } from './interfaces';
-import { absolute, getType } from './utils';
+import { getType } from './utils';
 import { DataRenderer, DataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
 
-const path = require('path');
+//const path = require('path');
 
 declare type IEntryPoints = { [key: string]: IProxyInfo };
 
@@ -119,6 +119,8 @@ export class Dispatcher extends DataSource {
         // tslint:disable-next-line:no-bitwise
         if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
             return;
+        } else if (methodName === 'get') {
+            if (schema.writeOnly === true) { return; }
         }
         // tslint:disable-next-line:no-bitwise
         else if (~['set', 'push'].indexOf(methodName)) {
@@ -141,25 +143,7 @@ export class Dispatcher extends DataSource {
             }
 
             await Promise.all(promises);
-        } else if (methodName === 'get') {
-            const property = (schema.type === 'array') ? schema.items : schema;
-            if (property && property.$data && typeof property.$data === 'string') {
-                const absolutePath = absolute(property.$data, itemPath);
-                const values: any[] = await this.dispatch('get', absolutePath) || [];
-
-                property.$values = values.reduce((acc: any, curr: any, idx: number) => {
-                    if (property.type === 'integer' || property.type === 'number') {
-                        acc[idx] = curr;
-                    } else {
-                        acc[`${absolutePath}/${curr._id || idx}`] = curr;
-                    }
-
-                    return acc;
-                }, {});
-            } else {
-                if (schema.writeOnly === true) { return; }
-            }
-        }
+        } 
 
         for (const proxy of this.getProxyForPath(itemPath).reverse()) {
             // tslint:disable-next-line:no-console
@@ -221,7 +205,7 @@ export class Dispatcher extends DataSource {
 
         return Object.keys(paths).reduce((acc: IEntryPoints, key: string) => {
             const fixedObjKey = key.replace(/\/$/, '');
-            acc[`${path.join(p, fixedObjKey)}`] = paths[key];
+            acc[`${p}/${fixedObjKey}`] = paths[key];
             // tslint:disable-next-line:no-console
             //console.log(p,key,`${p}${p?'\\/':''}${key}`)
 

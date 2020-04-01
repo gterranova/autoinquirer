@@ -1,7 +1,7 @@
 // tslint:disable-next-line:no-unused-expression
 import fs from 'fs';
 import path from 'path';
-import { JsonDataSource } from '../../src/datasource/index';
+import { JsonDataSource } from '../../src/index';
 
 const mockWrite = jest.spyOn(fs, 'writeFileSync');
 let dsValues;

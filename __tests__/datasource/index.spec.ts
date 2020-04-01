@@ -1,5 +1,5 @@
 // tslint:disable-next-line:no-unused-expression
-import * as datasource from '../../src/datasource/index';
+import * as datasource from '../../src/index';
 import { DummyDatasource } from './dummy-datasource';
 
 describe('DataSource', () => {

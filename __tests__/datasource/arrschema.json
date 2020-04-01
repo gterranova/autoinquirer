@@ -1,0 +1,80 @@
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "uri": {
+        "type": "string"
+      },
+      "another": {
+        "type": "object",
+        "properties": {
+          "foo": { "type": "string"}
+        }
+      },
+      "myArray": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "myObjArray": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties":{
+            "name": { "type": "string" },
+            "slug": { "type": "string" }
+          }
+        }
+      },
+      "myLinkedArray": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "$data": "../myObjArray"
+        }
+      },
+      "myNumberLinkedArray": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "$data": "../myObjArray"
+        }
+      },
+      "myUndefinedLinkedArray": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "$data": "../isNotDefined"
+        }
+      },
+      "myDataProxy": {
+        "type": "array",
+        "$proxy": {
+          "proxyName": "myProxy",
+          "params": {}
+        }
+      },
+      "myObjDataProxy": {
+        "type": "object",
+        "$proxy": {
+          "proxyName": "myObjProxy",
+          "params": {}
+        },
+        "properties": {}
+      }
+    },
+    "patternProperties": {
+      "^([A-Z]+)$": {
+        "type": "boolean",
+        "readOnly": true
+      },
+      "^(wo[A-Z]+)$": {
+        "type": "boolean",
+        "writeOnly": true
+      }
+    }
+  }
+}

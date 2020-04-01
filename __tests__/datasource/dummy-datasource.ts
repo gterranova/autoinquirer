@@ -1,4 +1,4 @@
-import { DataSource, JsonSchema } from '../../src/datasource/index';
+import { DataSource, JsonSchema } from '../../src/index';
 import { IProperty } from '../../src/interfaces';
 
 const dummyValue = {

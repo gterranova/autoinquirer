@@ -31,15 +31,23 @@ export class JsonDataSource extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
-        throw new Error("Method not implemented.");
+    public getSchema(itemPath?: string, schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
+        //throw new Error("Method not implemented.");
+        // Do not raise an error 
+        return schemaSource.get(itemPath);
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async get(itemPath?: string) {
-        if (!itemPath) { return this.jsonDocument; }
+    public async get(itemPath?: string, schema?: IProperty) {
+        if (!itemPath) {
+            //console.log(itemPath, schema?.type, getType(this.jsonDocument), Array.isArray(this.jsonDocument))
+            if (schema && schema.type === 'array' && !Array.isArray(this.jsonDocument)) {
+                //console.log(itemPath, schema.type, typeof this.jsonDocument)
+                return this.jsonDocument? [this.jsonDocument]: [];
+            } 
+            return this.jsonDocument; 
+        }
         const schemaPath = await this.convertObjIDToIndex(itemPath);
-
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
 

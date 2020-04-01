@@ -1,22 +1,17 @@
-// tslint:disable:no-any
-// tslint:disable:no-reserved-keywords
-export const enum Action {
-    BACK = 'back',
-    EXIT = 'exit',
-    GET = 'get',
-    PUSH = 'push',
-    SET = 'set',
-    UPDATE = 'update',
-    DEL = 'del'
+export declare const enum Action {
+    BACK = "back",
+    EXIT = "exit",
+    GET = "get",
+    PUSH = "push",
+    SET = "set",
+    UPDATE = "update",
+    DEL = "del"
 }
-
 export declare type PrimitiveType = number | boolean | string | null;
-
 export interface IProxyInfo {
     proxyName: string;
     params: any;
 }
-
 export interface IProperty {
     $ref?: string;
     $schema?: string;
@@ -49,7 +44,6 @@ export interface IProperty {
     };
     defaultProperties?: string[];
     pattern?: string;
-    // custom properties
     $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
@@ -59,4 +53,4 @@ export interface IProperty {
     $proxy?: IProxyInfo;
     $widget?: string;
 }
-
+//# sourceMappingURL=interfaces.d.ts.map

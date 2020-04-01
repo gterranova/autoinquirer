@@ -1,6 +1,6 @@
 // tslint:disable-next-line:no-unused-expression
 import path from 'path';
-import { JsonSchema } from '../../src/datasource/index';
+import { JsonSchema } from '../../src/index';
 
 let defaultSchema;
 beforeEach(() => {

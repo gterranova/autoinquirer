@@ -1,7 +1,7 @@
 // tslint:disable-next-line:no-unused-expression
 import fs from 'fs';
 import path from 'path';
-import { Dispatcher, JsonDataSource, JsonSchema, DataRenderer, DataSource } from '../../src/datasource/index';
+import { Dispatcher, JsonDataSource, JsonSchema, DataRenderer, DataSource } from '../../src/index';
 
 const mockWrite = jest.spyOn(fs, 'writeFileSync');
 let dispatcher;
@@ -71,7 +71,7 @@ describe('connect', () => {
     });
     it('to fix wrong root type', async () => {
         const ds = new Dispatcher(
-            new JsonSchema(path.join(process.cwd().replace('\\', '/'), /*'__tests__', 'datasource',*/ 'schema.json')),
+            new JsonSchema(path.join(process.cwd().replace('\\', '/'), '__tests__', 'datasource', 'arrschema.json')),
             new JsonDataSource({})
         );
         await ds.connect()
@@ -156,40 +156,6 @@ describe('dispatch', () => {
     it('returns undefined on writeOnly gets', async () => {
         const received = await dispatcher.dispatch('get', '0/woTEST');
         expect(received).not.toBeDefined();
-    });
-    it('adds $values on $data link reference', async () => {
-        await dispatcher.push('0/myObjArray', null, {'name': 'test'});
-        expect(mockWrite).toHaveBeenCalledTimes(1);
-        await dispatcher.get('0/myLinkedArray');
-        const schema = await dispatcher.getSchema('0/myLinkedArray');
-        expect(Object.keys(schema.items.$values)).toHaveLength(1);
-        // console.log(Object.keys(schema.items.$values)[0]);
-        expect(/^0\/myObjArray\/[a-f0-9]{24}$/.test(Object.keys(schema.items.$values)[0])).toBe(true);
-    });
-    it('adds $values on $data link reference (obj without _id)', async () => {
-        await dispatcher.push('0/myObjArray', null, {'name': 'test'});
-        await dispatcher.set('0/myObjArray/0', null, {'name': 'test'});
-        expect(mockWrite).toHaveBeenCalledTimes(2);
-        await dispatcher.get('0/myLinkedArray');
-        const schema = await dispatcher.getSchema('0/myLinkedArray');
-        expect(Object.keys(schema.items.$values)).toHaveLength(1);
-        // console.log(Object.keys(schema.items.$values)[0]);
-        expect(/^0\/myObjArray\/0$/.test(Object.keys(schema.items.$values)[0])).toBe(true);
-    });
-    it('adds $values on $data link reference (number)', async () => {
-        await dispatcher.push('0/myObjArray', null, {'name': 'test'});
-        expect(mockWrite).toHaveBeenCalledTimes(1);
-        await dispatcher.get('0/myNumberLinkedArray');
-        const schema = await dispatcher.getSchema('0/myNumberLinkedArray');
-        expect(Object.keys(schema.items.$values)).toHaveLength(1);
-        // console.log(Object.keys(schema.items.$values)[0]);
-        expect(Object.keys(schema.items.$values)[0]).toBe('0');
-    });
-    it('adds $values on $data link reference (undefined link)', async () => {
-        await dispatcher.get('0/myUndefinedLinkedArray');
-        const schema = await dispatcher.getSchema('0/myUndefinedLinkedArray');
-        expect(Object.keys(schema.items.$values)).toBeDefined();
-        expect(Object.keys(schema.items.$values)).toHaveLength(0);
     });
     it('routes calls to proxy', async () => {
         const proxyDs = new JsonDataSource({});
@@ -354,8 +320,8 @@ describe('proxies', () => {
     it('findEntryPoints retrieves proxyInfos', async () => {
         const schema = await dispatcher.getSchema();
         const entryPoints = dispatcher.findEntryPoints('', schema);
-        expect(Object.keys(entryPoints)).toHaveLength(3);     
-        expect(entryPoints['(\\d+|[a-f0-9-]{24})\\/myDataProxy']).toEqual({ proxyName: 'myProxy', params: {} });     
+        expect(Object.keys(entryPoints)).toHaveLength(3);
+        expect(entryPoints['(\\d+|[a-f0-9-]{24})/myDataProxy']).toEqual({ proxyName: 'myProxy', params: {} });     
     });
     it('findEntryPoints retrieves proxyInfos relative to provided path', async () => {
         const schema = await dispatcher.getSchema();

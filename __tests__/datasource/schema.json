@@ -64,7 +64,8 @@
             "$proxy": {
               "proxyName": "myObjProxy",
               "params": {}
-            }
+            },
+            "properties": {}
           }
         },
         "patternProperties": {
