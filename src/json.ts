@@ -1,7 +1,7 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
-
 import fs from "fs";
+import * as _ from 'lodash';
 import objectPath from 'object-path';
 import { IProperty } from './interfaces';
 import { getType, loadJSON, objectId } from './utils';
@@ -46,6 +46,23 @@ export class JsonDataSource extends DataSource {
                 return this.jsonDocument? [this.jsonDocument]: [];
             } 
             return this.jsonDocument; 
+        }
+        if (itemPath.indexOf('#') != -1) {
+            const base = itemPath.split('#', 1)[0];
+            const remaining = itemPath.slice(base.length+1);
+            const baseItems = objectPath.get(this.jsonDocument, (await this.convertObjIDToIndex(base)).split('/').filter( p => p != '')) || [];
+            const result = await Promise.all(baseItems.map( async baseItem => {
+                let _fullPath = [base, remaining].join(baseItem._id);
+                if (remaining.indexOf('#') == -1) {
+                    if (schema.$data?.remoteField) {
+                        _fullPath = [_fullPath, schema.$data.remoteField].join('/');
+                    }
+                    return { _fullPath, ...await this.get(_fullPath, schema) };
+                }
+                return await this.get([base, remaining].join(baseItem._id), schema);
+            } ));
+            //console.log(result);
+            return _.flatten(result);
         }
         const schemaPath = await this.convertObjIDToIndex(itemPath);
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));

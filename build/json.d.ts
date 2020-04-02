@@ -8,7 +8,7 @@ export declare class JsonDataSource extends DataSource {
     connect(): Promise<void>;
     close(): Promise<void>;
     save(): Promise<void>;
-    getSchema(itemPath?: string, schemaSource?: JsonSchema, _parentPath?: string, _params?: any): any;
+    getSchema(itemPath?: string, schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty>;
     get(itemPath?: string, schema?: IProperty): Promise<any>;
     push(itemPath: string, _?: IProperty, value?: any): Promise<any>;
     set(itemPath: string, _: IProperty, value: any): Promise<void>;

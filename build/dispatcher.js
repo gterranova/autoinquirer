@@ -79,6 +79,7 @@ class Dispatcher extends datasource_1.DataSource {
         this.proxies.push({ name, dataSource });
     }
     dispatch(methodName, itemPath, propertySchema, value) {
+        var _a, _b, _c, _d;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             itemPath = itemPath !== undefined ? itemPath : '';
             const schema = propertySchema || (yield this.getSchema(itemPath));
@@ -114,7 +115,58 @@ class Dispatcher extends datasource_1.DataSource {
                 }
             }
             ;
-            return yield this.dataSource.dispatch(methodName, itemPath, schema, value);
+            if ((~['set', 'push', 'del'].indexOf(methodName))) {
+                const $data = (schema === null || schema === void 0 ? void 0 : schema.$data) || ((_a = schema === null || schema === void 0 ? void 0 : schema.items) === null || _a === void 0 ? void 0 : _a.$data);
+                if (($data === null || $data === void 0 ? void 0 : $data.path) && $data.remoteField) {
+                    const refPath = utils_1.absolute($data.path, itemPath);
+                    let refSchema = yield this.getSchema(refPath);
+                    if (((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array' && ((_b = refSchema === null || refSchema === void 0 ? void 0 : refSchema.items) === null || _b === void 0 ? void 0 : _b.type) === 'object') || ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'object')) {
+                        refSchema = refSchema.items || refSchema;
+                        refSchema = refSchema.properties[$data.remoteField];
+                        const refValues = (yield this.get(itemPath)) || [];
+                        const refPaths = Array.isArray(refValues) ? refValues : [refValues];
+                        refPaths.forEach((refPath) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                            let refObject = (yield this.get(refPath, refSchema)) || [];
+                            if ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array') {
+                                refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter(ref => !itemPath.startsWith(ref));
+                                this.set(refPath, null, refObject);
+                            }
+                            else {
+                                if (itemPath.startsWith(refObject[$data.remoteField])) {
+                                    refObject[$data.remoteField] = '';
+                                    this.set(refPath, null, refObject);
+                                }
+                            }
+                        }));
+                    }
+                }
+            }
+            const result = yield this.dataSource.dispatch(methodName, itemPath, schema, value);
+            if ((~['set', 'push'].indexOf(methodName))) {
+                const $data = (schema === null || schema === void 0 ? void 0 : schema.$data) || ((_c = schema === null || schema === void 0 ? void 0 : schema.items) === null || _c === void 0 ? void 0 : _c.$data);
+                if (($data === null || $data === void 0 ? void 0 : $data.path) && $data.remoteField) {
+                    const refPath = utils_1.absolute($data.path, itemPath);
+                    let refSchema = yield this.getSchema(refPath);
+                    if (((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array' && ((_d = refSchema === null || refSchema === void 0 ? void 0 : refSchema.items) === null || _d === void 0 ? void 0 : _d.type) === 'object') || ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'object')) {
+                        refSchema = refSchema.items || refSchema;
+                        refSchema = refSchema.properties[$data.remoteField];
+                        const refPaths = Array.isArray(value) ? value : [value];
+                        refPaths.forEach((refPath) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                            let refObject = (yield this.get(refPath, refSchema)) || {};
+                            if ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array') {
+                                refObject[$data.remoteField] = refObject[$data.remoteField] || [];
+                                refObject[$data.remoteField].push(utils_1.absolute('..', itemPath));
+                                this.set(refPath, null, refObject);
+                            }
+                            else {
+                                refObject[$data.remoteField] = utils_1.absolute('..', itemPath);
+                                this.set(refPath, null, refObject);
+                            }
+                        }));
+                    }
+                }
+            }
+            return result;
         });
     }
     render(methodName = 'get', itemPath = '', schema, value) {

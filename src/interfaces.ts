@@ -17,6 +17,11 @@ export interface IProxyInfo {
     params: any;
 }
 
+export interface IRelationship {
+    path: string;
+    remoteField?: string;
+}
+
 export interface IProperty {
     $ref?: string;
     $schema?: string;
@@ -55,7 +60,7 @@ export interface IProperty {
     writeOnly?: boolean;
     typeof?: "function";
     depends?: string;
-    $data?: string;
+    $data?: IRelationship;
     $proxy?: IProxyInfo;
     $widget?: string;
 }
