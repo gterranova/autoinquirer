@@ -1,18 +1,17 @@
-import { IProperty } from './interfaces';
-import { JsonSchema } from './jsonschema';
+import { IProperty, IDispatchOptions } from './interfaces';
 export declare type Item = any;
 export declare type Param = any;
-export declare abstract class DataRenderer {
-    abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, datasource?: DataSource): Promise<Item>;
-}
-export declare abstract class DataSource {
-    protected renderer: DataRenderer;
+export declare abstract class AbstractDataSource {
     abstract connect(): Promise<void>;
     abstract close(): Promise<void>;
-    abstract getSchema(itemPath?: string, schemaSource?: JsonSchema, parentPath?: string, params?: Param): Promise<IProperty>;
-    abstract get(itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param): Promise<Item>;
-    abstract dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param): any;
-    setRenderer(renderer: DataRenderer): void;
+    abstract get(options?: IDispatchOptions): Promise<Item>;
+    abstract dispatch(methodName: string, options?: IDispatchOptions): any;
     convertObjIDToIndex(path: string | string[], basePath?: string, obj?: Item, ...others: Param[]): Promise<string>;
+}
+export declare abstract class AbstractDispatcher extends AbstractDataSource {
+    abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDataSource): Promise<IProperty>;
+}
+export interface IDataRenderer {
+    render: (methodName: string, options?: IDispatchOptions) => any;
 }
 //# sourceMappingURL=datasource.d.ts.map

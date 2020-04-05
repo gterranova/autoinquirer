@@ -4,17 +4,18 @@ const tslib_1 = require("tslib");
 const json_schema_ref_parser_1 = tslib_1.__importDefault(require("@apidevtools/json-schema-ref-parser"));
 const ajv_1 = tslib_1.__importDefault(require("ajv"));
 const path_1 = tslib_1.__importDefault(require("path"));
+const _ = tslib_1.__importStar(require("lodash"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
 const defaultTypeValue = {
-    'object': (value) => utils_1.getType(value) === 'Object' ? value : {},
-    'array': (value) => Array.isArray(value) ? value : [],
-    'string': (value) => value !== undefined ? value.toString() : value,
+    'object': (value) => _.isObject(value) ? value : {},
+    'array': (value) => _.isArray(value) ? value : [],
+    'string': (value) => _.toString(value),
     'number': (value) => parseFloat(value) || 0,
     'integer': (value) => parseFloat(value) || 0,
     'boolean': (value) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
 };
-class JsonSchema extends datasource_1.DataSource {
+class JsonSchema extends datasource_1.AbstractDataSource {
     constructor(data) {
         super();
         this.validator = new ajv_1.default({ coerceTypes: true });
@@ -34,21 +35,22 @@ class JsonSchema extends datasource_1.DataSource {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
         });
     }
-    get(itemPath) {
+    get(options) {
+        var _a, _b, _c, _d, _e;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let definition = this.schemaData;
-            if (!itemPath || !itemPath.length) {
+            if (!((_b = (_a = options) === null || _a === void 0 ? void 0 : _a.itemPath) === null || _b === void 0 ? void 0 : _b.length)) {
                 return definition;
             }
-            const parts = itemPath.split('/');
+            const parts = options.itemPath.split('/');
             while (definition && parts.length) {
                 const key = parts.shift();
                 if (definition.type === 'array' && key === 'items' ||
                     (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) ||
-                    (definition.items && definition.items.properties && definition.items.properties.slug)) {
+                    ((_d = (_c = definition.items) === null || _c === void 0 ? void 0 : _c.properties) === null || _d === void 0 ? void 0 : _d.slug)) {
                     definition = definition.items;
                 }
-                else if (definition.type === 'object' && definition.properties && definition.properties[key]) {
+                else if (definition.type === 'object' && ((_e = definition.properties) === null || _e === void 0 ? void 0 : _e[key])) {
                     definition = definition.properties[key];
                 }
                 else if (definition.type === 'object' && key === 'properties') {
@@ -90,7 +92,7 @@ class JsonSchema extends datasource_1.DataSource {
         }
         try {
             if (!this.validator.validate(schema, value)) {
-                throw new Error(this.validator.errors.map((err) => err.message).join('\n'));
+                throw new Error(JSON.stringify(this.validator.errors, null, 2));
             }
             ;
         }
@@ -102,16 +104,13 @@ class JsonSchema extends datasource_1.DataSource {
         }
         return value;
     }
-    dispatch(methodName, itemPath, schema, value, parentPath, params) {
+    dispatch(methodName, options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!this[methodName]) {
                 throw new Error(`Method ${methodName} not implemented`);
             }
-            return yield this[methodName].call(this, itemPath, schema, value, parentPath, params);
+            return yield this[methodName].call(this, options);
         });
-    }
-    getSchema(_itemPath, _schemaSource, _parentPath, _params) {
-        throw new Error("Method not implemented.");
     }
 }
 exports.JsonSchema = JsonSchema;

@@ -1,20 +1,30 @@
-import { IProperty } from './interfaces';
-import { DataSource } from './datasource';
+import { IProperty, IDispatchOptions } from './interfaces';
+import { AbstractDispatcher } from './datasource';
 import { JsonSchema } from './jsonschema';
-export declare class JsonDataSource extends DataSource {
+export declare class JsonDataSource extends AbstractDispatcher {
     private jsonDocument;
     private dataFile;
     constructor(data: any);
     connect(): Promise<void>;
     close(): Promise<void>;
     save(): Promise<void>;
-    getSchema(itemPath?: string, schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty>;
-    get(itemPath?: string, schema?: IProperty): Promise<any>;
-    push(itemPath: string, _?: IProperty, value?: any): Promise<any>;
-    set(itemPath: string, _: IProperty, value: any): Promise<void>;
-    update(itemPath: string, _: IProperty, value: any): Promise<any>;
-    del(itemPath?: string): Promise<void>;
-    delCascade(itemPath?: string): Promise<void>;
-    dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any): Promise<any>;
+    getSchema(options?: IDispatchOptions, schemaSource?: JsonSchema): Promise<IProperty>;
+    get(options?: IDispatchOptions): Promise<any>;
+    push({ itemPath, value }: {
+        itemPath: any;
+        value: any;
+    }): Promise<any>;
+    set({ itemPath, value }: {
+        itemPath: any;
+        value: any;
+    }): Promise<void>;
+    update(options?: IDispatchOptions): Promise<any>;
+    del({ itemPath }: {
+        itemPath: any;
+    }): Promise<void>;
+    delCascade({ itemPath }: {
+        itemPath: any;
+    }): Promise<void>;
+    dispatch(methodName: string, options?: IDispatchOptions): Promise<any>;
 }
 //# sourceMappingURL=json.d.ts.map

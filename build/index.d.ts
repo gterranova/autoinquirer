@@ -1,4 +1,4 @@
-export { DataSource, DataRenderer } from './datasource';
+export { AbstractDataSource as DataSource } from './datasource';
 export { Dispatcher } from './dispatcher';
 export { JsonSchema } from './jsonschema';
 export { JsonDataSource } from './json';

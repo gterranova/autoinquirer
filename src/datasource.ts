@@ -1,6 +1,5 @@
-import { IProperty } from './interfaces';
-import { getType } from './utils';
-import { JsonSchema } from './jsonschema';
+import { IProperty, IDispatchOptions } from './interfaces';
+import { isObject } from 'lodash';
 
 // tslint:disable:no-console
 
@@ -9,24 +8,12 @@ export declare type Item = any;
 // tslint:disable-next-line:no-any
 export declare type Param = any;
 
-export abstract class DataRenderer {
-    public async abstract render(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, datasource?: DataSource): Promise<Item>;
-}
-
-export abstract class DataSource {
-    protected renderer: DataRenderer;
-
+export abstract class AbstractDataSource {
     public async abstract connect(): Promise<void>;
     public async abstract close(): Promise<void>;
 
-    // tslint:disable-next-line:no-reserved-keywords
-    public async abstract getSchema(itemPath?: string, schemaSource?: JsonSchema, parentPath?: string, params?: Param): Promise<IProperty>;
-    public async abstract get(itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param): Promise<Item>;
-    public async abstract dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: Item, parentPath?: string, params?: Param);
-
-    public setRenderer(renderer: DataRenderer) {
-        this.renderer = renderer;
-    }
+    public async abstract get(options?: IDispatchOptions): Promise<Item>;
+    public async abstract dispatch(methodName: string, options?: IDispatchOptions);
 
     public async convertObjIDToIndex(path: string | string[], basePath: string = '', obj?: Item, ...others: Param[]): Promise<string> {
         if (!path) { return ''; }
@@ -57,7 +44,7 @@ export abstract class DataSource {
                 currentObj = currentObj[idx];
                 continue;
 
-            } else if (getType(currentObj) === 'Object' && currentObj[key]) {
+            } else if (isObject(currentObj) && currentObj[key]) {
                 converted.push(key);
                 currentObj = currentObj[key];
                 continue;
@@ -70,3 +57,14 @@ export abstract class DataSource {
     }
 
 }
+
+export abstract class AbstractDispatcher extends AbstractDataSource {
+    // tslint:disable-next-line:no-reserved-keywords
+    public async abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDataSource): Promise<IProperty>;
+    
+}
+
+export interface IDataRenderer {
+    render: (methodName: string, options?: IDispatchOptions) => any;
+}
+

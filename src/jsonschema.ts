@@ -4,20 +4,22 @@ import $RefParser from "@apidevtools/json-schema-ref-parser";
 
 import ajv from 'ajv';
 import path from 'path';
-import { IProperty } from './interfaces';
-import { findUp, getType, loadJSON } from './utils';
-import { DataSource } from './datasource';
+import * as _ from 'lodash';
+
+import { IProperty, IDispatchOptions } from './interfaces';
+import { findUp, loadJSON } from './utils';
+import { AbstractDataSource } from './datasource';
 
 const defaultTypeValue = {
-    'object': (value?: any) => getType(value) === 'Object' ? value : {},
-    'array': (value?: any[]) => Array.isArray(value) ? value : [],
-    'string': (value?: any) => value !== undefined ? value.toString() : value,
+    'object': (value?: any) => _.isObject(value) ? value : {},
+    'array': (value?: any[]) => _.isArray(value) ? value : [],
+    'string': (value?: any) => _.toString(value),
     'number': (value?: string) => parseFloat(value) || 0,
     'integer': (value?: string) => parseFloat(value) || 0,
     'boolean': (value?: boolean | string | number) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
 };
 
-export class JsonSchema extends DataSource {
+export class JsonSchema extends AbstractDataSource {
     private validator: any;
     private schemaData: IProperty;
     private basePath: string;
@@ -42,21 +44,21 @@ export class JsonSchema extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords cyclomatic-complexity
-    public async get(itemPath?: string) {
+    public async get(options?: IDispatchOptions) {
         let definition = this.schemaData;
-        if (!itemPath || !itemPath.length) {
+        if (!options?.itemPath?.length) {
             return definition;
         }
-        const parts = itemPath.split('/');
+        const parts = options.itemPath.split('/');
 
         while (definition && parts.length) {
             const key = parts.shift();
 
             if (definition.type === 'array' && key === 'items' ||
                 (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) ||
-                (definition.items && definition.items.properties && definition.items.properties.slug)) {
+                (definition.items?.properties?.slug)) {
                 definition = definition.items;
-            } else if (definition.type === 'object' && definition.properties && definition.properties[key]) {
+            } else if (definition.type === 'object' && definition.properties?.[key]) {
                 definition = definition.properties[key];
             } else if (definition.type === 'object' && key === 'properties') {
                 definition = definition.properties;
@@ -101,7 +103,7 @@ export class JsonSchema extends DataSource {
         }
         try {
             if (!this.validator.validate(schema, value)) {
-                throw new Error(this.validator.errors.map((err: any) => err.message).join('\n'));
+                throw new Error(JSON.stringify(this.validator.errors, null, 2));
             };
         } catch (error) {
             // Recursion maybe
@@ -112,16 +114,12 @@ export class JsonSchema extends DataSource {
         return value;
     }
 
-    public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
+    public async dispatch(methodName: string, options?: IDispatchOptions) {
         if (!this[methodName]) {
             throw new Error(`Method ${methodName} not implemented`);
         }
 
         // tslint:disable-next-line:no-return-await
-        return await this[methodName].call(this, itemPath, schema, value, parentPath, params);
-    }
-
-    public getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
-        throw new Error("Method not implemented.");
+        return await this[methodName].call(this, options);
     }
 }

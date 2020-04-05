@@ -55,6 +55,7 @@ export function absolute(testPath: string, absolutePath: string): string {
     return p0.join('/');
 }
 
+/*
 export function getType(value: any): string {
     // tslint:disable-next-line:no-reserved-keywords
     const type = typeof value;
@@ -64,6 +65,7 @@ export function getType(value: any): string {
 
     return type;
 }
+*/
 
 /**
  * Generates a MongoDB-style ObjectId in Node.js. Uses nanosecond timestamp in place of counter; 

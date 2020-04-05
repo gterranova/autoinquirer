@@ -65,3 +65,10 @@ export interface IProperty {
     $widget?: string;
 }
 
+export interface IDispatchOptions {
+    itemPath?: string, 
+    schema?: IProperty, 
+    value?: any, 
+    parentPath?: string, 
+    params?: any
+}

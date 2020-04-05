@@ -3,12 +3,12 @@
 import fs from "fs";
 import * as _ from 'lodash';
 import objectPath from 'object-path';
-import { IProperty } from './interfaces';
-import { getType, loadJSON, objectId } from './utils';
-import { DataSource } from './datasource';
+import { IProperty, IDispatchOptions } from './interfaces';
+import { loadJSON, objectId } from './utils';
+import { AbstractDispatcher } from './datasource';
 import { JsonSchema } from './jsonschema';
 
-export class JsonDataSource extends DataSource {
+export class JsonDataSource extends AbstractDispatcher {
     private jsonDocument: any;
     private dataFile: string;
 
@@ -31,46 +31,46 @@ export class JsonDataSource extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public getSchema(itemPath?: string, schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
+    public getSchema(options?: IDispatchOptions, schemaSource?: JsonSchema): Promise<IProperty> {
         //throw new Error("Method not implemented.");
         // Do not raise an error 
-        return schemaSource.get(itemPath);
+        return schemaSource.get(options);
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async get(itemPath?: string, schema?: IProperty) {
-        if (!itemPath) {
+    public async get(options?: IDispatchOptions) {
+        if (!options?.itemPath) {
             //console.log(itemPath, schema?.type, getType(this.jsonDocument), Array.isArray(this.jsonDocument))
-            if (schema && schema.type === 'array' && !Array.isArray(this.jsonDocument)) {
+            if (options?.schema?.type === 'array' && !Array.isArray(this.jsonDocument)) {
                 //console.log(itemPath, schema.type, typeof this.jsonDocument)
                 return this.jsonDocument? [this.jsonDocument]: [];
             } 
             return this.jsonDocument; 
         }
-        if (itemPath.indexOf('#') != -1) {
-            const base = itemPath.split('#', 1)[0];
-            const remaining = itemPath.slice(base.length+1);
+        if (options.itemPath.indexOf('#') != -1) {
+            const base = options.itemPath.split('#', 1)[0];
+            const remaining = options.itemPath.slice(base.length+1);
             const baseItems = objectPath.get(this.jsonDocument, (await this.convertObjIDToIndex(base)).split('/').filter( p => p != '')) || [];
             const result = await Promise.all(baseItems.map( async baseItem => {
                 let _fullPath = [base, remaining].join(baseItem._id);
                 if (remaining.indexOf('#') == -1) {
-                    if (schema.$data?.remoteField) {
-                        _fullPath = [_fullPath, schema.$data.remoteField].join('/');
+                    if (options.schema?.$data?.remoteField) {
+                        _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                     }
-                    return { _fullPath, ...await this.get(_fullPath, schema) };
+                    return { _fullPath, ...await this.get({ itemPath: _fullPath, schema: options.schema }) };
                 }
-                return await this.get([base, remaining].join(baseItem._id), schema);
+                return await this.get({ itemPath: [base, remaining].join(baseItem._id), schema: options.schema});
             } ));
             //console.log(result);
             return _.flatten(result);
         }
-        const schemaPath = await this.convertObjIDToIndex(itemPath);
+        const schemaPath = await this.convertObjIDToIndex(options.itemPath);
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
 
-    public async push(itemPath: string, _?: IProperty, value?: any) {
+    public async push({ itemPath, value }) {
         if (value !== undefined) {
-            if (getType(value) === 'Object') {
+            if (_.isObject(value)) {
                 value._id = objectId();
             }
 
@@ -87,7 +87,7 @@ export class JsonDataSource extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async set(itemPath: string, _: IProperty, value: any) {
+    public async set({ itemPath, value }) {
         if (value !== undefined) {
             if (!itemPath) {
                 this.jsonDocument = value;
@@ -100,23 +100,24 @@ export class JsonDataSource extends DataSource {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async update(itemPath: string, _: IProperty, value: any) {
+    public async update(options?: IDispatchOptions) {
+        const { itemPath, value } = options;
+        let newValue;
         if (value !== undefined) {
             if (!itemPath) {
-                this.jsonDocument = { ...this.jsonDocument, ...value };
+                newValue = this.jsonDocument = { ...this.jsonDocument, ...value };
             } else {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
                 // tslint:disable-next-line:no-parameter-reassignment
-                value = { ...objectPath.get(this.jsonDocument, schemaPath.split('/')), ...value };
-                objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
+                newValue = { ...objectPath.get(this.jsonDocument, schemaPath.split('/')), ...value };
+                objectPath.set(this.jsonDocument, schemaPath.split('/'), newValue);
             }
             this.save();
-
-            return value;
+            return newValue;
         }
     }
 
-    public async del(itemPath?: string) {
+    public async del({ itemPath }) {
         if (!itemPath) {
             this.jsonDocument = undefined;
             this.save();
@@ -128,18 +129,18 @@ export class JsonDataSource extends DataSource {
         this.save();
     }
 
-    public async delCascade(itemPath?: string) {
+    public async delCascade({ itemPath }) {
         // Nothing to do
         itemPath;
     }
 
-    public async dispatch(methodName: string, itemPath?: string, schema?: IProperty, value?: any, parentPath?: string, params?: any) {
+    public async dispatch(methodName: string, options?: IDispatchOptions) {
         if (!this[methodName]) {
             throw new Error(`Method ${methodName} not implemented`);
         }
 
         // tslint:disable-next-line:no-return-await
-        return await this[methodName].call(this, itemPath, schema, value, parentPath, params);
+        return await this[methodName].call(this, options);
     }
 
 }

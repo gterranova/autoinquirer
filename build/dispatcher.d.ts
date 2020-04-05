@@ -1,23 +1,22 @@
-import { IProperty } from './interfaces';
-import { DataRenderer, DataSource } from './datasource';
+import { IProperty, IDispatchOptions } from './interfaces';
+import { AbstractDispatcher } from './datasource';
 import { JsonSchema } from './jsonschema';
-export declare class Dispatcher extends DataSource {
+export declare class Dispatcher extends AbstractDispatcher {
     private entryPoints;
     private proxies;
     private schemaSource;
     private dataSource;
-    constructor(schema: string | JsonSchema, data: string | DataSource, renderer?: DataRenderer);
+    constructor(schema: string | JsonSchema, data: string | AbstractDispatcher);
     connect(): Promise<void>;
     close(): Promise<void>;
-    getSchema(itemPath?: string, schemaSource?: JsonSchema): Promise<IProperty>;
-    get(itemPath?: string, propertySchema?: IProperty): Promise<any>;
-    set(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
-    update(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
-    push(itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
-    del(itemPath?: string, propertySchema?: IProperty): Promise<any>;
-    registerProxy(name: string, dataSource: DataSource): void;
-    dispatch(methodName: string, itemPath?: string, propertySchema?: IProperty, value?: any): Promise<any>;
-    render(methodName?: string, itemPath?: string, schema?: IProperty, value?: any): Promise<any>;
+    getSchema(options?: IDispatchOptions): Promise<IProperty>;
+    get(options?: IDispatchOptions): Promise<any>;
+    set(options?: IDispatchOptions): Promise<any>;
+    update(options?: IDispatchOptions): Promise<any>;
+    push(options?: IDispatchOptions): Promise<any>;
+    del(options?: IDispatchOptions): Promise<any>;
+    registerProxy(name: string, dataSource: AbstractDispatcher): void;
+    dispatch(methodName: string, options?: IDispatchOptions): Promise<any>;
     private findEntryPoints;
     private getProxyForPath;
     private getProxyWithinPath;

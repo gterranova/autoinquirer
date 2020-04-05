@@ -1,14 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const utils_1 = require("./utils");
-class DataRenderer {
-}
-exports.DataRenderer = DataRenderer;
-class DataSource {
-    setRenderer(renderer) {
-        this.renderer = renderer;
-    }
+const lodash_1 = require("lodash");
+class AbstractDataSource {
     convertObjIDToIndex(path, basePath = '', obj, ...others) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!path) {
@@ -41,7 +35,7 @@ class DataSource {
                     currentObj = currentObj[idx];
                     continue;
                 }
-                else if (utils_1.getType(currentObj) === 'Object' && currentObj[key]) {
+                else if (lodash_1.isObject(currentObj) && currentObj[key]) {
                     converted.push(key);
                     currentObj = currentObj[key];
                     continue;
@@ -52,5 +46,8 @@ class DataSource {
         });
     }
 }
-exports.DataSource = DataSource;
+exports.AbstractDataSource = AbstractDataSource;
+class AbstractDispatcher extends AbstractDataSource {
+}
+exports.AbstractDispatcher = AbstractDispatcher;
 //# sourceMappingURL=datasource.js.map

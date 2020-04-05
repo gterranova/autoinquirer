@@ -6,7 +6,7 @@ const _ = tslib_1.__importStar(require("lodash"));
 const object_path_1 = tslib_1.__importDefault(require("object-path"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
-class JsonDataSource extends datasource_1.DataSource {
+class JsonDataSource extends datasource_1.AbstractDispatcher {
     constructor(data) {
         super();
         this.dataFile = (typeof data === 'string') ? data : undefined;
@@ -28,42 +28,43 @@ class JsonDataSource extends datasource_1.DataSource {
             }
         });
     }
-    getSchema(itemPath, schemaSource, _parentPath, _params) {
-        return schemaSource.get(itemPath);
+    getSchema(options, schemaSource) {
+        return schemaSource.get(options);
     }
-    get(itemPath, schema) {
+    get(options) {
+        var _a, _b, _c;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (!itemPath) {
-                if (schema && schema.type === 'array' && !Array.isArray(this.jsonDocument)) {
+            if (!((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath)) {
+                if (((_c = (_b = options) === null || _b === void 0 ? void 0 : _b.schema) === null || _c === void 0 ? void 0 : _c.type) === 'array' && !Array.isArray(this.jsonDocument)) {
                     return this.jsonDocument ? [this.jsonDocument] : [];
                 }
                 return this.jsonDocument;
             }
-            if (itemPath.indexOf('#') != -1) {
-                const base = itemPath.split('#', 1)[0];
-                const remaining = itemPath.slice(base.length + 1);
+            if (options.itemPath.indexOf('#') != -1) {
+                const base = options.itemPath.split('#', 1)[0];
+                const remaining = options.itemPath.slice(base.length + 1);
                 const baseItems = object_path_1.default.get(this.jsonDocument, (yield this.convertObjIDToIndex(base)).split('/').filter(p => p != '')) || [];
                 const result = yield Promise.all(baseItems.map((baseItem) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    var _a;
+                    var _d, _e;
                     let _fullPath = [base, remaining].join(baseItem._id);
                     if (remaining.indexOf('#') == -1) {
-                        if ((_a = schema.$data) === null || _a === void 0 ? void 0 : _a.remoteField) {
-                            _fullPath = [_fullPath, schema.$data.remoteField].join('/');
+                        if ((_e = (_d = options.schema) === null || _d === void 0 ? void 0 : _d.$data) === null || _e === void 0 ? void 0 : _e.remoteField) {
+                            _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                         }
-                        return Object.assign({ _fullPath }, yield this.get(_fullPath, schema));
+                        return Object.assign({ _fullPath }, yield this.get({ itemPath: _fullPath, schema: options.schema }));
                     }
-                    return yield this.get([base, remaining].join(baseItem._id), schema);
+                    return yield this.get({ itemPath: [base, remaining].join(baseItem._id), schema: options.schema });
                 })));
                 return _.flatten(result);
             }
-            const schemaPath = yield this.convertObjIDToIndex(itemPath);
+            const schemaPath = yield this.convertObjIDToIndex(options.itemPath);
             return object_path_1.default.get(this.jsonDocument, schemaPath.split('/'));
         });
     }
-    push(itemPath, _, value) {
+    push({ itemPath, value }) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (value !== undefined) {
-                if (utils_1.getType(value) === 'Object') {
+                if (_.isObject(value)) {
                     value._id = utils_1.objectId();
                 }
                 if (!itemPath) {
@@ -78,7 +79,7 @@ class JsonDataSource extends datasource_1.DataSource {
             }
         });
     }
-    set(itemPath, _, value) {
+    set({ itemPath, value }) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (value !== undefined) {
                 if (!itemPath) {
@@ -92,23 +93,25 @@ class JsonDataSource extends datasource_1.DataSource {
             }
         });
     }
-    update(itemPath, _, value) {
+    update(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { itemPath, value } = options;
+            let newValue;
             if (value !== undefined) {
                 if (!itemPath) {
-                    this.jsonDocument = Object.assign(Object.assign({}, this.jsonDocument), value);
+                    newValue = this.jsonDocument = Object.assign(Object.assign({}, this.jsonDocument), value);
                 }
                 else {
                     const schemaPath = yield this.convertObjIDToIndex(itemPath);
-                    value = Object.assign(Object.assign({}, object_path_1.default.get(this.jsonDocument, schemaPath.split('/'))), value);
-                    object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
+                    newValue = Object.assign(Object.assign({}, object_path_1.default.get(this.jsonDocument, schemaPath.split('/'))), value);
+                    object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), newValue);
                 }
                 this.save();
-                return value;
+                return newValue;
             }
         });
     }
-    del(itemPath) {
+    del({ itemPath }) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!itemPath) {
                 this.jsonDocument = undefined;
@@ -120,17 +123,17 @@ class JsonDataSource extends datasource_1.DataSource {
             this.save();
         });
     }
-    delCascade(itemPath) {
+    delCascade({ itemPath }) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             itemPath;
         });
     }
-    dispatch(methodName, itemPath, schema, value, parentPath, params) {
+    dispatch(methodName, options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!this[methodName]) {
                 throw new Error(`Method ${methodName} not implemented`);
             }
-            return yield this[methodName].call(this, itemPath, schema, value, parentPath, params);
+            return yield this[methodName].call(this, options);
         });
     }
 }

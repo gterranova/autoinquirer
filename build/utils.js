@@ -58,14 +58,6 @@ function absolute(testPath, absolutePath) {
     return p0.join('/');
 }
 exports.absolute = absolute;
-function getType(value) {
-    const type = typeof value;
-    if (type === 'object') {
-        return value ? Object.prototype.toString.call(value).slice(8, -1) : 'null';
-    }
-    return type;
-}
-exports.getType = getType;
 function objectId() {
     const now = new Date();
     const seconds = Math.floor(now.getTime() / 1000).toString(16);
