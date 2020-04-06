@@ -61,7 +61,7 @@ export class Dispatcher extends AbstractDispatcher {
     public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
         //console.log(`DISPATCH getSchema(itemPath?: ${itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
-        for (const proxy of this.getProxyForPath(options.itemPath).reverse()) {
+        for (const proxy of this.getProxyForPath(options?.itemPath).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
             const { parentPath, proxyInfo } = proxy;

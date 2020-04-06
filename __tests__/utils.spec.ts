@@ -1,5 +1,5 @@
 import path from 'path';
-import { absolute, backPath, evalExpr, findUp, getType, loadJSON } from '../src/utils';
+import { absolute, backPath, evalExpr, findUp, loadJSON } from '../src/utils';
 
 const mockWarn = jest.spyOn(global.console, 'warn');
 beforeEach(() => {
@@ -59,45 +59,6 @@ describe('backPath', () => {
     
     expect(backPath('/test/whatever')).toBe('/test');
     expect(backPath('/test/whatever')).toBe(absolute('..', '/test/whatever'));
-  });
-});
-
-describe('getType', () => {
-  // Assert Action values
-  it('returns Object on objects', () => {
-    expect(getType({})).toBe(`Object`);
-  });
-  it('returns Array on arrays', () => {
-    expect(getType([])).toBe(`Array`);
-  });
-  it('returns null on nulls', () => {
-    expect(getType(null)).toBe(`null`);
-  });
-  it('returns string on strings', () => {
-    expect(getType("")).toBe(`string`);
-  });
-  it('returns number on numbers', () => {
-    expect(getType(1)).toBe(`number`);
-  });
-  it('returns number on floats', () => {
-    expect(getType(1.1)).toBe(`number`);
-  });
-  it('returns function on functions', () => {
-    expect(getType(getType)).toBe(`function`);
-  });
-  it('returns function/Object on classes/instances', () => {
-    class Test {
-      private x: string;
-      constructor() {
-        this.x = 'test';
-      }
-      getX() {
-        return this.x;
-      }
-    };
-    const inst = new Test();
-    expect(getType(Test)).toBe(`function`);
-    expect(getType(inst)).toBe(`Object`);
   });
 });
 

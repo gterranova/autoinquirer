@@ -36,8 +36,9 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     getSchema(options) {
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            for (const proxy of this.getProxyForPath(options.itemPath).reverse()) {
+            for (const proxy of this.getProxyForPath((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath).reverse()) {
                 const { parentPath, proxyInfo } = proxy;
                 const dataSource = this.getProxy(proxyInfo);
                 if (dataSource) {

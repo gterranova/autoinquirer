@@ -81,7 +81,7 @@ describe('dispatch', () => {
     it('throws if method does not exists', async () => {
         let exception;
         try {
-            await dsValues.dispatch('foo', '')
+            await dsValues.dispatch('foo', { itemPath: '' })
         } catch (e) {
             exception = e;
         }
@@ -91,22 +91,22 @@ describe('dispatch', () => {
 
 describe('dispatch', () => {
     it('walks array', async () => {
-        const received = await dsValues.dispatch('get', '0/another/foo');
+        const received = await dsValues.dispatch('get', { itemPath: '0/another/foo'});
         const expected = "bar";
         expect(received).toBe(expected);
     });
     it('walks objects', async () => {
-        const received = await dsValues.dispatch('get', '0/uri');
+        const received = await dsValues.dispatch('get', { itemPath: '0/uri' });
         const expected = "test";
         expect(received).toBe(expected);
     });
     it('walks pattern properties', async () => {
-        const received = await dsValues.dispatch('get', '0/ABC');
+        const received = await dsValues.dispatch('get', { itemPath: '0/ABC'});
         const expected = true;
         expect(received).toBe(expected);
     });
     it('returns undefined in any other case', async () => {
-        const received = await dsValues.dispatch('get', 'another/hhh/sdsada');
+        const received = await dsValues.dispatch('get', { itemPath: 'another/hhh/sdsada'});
         expect(received).not.toBeDefined();
     });
 });
@@ -121,17 +121,17 @@ describe('save', () => {
 
 describe('set', () => {
     it('does nothing if no value is provided', async () => {
-        await dsValues.set('', null, undefined);
+        await dsValues.set('', {});
         expect(mockWrite).not.toHaveBeenCalled();
     });
     it('set a value', async () => {
-        await dsValues.set('0/another/foo', null, 'baz');
+        await dsValues.set({ itemPath: '0/another/foo', value: 'baz'});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        expect(dsValues.get('0/another/foo')).resolves.toBe('baz');
+        expect(dsValues.get({ itemPath: '0/another/foo'})).resolves.toBe('baz');
     });
     it('set a value', async () => {
-        await dsValues.set(null, null, { baz: 1});
+        await dsValues.set({ value: { baz: 1}});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         expect(dsValues.get()).resolves.toEqual({ baz: 1});
@@ -140,35 +140,35 @@ describe('set', () => {
 
 describe('push', () => {
     it('does nothing if no value is provided', async () => {
-        await dsValues.push('', null, undefined);
+        await dsValues.push({ itemPath: '' });
         expect(mockWrite).not.toHaveBeenCalled();
     });
     it('push a value', async () => {
-        await dsValues.push('0/myArray', null, 'baz');
+        await dsValues.push({ itemPath: '0/myArray', value: 'baz'});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        expect(dsValues.get('0/myArray')).resolves.toContain('baz');
+        expect(dsValues.get({ itemPath: '0/myArray'})).resolves.toContain('baz');
     });
     it('set a value', async () => {
-        await dsValues.set('0/myArray', null, ['baz']);
+        await dsValues.set({ itemPath: '0/myArray', value: ['baz']});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        const newValue = await dsValues.get('0/myArray');
+        const newValue = await dsValues.get({ itemPath: '0/myArray'});
         expect(newValue).toContain('baz');
         expect(newValue).toHaveLength(1);
     });
     it('pushes to root if no path is provided', async () => {
         const arrayDs = new JsonDataSource([]);
-        await arrayDs.push(null, null, {'baz': 1});
+        await arrayDs.push({ itemPath: '', value: {'baz': 1} });
         expect(mockWrite).not.toBeCalled();
         const newValue = await arrayDs.get();
         expect(newValue).toHaveLength(1);
         expect(newValue[0].baz).toBe(1);
     });
     it('adds _id to objects', async () => {
-        await dsValues.push('0/myObjArray', null, {'baz': 1});
+        await dsValues.push({ itemPath: '0/myObjArray', value: {'baz': 1}});
         expect(mockWrite).toHaveBeenCalledTimes(1);
-        const newValue = await dsValues.get('0/myObjArray/0');
+        const newValue = await dsValues.get({ itemPath: '0/myObjArray/0'});
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         expect(newValue.baz).toBe(1);
         expect(newValue._id).toBeDefined();
@@ -178,24 +178,24 @@ describe('push', () => {
 
 describe('del', () => {
     it('delete root if not pah is provided', async () => {
-        await dsValues.del('', null);
+        await dsValues.del({ itemPath: ''});
         expect(mockWrite).toHaveBeenCalledTimes(1);
-        const newValue = await dsValues.get('0/myArray');
+        const newValue = await dsValues.get({ itemPath: '0/myArray'});
         expect(newValue).not.toBeDefined();
     });
     it('del a value', async () => {
-        await dsValues.del('0/myArray/0', null);
+        await dsValues.del({ itemPath: '0/myArray/0' });
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        const newValue = await dsValues.get('0/myArray');
+        const newValue = await dsValues.get({ itemPath: '0/myArray'});
         expect(newValue).not.toContain('A');
         expect(newValue).toHaveLength(2);
     });
     it('deletes whole element', async () => {
-        await dsValues.del('0/myArray', null);
+        await dsValues.del({ itemPath: '0/myArray' });
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        const newValue = await dsValues.get('0/myArray');
+        const newValue = await dsValues.get({ itemPath: '0/myArray'});
         expect(newValue).not.toBeDefined();
     });
 });

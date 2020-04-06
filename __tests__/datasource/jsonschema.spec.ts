@@ -93,7 +93,7 @@ describe('coerce', () => {
         expect(schema.coerce({ type: 'boolean' }, 1)).toBe(true);
         expect(schema.coerce({ type: 'boolean' }, 0)).toBe(false);
 
-        expect(schema.coerce({ type: 'string' }, undefined)).toBe(undefined);
+        expect(schema.coerce({ type: 'string' }, undefined)).toBe('');
         expect(schema.coerce({ type: 'number' }, undefined)).toBe(undefined);
 
         expect(schema.coerce({}, 1234)).toBe(1234);
@@ -127,7 +127,7 @@ describe('validate', () => {
         expect(()=>defaultSchema.validate({ type: 'boolean' }, 1)).toThrowError();
         expect(()=>defaultSchema.validate({ type: 'boolean' }, 0)).toThrowError();
 
-        expect(()=>defaultSchema.validate({ type: 'string' }, undefined)).toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'string' }, undefined)).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'number' }, undefined)).toThrowError()
         expect(()=>defaultSchema.validate({ type: 'string', default: '' }, undefined)).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'number', default: 0 }, undefined)).not.toThrowError()
@@ -144,16 +144,16 @@ describe('validate', () => {
 
 describe('dispatch', () => {
     it('dispatches method calls', async () => {
-        const expected = await defaultSchema.dispatch('get', '');
+        const expected = await defaultSchema.dispatch('get', { itemPath: ''});
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        const received = await defaultSchema.get('');
+        const received = await defaultSchema.get({ itemPath: ''});
         expect(expected).toEqual(received);
     });
 
     it('throws if method does not exists', async () => {
         let exception;
         try {
-            await defaultSchema.dispatch('foo', '')
+            await defaultSchema.dispatch('foo', { itemPath: ''})
         } catch (e) {
             exception = e;
         }
@@ -164,33 +164,33 @@ describe('dispatch', () => {
 describe('dispatch', () => {
     it('walks array', async () => {
         await defaultSchema.connect();
-        const received = await defaultSchema.dispatch('get', '#');
+        const received = await defaultSchema.dispatch('get', { itemPath: '#'});
         const expected = "object";
         expect(received.type).toEqual(expected);
     });
     it('walks objects', async () => {
         await defaultSchema.connect();
-        const received = await defaultSchema.dispatch('get', '#/uri');
+        const received = await defaultSchema.dispatch('get', { itemPath: '#/uri'});
         const expected = "string";
         expect(received.type).toBe(expected);
     });
     it('walks named properties', async () => {
         await defaultSchema.connect();
-        const received = await defaultSchema.dispatch('get', '#/properties');
+        const received = await defaultSchema.dispatch('get', { itemPath: '#/properties'});
         const expected = "string";
         expect(received.uri.type).toBe(expected);
     });
     it('walks pattern properties', async () => {
         await defaultSchema.connect();
-        let received = await defaultSchema.dispatch('get', '#/ABC');
+        let received = await defaultSchema.dispatch('get', { itemPath: '#/ABC'});
         const expected = "boolean";
         expect(received.type).toBe(expected);
-        received = await defaultSchema.dispatch('get', '#/abcNotInPattern');
+        received = await defaultSchema.dispatch('get', { itemPath: '#/abcNotInPattern'});
         expect(received).not.toBeDefined();
     });
     it('returns undefined in any other case', async () => {
         await defaultSchema.connect();
-        const received = await defaultSchema.dispatch('get', '#/another/hhh/sdsada');
+        const received = await defaultSchema.dispatch('get', { itemPath: '#/another/hhh/sdsada'});
         expect(received).not.toBeDefined();
     });
 });

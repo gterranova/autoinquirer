@@ -1,5 +1,5 @@
 import { DataSource, JsonSchema } from '../../src/index';
-import { IProperty } from '../../src/interfaces';
+import { IProperty, IDispatchOptions } from '../../src/interfaces';
 
 const dummyValue = {
     primitive: 'a string',
@@ -19,7 +19,8 @@ export class DummyDatasource extends DataSource {
         throw new Error("Method not implemented.");
     }
     // tslint:disable-next-line:no-reserved-keywords no-any
-    public async get(itemPath?: string): Promise<any> {
+    public async get(options?: IDispatchOptions): Promise<any> {
+        const { itemPath } = options || {};
         if (!itemPath) { return dummyValue; }
         switch (itemPath) {
             case 'primitive':
@@ -36,9 +37,9 @@ export class DummyDatasource extends DataSource {
         return null;
     }
     // tslint:disable-next-line:no-any
-    public async dispatch(methodName: string, itemPath?: string, schema?: any, value?: any, parentPath?: string, params?: any) {
+    public async dispatch(methodName: string, options?: IDispatchOptions) {
         // tslint:disable-next-line:no-return-await
-        return await this[methodName](itemPath, schema, value, parentPath, params);
+        return await this[methodName](options);
     }
 }
 
