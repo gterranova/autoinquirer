@@ -29,7 +29,11 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     getSchema(options, schemaSource) {
-        return schemaSource.get(options);
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { parentPath, itemPath } = options;
+            const newPath = [parentPath, itemPath].filter(p => { var _a; return (_a = p) === null || _a === void 0 ? void 0 : _a.length; }).join('/');
+            return yield schemaSource.get({ itemPath: newPath });
+        });
     }
     get(options) {
         var _a, _b, _c;

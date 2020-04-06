@@ -16,9 +16,12 @@ interface IEntryPointInfo {
     objPath: string;
 };
 
+export type Newable<T> = { new (...args: any[]): T; };
+
 interface IProxy {
     name: string;
-    dataSource: AbstractDispatcher
+    classRef?: Newable<AbstractDispatcher>,
+    dataSource?: AbstractDispatcher
 }
 
 export class Dispatcher extends AbstractDispatcher {
@@ -48,28 +51,28 @@ export class Dispatcher extends AbstractDispatcher {
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
         //console.log("ENTRY POINTS:", this.entryPoints)
-        await Promise.all(this.proxies.map((proxy: IProxy) => proxy.dataSource.connect()));
+        await Promise.all(this.proxies.map((proxy: IProxy) => {proxy?.dataSource?.connect()}));
     }
 
     public async close() {
         await this.schemaSource.close();
         await this.dataSource.close();
-        await Promise.all(this.proxies.map((proxy: IProxy) => proxy.dataSource.close()));
+        await Promise.all(this.proxies.map((proxy: IProxy) => proxy?.dataSource?.close()));
     }
 
     // tslint:disable-next-line:no-reserved-keywords
     public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
-        //console.log(`DISPATCH getSchema(itemPath?: ${itemPath})`);
+        //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
         for (const proxy of this.getProxyForPath(options?.itemPath).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
-            const { parentPath, proxyInfo } = proxy;
-            const dataSource = this.getProxy(proxyInfo);
+            const { objPath, parentPath, proxyInfo } = proxy;
+            const dataSource = await this.getProxy(proxyInfo);
             if (dataSource) {
                 // tslint:disable-next-line:no-return-await
-                //console.log(`DISPATCH DELEGATE getSchema(itemPath?: ${itemPath})`);
-                return await dataSource.getSchema({itemPath: options.itemPath, parentPath, params: proxyInfo.params}, this.schemaSource);
+                //console.log(`DISPATCH DELEGATE getSchema(itemPath?: ${objPath})`, await dataSource.getSchema({itemPath: objPath, parentPath, params: proxyInfo.params}, this.schemaSource));
+                return await dataSource.getSchema({itemPath: objPath, parentPath, params: proxyInfo.params}, this.schemaSource);
             }
         };
         const schema = await this.schemaSource.get(options);
@@ -104,8 +107,11 @@ export class Dispatcher extends AbstractDispatcher {
         return await this.dispatch('del', options);
     }
 
-    public registerProxy(name: string, dataSource: AbstractDispatcher) {
-        this.proxies.push({ name, dataSource });
+    public registerProxy(proxy: IProxy) {
+        //if (!proxy.dataSource && proxy.classRef && args) {
+        //    proxy.dataSource = new proxy.classRef(...args);
+        //}
+        this.proxies.push(proxy);
     }
 
     // tslint:disable-next-line:cyclomatic-complexity
@@ -128,7 +134,7 @@ export class Dispatcher extends AbstractDispatcher {
         } else if (methodName === 'del') {
             const promises: Promise<any>[] = [];
             for (const proxyInfo of this.getProxyWithinPath(itemPath)) {
-                const dataSource = this.getProxy(proxyInfo)
+                const dataSource = await this.getProxy(proxyInfo)
                 // tslint:disable-next-line:no-console
                 //console.log("Must delete from", proxyInfo, "with parentPath starting with", RegExp(`^${itemPath}`));
                 // tslint:disable-next-line:no-string-literal
@@ -148,7 +154,7 @@ export class Dispatcher extends AbstractDispatcher {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
             const { objPath, parentPath, proxyInfo } = proxy;
-            const dataSource = this.getProxy(proxyInfo);
+            const dataSource = await this.getProxy(proxyInfo);
             if (dataSource && dataSource[methodName]) {
                 // tslint:disable-next-line:no-return-await
                 return await dataSource.dispatch(methodName, { itemPath: objPath, schema, value, parentPath, params: proxyInfo.params });
@@ -259,7 +265,7 @@ export class Dispatcher extends AbstractDispatcher {
 
         return Object.keys(paths).reduce((acc: IEntryPoints, key: string) => {
             const fixedObjKey = key.replace(/\/$/, '');
-            acc[`${p}/${fixedObjKey}`] = paths[key];
+            acc[`${p}${p?'/':''}${fixedObjKey}`] = paths[key];
             // tslint:disable-next-line:no-console
             //console.log(p,key,`${p}${p?'\\/':''}${key}`)
 
@@ -275,7 +281,7 @@ export class Dispatcher extends AbstractDispatcher {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey: string) => {
             const objPath = schemaPath.replace(RegExp(foundKey), '');
-            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1);
+            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1).replace(/\/$/, '');
 
             return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath: objPath.replace(/^\//, '') };
         });
@@ -295,12 +301,24 @@ export class Dispatcher extends AbstractDispatcher {
         });
     }
 
-    private getProxy(proxyInfo: IProxyInfo): AbstractDispatcher {
+    private async getProxy(proxyInfo: IProxyInfo): Promise<AbstractDispatcher> {
         //console.log(`DISPATCH getProxy(proxyInfo: ${proxyInfo})`)
 
         const proxy = this.proxies.find((p: IProxy) => p.name === proxyInfo.proxyName);
-
-        return proxy && proxy.dataSource;
+        if (proxy?.dataSource) return proxy.dataSource;
+        if (proxy?.classRef) {
+            //console.log("Instantiating",proxy?.classRef, proxyInfo.initParams);
+            const dataSource = (proxy && new proxy.classRef(...(proxyInfo.initParams || [])));
+            if (dataSource) {
+                await dataSource.connect();
+                if (proxyInfo.singleton !== false) {
+                    proxy.dataSource = dataSource;
+                }
+            }
+            //console.log("Done", dataSource);
+            return dataSource
+        };
+        return undefined;
     }
 
 }

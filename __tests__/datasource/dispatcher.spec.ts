@@ -86,7 +86,7 @@ describe('connect', () => {
         const data = new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
         const ds = new Dispatcher(schema, data);
         const proxyDs = new JsonDataSource({});
-        ds.registerProxy('myProxy', proxyDs);
+        ds.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         const mockSchemaConnect = jest.spyOn(schema, 'connect');
         const mockDataConnect = jest.spyOn(schema, 'connect');
         const mockProxyConnect = jest.spyOn(proxyDs, 'connect');
@@ -107,7 +107,7 @@ describe('close', () => {
         const data = new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
         const ds = new Dispatcher(schema, data);
         const proxyDs = new JsonDataSource({});
-        ds.registerProxy('myProxy', proxyDs);
+        ds.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         const mockSchemaClose = jest.spyOn(schema, 'close');
         const mockDataClose = jest.spyOn(schema, 'close');
         const mockProxyClose = jest.spyOn(proxyDs, 'close');
@@ -160,7 +160,7 @@ describe('dispatch', () => {
     it('routes calls to proxy', async () => {
         const proxyDs = new JsonDataSource({});
         const mockGetListener = jest.spyOn(proxyDs, 'get');
-        dispatcher.registerProxy('myProxy', proxyDs);
+        dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         await dispatcher.connect();
         await dispatcher.get({ itemPath: '0/myDataProxy'});
         expect(mockGetListener).toHaveBeenCalledTimes(1);
@@ -169,7 +169,7 @@ describe('dispatch', () => {
     it('does not route calls to proxy not in path', async () => {
         const proxyDs = new JsonDataSource({});
         const mockGetListener = jest.spyOn(proxyDs, 'get');
-        dispatcher.registerProxy('myProxy', proxyDs);
+        dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         await dispatcher.connect();
         await dispatcher.get({ itemPath: '0/myLinkedArray'});
         expect(mockGetListener).not.toHaveBeenCalled();
@@ -273,7 +273,7 @@ describe('del', () => {
         const proxyDs = new JsonDataSource({});
         proxyDs.delCascade = jest.fn();
         dispatcher.dataSource.delCascade = jest.fn();
-        dispatcher.registerProxy('myProxy', proxyDs);
+        dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         await dispatcher.connect();
         await dispatcher.del();
         expect(mockWrite).toHaveBeenCalledTimes(1);
@@ -305,17 +305,21 @@ describe('proxies', () => {
     });
     it('registerProxy adds proxies', () => {
         const proxyDs = new JsonDataSource({});
-        dispatcher.registerProxy('myProxy', proxyDs);
+        dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         expect(dispatcher.proxies).toHaveLength(1);     
+    });
+    it('registerProxy does not init proxies at registration', () => {
+        dispatcher.registerProxy({ name: 'myProxy', classRef: JsonDataSource});
+        expect(dispatcher.proxies[0].dataSource).not.toBeInstanceOf(JsonDataSource);     
     });
     it('getProxy retrieves proxy by proxyInfo', () => {
         const proxyDs = new JsonDataSource({});
-        dispatcher.registerProxy('myProxy', proxyDs);
-        expect(dispatcher.getProxy({ proxyName: 'myProxy'})).toBe(proxyDs);     
+        dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
+        expect(dispatcher.getProxy({ proxyName: 'myProxy'})).resolves.toBe(proxyDs);     
     });
-    it('findEntryPoints returns {} if not schema is passed', async () => {
-        const entryPoints = dispatcher.findEntryPoints();
-        expect(entryPoints).toEqual({});     
+    it('getProxy init proxies at registration', () => {
+        dispatcher.registerProxy({ name: 'myProxy', classRef: JsonDataSource});
+        expect(dispatcher.getProxy({ proxyName: 'myProxy'})).resolves.toBeInstanceOf(JsonDataSource);     
     });
     it('findEntryPoints retrieves proxyInfos', async () => {
         const schema = await dispatcher.getSchema();

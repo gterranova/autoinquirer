@@ -31,10 +31,12 @@ export class JsonDataSource extends AbstractDispatcher {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public getSchema(options?: IDispatchOptions, schemaSource?: JsonSchema): Promise<IProperty> {
+    public async getSchema(options?: IDispatchOptions, schemaSource?: JsonSchema): Promise<IProperty> {
+        const { parentPath, itemPath} = options;
         //throw new Error("Method not implemented.");
         // Do not raise an error 
-        return schemaSource.get(options);
+        const newPath = [parentPath, itemPath].filter( p => p?.length).join('/');
+        return await schemaSource.get({ itemPath: newPath });
     }
 
     // tslint:disable-next-line:no-reserved-keywords
