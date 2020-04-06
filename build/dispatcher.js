@@ -79,7 +79,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         this.proxies.push(proxy);
     }
     dispatch(methodName, options) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+        var _a, _b, _c;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const itemPath = ((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath) || '';
             const schema = ((_b = options) === null || _b === void 0 ? void 0 : _b.schema) || (yield this.getSchema(Object.assign({}, options)));
@@ -117,59 +117,64 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             }
             ;
             if ((~['set', 'push', 'del'].indexOf(methodName))) {
-                const $data = ((_d = schema) === null || _d === void 0 ? void 0 : _d.$data) || ((_f = (_e = schema) === null || _e === void 0 ? void 0 : _e.items) === null || _f === void 0 ? void 0 : _f.$data);
-                if (((_g = $data) === null || _g === void 0 ? void 0 : _g.path) && $data.remoteField) {
-                    const refPath = utils_1.absolute($data.path, itemPath);
-                    let refSchema = yield this.getSchema({ itemPath: refPath });
-                    if ((((_h = refSchema) === null || _h === void 0 ? void 0 : _h.type) === 'array' && ((_k = (_j = refSchema) === null || _j === void 0 ? void 0 : _j.items) === null || _k === void 0 ? void 0 : _k.type) === 'object') || (((_l = refSchema) === null || _l === void 0 ? void 0 : _l.type) === 'object')) {
-                        refSchema = refSchema.items || refSchema;
-                        refSchema = refSchema.properties[$data.remoteField];
-                        const refValues = (yield this.get({ itemPath })) || [];
-                        const refPaths = Array.isArray(refValues) ? refValues : [refValues];
-                        refPaths.forEach((refPath) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                            var _v;
-                            let refObject = (yield this.get({ itemPath: refPath, schema: refSchema })) || [];
-                            if (((_v = refSchema) === null || _v === void 0 ? void 0 : _v.type) === 'array') {
-                                refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter(ref => !itemPath.startsWith(ref));
-                                this.set({ itemPath: refPath, value: refObject });
-                            }
-                            else {
-                                if (itemPath.startsWith(refObject[$data.remoteField])) {
-                                    refObject[$data.remoteField] = '';
-                                    this.set({ itemPath: refPath, value: refObject });
-                                }
-                            }
-                        }));
+                yield this.eachRemoteField({ itemPath, schema, value }, (remote, $data) => {
+                    var _a;
+                    const refSchema = remote.schema;
+                    const refObject = remote.value;
+                    const refPath = remote.itemPath;
+                    if (((_a = refSchema) === null || _a === void 0 ? void 0 : _a.type) === 'array') {
+                        refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter(ref => !itemPath.startsWith(ref));
+                        return this.set({ itemPath: refPath, value: refObject });
                     }
-                }
+                    else {
+                        if (itemPath.startsWith(refObject[$data.remoteField])) {
+                            refObject[$data.remoteField] = '';
+                            return this.set({ itemPath: refPath, value: refObject });
+                        }
+                        return null;
+                    }
+                });
             }
             const result = yield this.dataSource.dispatch(methodName, { itemPath, schema, value });
             if ((~['set', 'push'].indexOf(methodName))) {
-                const $data = ((_m = schema) === null || _m === void 0 ? void 0 : _m.$data) || ((_p = (_o = schema) === null || _o === void 0 ? void 0 : _o.items) === null || _p === void 0 ? void 0 : _p.$data);
-                if (((_q = $data) === null || _q === void 0 ? void 0 : _q.path) && $data.remoteField) {
-                    const refPath = utils_1.absolute($data.path, itemPath);
-                    let refSchema = yield this.getSchema({ itemPath: refPath });
-                    if ((((_r = refSchema) === null || _r === void 0 ? void 0 : _r.type) === 'array' && ((_t = (_s = refSchema) === null || _s === void 0 ? void 0 : _s.items) === null || _t === void 0 ? void 0 : _t.type) === 'object') || (((_u = refSchema) === null || _u === void 0 ? void 0 : _u.type) === 'object')) {
-                        refSchema = refSchema.items || refSchema;
-                        refSchema = refSchema.properties[$data.remoteField];
-                        const refPaths = Array.isArray(value) ? value : [value];
-                        refPaths.forEach((refPath) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                            var _w;
-                            let refObject = (yield this.get({ itemPath: refPath, schema: refSchema })) || {};
-                            if (((_w = refSchema) === null || _w === void 0 ? void 0 : _w.type) === 'array') {
-                                refObject[$data.remoteField] = refObject[$data.remoteField] || [];
-                                refObject[$data.remoteField].push(utils_1.absolute('..', itemPath));
-                                this.set({ itemPath: refPath, schema: refObject });
-                            }
-                            else {
-                                refObject[$data.remoteField] = utils_1.absolute('..', itemPath);
-                                this.set({ itemPath: refPath, schema: refObject });
-                            }
-                        }));
+                yield this.eachRemoteField({ itemPath, schema, value }, (remote, $data) => {
+                    var _a;
+                    const refSchema = remote.schema;
+                    const refObject = remote.value;
+                    const refPath = remote.itemPath;
+                    if (((_a = refSchema) === null || _a === void 0 ? void 0 : _a.type) === 'array') {
+                        refObject[$data.remoteField] = refObject[$data.remoteField] || [];
+                        refObject[$data.remoteField].push(utils_1.absolute('..', itemPath));
+                        return this.set({ itemPath: refPath, value: refObject });
                     }
-                }
+                    else {
+                        refObject[$data.remoteField] = utils_1.absolute('..', itemPath);
+                        return this.set({ itemPath: refPath, value: refObject });
+                    }
+                });
             }
             return result;
+        });
+    }
+    eachRemoteField(options, callback) {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const $data = ((_a = options.schema) === null || _a === void 0 ? void 0 : _a.$data) || ((_c = (_b = options.schema) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.$data);
+            if (((_d = $data) === null || _d === void 0 ? void 0 : _d.path) && $data.remoteField) {
+                const refPath = utils_1.absolute($data.path, options.itemPath);
+                let refSchema = yield this.getSchema({ itemPath: refPath });
+                if ((((_e = refSchema) === null || _e === void 0 ? void 0 : _e.type) === 'array' && ((_g = (_f = refSchema) === null || _f === void 0 ? void 0 : _f.items) === null || _g === void 0 ? void 0 : _g.type) === 'object') || (((_h = refSchema) === null || _h === void 0 ? void 0 : _h.type) === 'object')) {
+                    refSchema = refSchema.items || refSchema;
+                    refSchema = refSchema.properties[$data.remoteField];
+                    const refValues = (yield this.get({ itemPath: options.itemPath, schema: refSchema })) || [];
+                    const refPaths = Array.isArray(refValues) ? refValues : [refValues];
+                    return yield Promise.all(refPaths.map((refPath) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                        let refObject = (yield this.get({ itemPath: refPath, schema: refSchema })) || [];
+                        return callback({ itemPath: refObject._fullPath || refPath, schema: refSchema, value: refObject }, $data);
+                    })));
+                }
+            }
+            return null;
         });
     }
     findEntryPoints(p = '', schema) {

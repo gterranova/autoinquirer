@@ -37,7 +37,7 @@ export function loadJSON(fileName: string): any {
 }
 
 export function absolute(testPath: string, absolutePath: string): string {
-    if (testPath && testPath[0] === '/') { return testPath; }
+    if (testPath && testPath[0] !== '.') { return testPath; }
     if (!testPath) { return absolutePath; }
     const p0 = absolutePath.split('/');
     const rel = testPath.split('/');

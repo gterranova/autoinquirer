@@ -163,72 +163,73 @@ export class Dispatcher extends AbstractDispatcher {
         
         if ((~['set', 'push', 'del'].indexOf(methodName))) {
             //console.log(methodName, itemPath, schema, value)
-            const $data = schema?.$data || schema?.items?.$data;
-            if ($data?.path && $data.remoteField) {
-                const refPath = absolute($data.path, itemPath);
-                let refSchema = await this.getSchema({ itemPath: refPath });
-                if ((refSchema?.type === 'array' && refSchema?.items?.type === 'object') || (refSchema?.type === 'object')) {
-                    refSchema = refSchema.items || refSchema;
-                    refSchema = refSchema.properties[$data.remoteField];
-                    
-                    const refValues = await this.get({ itemPath }) || [];
-                    const refPaths = Array.isArray(refValues) ? refValues: [refValues];
-                    refPaths.forEach( async refPath => {
-                        let refObject = await this.get({ itemPath: refPath, schema: refSchema}) || [];
-                        //console.log("HERE", refSchema, refObject, refPath);
-                        if (refSchema?.type === 'array') {
-                            refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter( ref => !itemPath.startsWith(ref) );
-                            //console.log(refPath, refSchema, refObject);
-                            this.set({ itemPath: refPath, value: refObject});    
-                        } else {
-                            //refPath = [refPath, $data.remoteField].join('/');
-                            //refObject = '';
-                            if (itemPath.startsWith(refObject[$data.remoteField])) {
-                                refObject[$data.remoteField] = '';
-                                this.set({ itemPath: refPath, value: refObject});    
-                            }
-                            //console.log(refPath, refSchema, refObject);
-                        }
-                        //console.log(refPath, refSchema, refObject);
-                        //this.set(refPath, refSchema, refObject);    
-                    })
+            await this.eachRemoteField({ itemPath, schema, value }, (remote, $data) => {
+                const refSchema = remote.schema;
+                const refObject = remote.value;
+                const refPath = remote.itemPath;
+                //console.log("called from dispatch", refPath, refSchema, refObject);
+
+                if (refSchema?.type === 'array') {
+                    //console.log("removing from", refObject[$data.remoteField], itemPath)
+                    refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter( ref => !itemPath.startsWith(ref) );
+                    return this.set({ itemPath: refPath, value: refObject});    
+                } else {
+                    //refPath = [refPath, $data.remoteField].join('/');
+                    //refObject = '';
+                    if (itemPath.startsWith(refObject[$data.remoteField])) {
+                        refObject[$data.remoteField] = '';
+                        return this.set({ itemPath: refPath, value: refObject});    
+                    }
+                    //console.log(refPath, refSchema, refObject);
+                    return null;
                 }
-            }    
+            });
         }
 
         // tslint:disable-next-line:no-return-await
         const result = await this.dataSource.dispatch(methodName, { itemPath, schema, value });
-        
-        if ((~['set', 'push'].indexOf(methodName))) {
-            //console.log(methodName, itemPath, schema, value)
-            const $data = schema?.$data || schema?.items?.$data;
-            if ($data?.path && $data.remoteField) {
-                const refPath = absolute($data.path, itemPath);
-                let refSchema = await this.getSchema({ itemPath: refPath});
-                if ((refSchema?.type === 'array' && refSchema?.items?.type === 'object') || (refSchema?.type === 'object')) {
-                    refSchema = refSchema.items || refSchema;
-                    refSchema = refSchema.properties[$data.remoteField];
-                    const refPaths = Array.isArray(value) ? value: [value];
-                    refPaths.forEach( async refPath => {
-                        let refObject = await this.get({ itemPath: refPath, schema: refSchema}) || {};
-                        //console.log("HERE", refSchema, refObject, refPath);
-                        if (refSchema?.type === 'array') {
-                            refObject[$data.remoteField] = refObject[$data.remoteField] || [];
-                            refObject[$data.remoteField].push(absolute('..', itemPath));
-                            this.set({ itemPath: refPath, schema: refObject });    
-                        } else {
-                            //refPath = [refPath, $data.remoteField].join('/');
-                            refObject[$data.remoteField] = absolute('..', itemPath);
-                            //console.log(refPath, refSchema, refObject);
-                            this.set({ itemPath: refPath, schema: refObject });    
-                        }
-                    })
-                }
-            }    
-        }
 
+        if ((~['set', 'push'].indexOf(methodName))) {
+            await this.eachRemoteField({ itemPath, schema, value }, (remote, $data) => {
+                const refSchema = remote.schema;
+                const refObject = remote.value;
+                const refPath = remote.itemPath;
+                //console.log("called from dispatch", refPath, refSchema, refObject);
+                if (refSchema?.type === 'array') {
+                    refObject[$data.remoteField] = refObject[$data.remoteField] || [];
+                    refObject[$data.remoteField].push(absolute('..', itemPath));
+                    return this.set({ itemPath: refPath, value: refObject });    
+                } else {
+                    //refPath = [refPath, $data.remoteField].join('/');
+                    refObject[$data.remoteField] = absolute('..', itemPath);
+                    //console.log(refPath, refSchema, refObject);
+                    return this.set({ itemPath: refPath, value: refObject });    
+                }
+            });
+        }
         // tslint:disable-next-line:no-return-await
         return result;
+    }
+
+    private async eachRemoteField(options: IDispatchOptions, callback: (IDispatchOptions, IRelationship) => Promise<any>) {
+        const $data = options.schema?.$data || options.schema?.items?.$data;
+        if ($data?.path && $data.remoteField) {
+            const refPath = absolute($data.path, options.itemPath);
+            //console.log("eachRemote", refPath)
+            let refSchema = await this.getSchema({ itemPath: refPath });
+            if ((refSchema?.type === 'array' && refSchema?.items?.type === 'object') || (refSchema?.type === 'object')) {
+                refSchema = refSchema.items || refSchema;
+                refSchema = refSchema.properties[$data.remoteField];
+                
+                const refValues = await this.get({ itemPath: options.itemPath, schema: refSchema }) || [];
+                const refPaths = Array.isArray(refValues) ? refValues: [refValues];
+                return await Promise.all(refPaths.map( async refPath => {
+                    let refObject = await this.get({ itemPath: refPath, schema: refSchema}) || [];
+                    return callback({ itemPath: refObject._fullPath || refPath, schema: refSchema, value: refObject }, $data);
+                }))
+            }
+        }    
+        return null;        
     }
 
     private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {

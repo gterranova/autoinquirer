@@ -32,7 +32,7 @@ function loadJSON(fileName) {
 }
 exports.loadJSON = loadJSON;
 function absolute(testPath, absolutePath) {
-    if (testPath && testPath[0] === '/') {
+    if (testPath && testPath[0] !== '.') {
         return testPath;
     }
     if (!testPath) {

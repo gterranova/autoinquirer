@@ -25,6 +25,7 @@ export declare class Dispatcher extends AbstractDispatcher {
     del(options?: IDispatchOptions): Promise<any>;
     registerProxy(proxy: IProxy): void;
     dispatch(methodName: string, options?: IDispatchOptions): Promise<any>;
+    private eachRemoteField;
     private findEntryPoints;
     private getProxyForPath;
     private getProxyWithinPath;
