@@ -34,7 +34,7 @@ describe('constructor', () => {
         await ds.connect()
         const value = await ds.get();
         const schema = await ds.getSchema();
-        expect(value).toEqual([{"ABC": true, "another": {"foo": "bar"}, "myArray": ["A", "B", "C"], "myObjArray": [], "uri": "test"}]);
+        expect(value).toEqual([{"_id": "5e8bb02edd0d6073701ab174", "ABC": true, "another": {"foo": "bar"}, "myArray": ["A", "B", "C"], "myObjArray": [], "uri": "test"}]);
         expect(value).toBeDefined(); 
         expect(schema).toBeDefined(); 
     });
@@ -50,6 +50,16 @@ describe('constructor', () => {
         expect(ds.schemaSource).toBeDefined(); 
         expect(ds.dataSource).toBeDefined(); 
         expect(ds.dataSource.dataFile).toBe(path.join(process.cwd(), '__tests__', 'notexists.json'));
+    });
+    it('dispatch returns undefined on not existent json files', async () => {
+        let ds;
+        let exception;
+        try {
+            ds = new Dispatcher(path.join(process.cwd(), '__tests__', 'notexists.json'), path.join(process.cwd(), '__tests__', 'notexists.json'));
+        } catch (e) {
+            exception = e;
+        }
+        expect(exception).not.toBeDefined();
         const newValue = await ds.get();
         expect(newValue).toEqual(undefined);
     });
@@ -124,7 +134,6 @@ describe('dispatch', () => {
         const received = await dispatcher.get();
         expect(expected).toEqual(received);
     });
-
     it('throws if method does not exists', async () => {
         let exception;
         try {
@@ -134,6 +143,11 @@ describe('dispatch', () => {
         }
         expect(exception).toBeDefined();
     })
+    it('dispatched getSchema return schema', async () => {
+        const received = await dispatcher.getSchema({ itemPath: '0/another/foo'});
+        const expected = {type: "string"};
+        expect(received).toStrictEqual(expected);
+    });
     it('walks array', async () => {
         const received = await dispatcher.dispatch('get', { itemPath: '0/another/foo'});
         const expected = "bar";
@@ -164,7 +178,8 @@ describe('dispatch', () => {
         await dispatcher.connect();
         await dispatcher.get({ itemPath: '0/myDataProxy'});
         expect(mockGetListener).toHaveBeenCalledTimes(1);
-        expect(JSON.stringify(mockGetListener.mock.calls[0])).toBe('[{"itemPath":"","schema":{"type":"array","$proxy":{"proxyName":"myProxy","params":{}}},"parentPath":"0/myDataProxy","params":{}}]');
+        expect(mockGetListener.mock.calls[0][0].itemPath).toBe('');
+        expect(mockGetListener.mock.calls[0][0].parentPath).toBe('0/myDataProxy');
     });
     it('does not route calls to proxy not in path', async () => {
         const proxyDs = new JsonDataSource({});
@@ -215,7 +230,7 @@ describe('set', () => {
 
 describe('push', () => {
     it('pushes empty item if no value is provided', async () => {
-        await dispatcher.push();
+        await dispatcher.dispatch('push');
         expect(mockWrite).toHaveBeenCalled();
         const value = await dispatcher.get({ itemPath: '1'});
         expect(value._id).toBeDefined();
@@ -298,7 +313,40 @@ describe('del', () => {
         expect(newValue).not.toBeDefined();
     });
 });
+describe('dispatch with wildcards', () => {
+    it('return array for paths with wildcards', async () => {
+        await dispatcher.push({ value: { myArray: ['A'] }});
+        const value = await dispatcher.get({ itemPath: '#/myArray' });
+        expect(value).toHaveLength(4);
+        expect(value[0]).not.toHaveProperty('_fullPath');
+    });
+    it('adds a property _fullPath for paths with wildcards', async () => {
+        await dispatcher.set({ itemPath: '0/foo', value: []});
+        await dispatcher.push({ value: { foo: [] }});
+        await dispatcher.push({ value: { foo: [] }});
+        await dispatcher.push({ itemPath: '0/foo', value: { bar: { baz: 'aaa'}} });
+        await dispatcher.push({ itemPath: '1/foo', value: { bar: { baz: 'bbb'}} });
+        await dispatcher.push({ itemPath: '2/foo', value: { bar: { baz: 'ccc'}} });
+        const value = await dispatcher.get({ itemPath: '#/foo/#/bar' });
+        expect(value).toHaveLength(3);
+        expect(value[0]).toHaveProperty('_fullPath');
+        expect(value[0].baz).toStrictEqual('aaa');
+    });    
+    it('set bulk for paths with wildcards', async () => {
+        await dispatcher.set({ itemPath: '0/foo', value: []});
+        await dispatcher.push({ value: { foo: [] }});
+        await dispatcher.push({ value: { foo: [] }});
+        await dispatcher.push({ itemPath: '0/foo', value: { bar: { baz: 'aaa'}} });
+        await dispatcher.push({ itemPath: '1/foo', value: { bar: { baz: 'bbb'}} });
+        await dispatcher.push({ itemPath: '2/foo', value: { bar: { baz: 'ccc'}} });
+        await dispatcher.set({ itemPath: '#/foo/#/bar', value: { baz: 'changed'} });
+        const value = await dispatcher.get({ itemPath: '#/foo/#/bar' });
 
+        expect(value).toHaveLength(3);
+        expect(value[0]).toHaveProperty('_fullPath');
+        expect(value[2].baz).toStrictEqual('changed');
+    });    
+});
 describe('proxies', () => {
     it('registerProxy is defined', () => {
         expect(dispatcher.registerProxy).toBeDefined();     
@@ -325,7 +373,7 @@ describe('proxies', () => {
         const schema = await dispatcher.getSchema();
         const entryPoints = dispatcher.findEntryPoints('', schema);
         expect(Object.keys(entryPoints)).toHaveLength(3);
-        expect(entryPoints['(\\d+|[a-f0-9-]{24})/myDataProxy']).toEqual({ proxyName: 'myProxy', params: {} });     
+        expect(entryPoints['(#|\\d+|[a-f0-9-]{24})/myDataProxy']).toEqual({ proxyName: 'myProxy', params: {} });     
     });
     it('findEntryPoints retrieves proxyInfos relative to provided path', async () => {
         const schema = await dispatcher.getSchema();
@@ -341,4 +389,3 @@ describe('proxies', () => {
         expect(paths.map(p => p.proxyName)).toContain('myObjProxy');     
     });
 });
-

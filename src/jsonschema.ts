@@ -11,8 +11,8 @@ import { findUp, loadJSON } from './utils';
 import { AbstractDataSource } from './datasource';
 
 const defaultTypeValue = {
-    'object': (value?: any) => _.isObject(value) ? value : {},
-    'array': (value?: any[]) => _.isArray(value) ? value : [],
+    'object': (value?: any) => value !== undefined && _.isObject(value) ? value : {},
+    'array': (value?: any[]) => value !== undefined && _.isArray(value) ? value : [],
     'string': (value?: any) => _.toString(value),
     'number': (value?: string) => parseFloat(value) || 0,
     'integer': (value?: string) => parseFloat(value) || 0,

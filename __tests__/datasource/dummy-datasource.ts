@@ -1,5 +1,5 @@
-import { DataSource, JsonSchema } from '../../src/index';
-import { IProperty, IDispatchOptions } from '../../src/interfaces';
+import { DataSource } from '../../src/index';
+import { IDispatchOptions } from '../../src/interfaces';
 
 const dummyValue = {
     primitive: 'a string',
@@ -9,9 +9,6 @@ const dummyValue = {
 };
 
 export class DummyDatasource extends DataSource {
-    public getSchema(_itemPath?: string, _schemaSource?: JsonSchema, _parentPath?: string, _params?: any): Promise<IProperty> {
-        throw new Error("Method not implemented.");
-    }
     public connect(): Promise<void> {
         throw new Error("Method not implemented.");
     }    

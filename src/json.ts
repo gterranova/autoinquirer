@@ -5,8 +5,7 @@ import * as _ from 'lodash';
 import objectPath from 'object-path';
 import { IProperty, IDispatchOptions } from './interfaces';
 import { loadJSON, objectId } from './utils';
-import { AbstractDispatcher } from './datasource';
-import { JsonSchema } from './jsonschema';
+import { AbstractDispatcher, AbstractDataSource } from './datasource';
 
 export class JsonDataSource extends AbstractDispatcher {
     private jsonDocument: any;
@@ -30,13 +29,21 @@ export class JsonDataSource extends AbstractDispatcher {
         if (this.dataFile) { fs.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2)); }
     }
 
+    public getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+        return parentDispatcher.getSchemaDataSource();
+    }
+
+    public getDataSource(_parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+        return this;
+    }
+
     // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(options?: IDispatchOptions, schemaSource?: JsonSchema): Promise<IProperty> {
+    public async getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty> {
         const { parentPath, itemPath} = options;
         //throw new Error("Method not implemented.");
         // Do not raise an error 
         const newPath = [parentPath, itemPath].filter( p => p?.length).join('/');
-        return await schemaSource.get({ itemPath: newPath });
+        return await this.getSchemaDataSource(parentDispatcher).get({ itemPath: newPath });
     }
 
     // tslint:disable-next-line:no-reserved-keywords
@@ -49,6 +56,7 @@ export class JsonDataSource extends AbstractDispatcher {
             } 
             return this.jsonDocument; 
         }
+        /*
         if (options.itemPath.indexOf('#') != -1) {
             const base = options.itemPath.split('#', 1)[0];
             const remaining = options.itemPath.slice(base.length+1);
@@ -66,6 +74,7 @@ export class JsonDataSource extends AbstractDispatcher {
             //console.log(result);
             return _.flatten(result);
         }
+        */
         const schemaPath = await this.convertObjIDToIndex(options.itemPath);
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
@@ -141,6 +150,10 @@ export class JsonDataSource extends AbstractDispatcher {
             throw new Error(`Method ${methodName} not implemented`);
         }
 
+        if (this.requestHasWildcards(options)) {
+            return await this.processWildcards(methodName, options);
+        }
+        
         // tslint:disable-next-line:no-return-await
         return await this[methodName].call(this, options);
     }

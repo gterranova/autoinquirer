@@ -1,6 +1,5 @@
 import { IProperty, IDispatchOptions } from './interfaces';
-import { AbstractDispatcher } from './datasource';
-import { JsonSchema } from './jsonschema';
+import { AbstractDispatcher, AbstractDataSource } from './datasource';
 export declare class JsonDataSource extends AbstractDispatcher {
     private jsonDocument;
     private dataFile;
@@ -8,7 +7,9 @@ export declare class JsonDataSource extends AbstractDispatcher {
     connect(): Promise<void>;
     close(): Promise<void>;
     save(): Promise<void>;
-    getSchema(options?: IDispatchOptions, schemaSource?: JsonSchema): Promise<IProperty>;
+    getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
+    getDataSource(_parentDispatcher?: AbstractDispatcher): AbstractDataSource;
+    getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty>;
     get(options?: IDispatchOptions): Promise<any>;
     push({ itemPath, value }: {
         itemPath: any;

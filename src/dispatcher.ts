@@ -2,7 +2,7 @@
 // tslint:disable-next-line:import-name
 import { IProperty, IProxyInfo, IDispatchOptions } from './interfaces';
 import { absolute } from './utils';
-import { AbstractDispatcher } from './datasource';
+import { AbstractDispatcher, AbstractDataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
 
@@ -24,11 +24,16 @@ interface IProxy {
     dataSource?: AbstractDispatcher
 }
 
+export type IDataSourceInfo<T extends AbstractDataSource> = {
+    dataSource: T,
+    entryPointInfo?: IEntryPointInfo
+};
+
 export class Dispatcher extends AbstractDispatcher {
     private entryPoints: IEntryPoints = {};
     private proxies: IProxy[] = [];
     private schemaSource: JsonSchema;
-    private dataSource: AbstractDispatcher;
+    private dataSource: AbstractDataSource;
 
     constructor(schema: string | JsonSchema, data: string | AbstractDispatcher) {
         super();
@@ -60,24 +65,46 @@ export class Dispatcher extends AbstractDispatcher {
         await Promise.all(this.proxies.map((proxy: IProxy) => proxy?.dataSource?.close()));
     }
 
-    // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
+    public getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+        return this.schemaSource || parentDispatcher?.getSchemaDataSource();
+    }
+
+    public getDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+        return this.dataSource || parentDispatcher?.getDataSource();
+    }
+
+    public async getDataSourceInfo(options?: IDispatchOptions): Promise<IDataSourceInfo<AbstractDataSource>> {
         //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
-        for (const proxy of this.getProxyForPath(options?.itemPath).reverse()) {
+        for (const entryPointInfo of this.getProxyForPath(options?.itemPath).reverse()) {
             // tslint:disable-next-line:no-console
             //console.log("REFS", collectionRefs);
-            const { objPath, parentPath, proxyInfo } = proxy;
+            const { proxyInfo } = entryPointInfo;
             const dataSource = await this.getProxy(proxyInfo);
             if (dataSource) {
                 // tslint:disable-next-line:no-return-await
                 //console.log(`DISPATCH DELEGATE getSchema(itemPath?: ${objPath})`, await dataSource.getSchema({itemPath: objPath, parentPath, params: proxyInfo.params}, this.schemaSource));
-                return await dataSource.getSchema({itemPath: objPath, parentPath, params: proxyInfo.params}, this.schemaSource);
+                return <IDataSourceInfo<AbstractDataSource>>{ dataSource, entryPointInfo };
             }
         };
-        const schema = await this.schemaSource.get(options);
+        return { dataSource: <AbstractDataSource>this };
+    }
 
-        return schema;
+    // tslint:disable-next-line:no-reserved-keywords
+    public async getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty> {
+        //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
+        // tslint:disable-next-line:no-unnecessary-local-variable
+        const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
+        if (dataSource instanceof AbstractDispatcher) {
+            //console.log("CALL DELEGATED JSONSCHEMA GET", options)
+            return await dataSource.getSchemaDataSource(this).get(entryPointInfo? {
+                itemPath: entryPointInfo?.objPath, 
+                parentPath: entryPointInfo?.parentPath, 
+                params: entryPointInfo?.proxyInfo?.params
+            } : options);
+        }
+        //console.log("CALL DEFAULT JSONSCHEMA GET", options)
+        return await this.getSchemaDataSource(parentDispatcher).get(options);
     }
 
     // tslint:disable-next-line:no-reserved-keywords
@@ -117,53 +144,48 @@ export class Dispatcher extends AbstractDispatcher {
     // tslint:disable-next-line:cyclomatic-complexity
     public async dispatch(methodName: string, options?: IDispatchOptions): Promise<any> {
         // tslint:disable-next-line:no-parameter-reassignment
-        const itemPath = options?.itemPath || '';
-        const schema = options?.schema || await this.getSchema({ ...options });
-        let value = options?.value;
+        options = options || {};
 
-        // tslint:disable-next-line:no-bitwise
-        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
-            return;
-        } else if (methodName === 'get') {
-            if (schema.writeOnly === true) { return; }
+        options.itemPath = options?.itemPath ? await this.convertPathToUri(options?.itemPath) : '';
+        options.schema = options?.schema || await this.getSchema(options);
+        options.value = options?.value;
+
+        if (!this.isMethodAllowed(methodName, options.schema)) {
+            //throw new Error(`Method "${methodName}" not allowed for path "${itemPath}"`);
+            return undefined;
         }
+
+        if (this.requestHasWildcards(options)) {
+            return await this.processWildcards(methodName, options);
+        }
+
+        //console.log("DISPATCH", methodName, `${options.itemPath}`)        
         // tslint:disable-next-line:no-bitwise
         else if (~['set', 'push'].indexOf(methodName)) {
             // tslint:disable-next-line:no-parameter-reassignment
-            value = this.schemaSource.validate(methodName === 'push' ? schema.items : schema, value);
+            options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
         } else if (methodName === 'del') {
             const promises: Promise<any>[] = [];
-            for (const proxyInfo of this.getProxyWithinPath(itemPath)) {
+            for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {
                 const dataSource = await this.getProxy(proxyInfo)
                 // tslint:disable-next-line:no-console
                 //console.log("Must delete from", proxyInfo, "with parentPath starting with", RegExp(`^${itemPath}`));
                 // tslint:disable-next-line:no-string-literal
                 if (dataSource && dataSource['delCascade'] !== undefined) {
-                    promises.push(dataSource.dispatch('delCascade', { itemPath, params: proxyInfo.params }));
+                    promises.push(dataSource.dispatch('delCascade', { itemPath: options.itemPath, params: proxyInfo.params }));
                 }
             }
             // tslint:disable-next-line:no-string-literal
             if (this.dataSource['delCascade'] !== undefined) {
-                promises.push(this.dataSource.dispatch('delCascade', { itemPath }));
+                promises.push(this.dataSource.dispatch('delCascade', { itemPath: options.itemPath }));
             }
 
             await Promise.all(promises);
         } 
 
-        for (const proxy of this.getProxyForPath(itemPath).reverse()) {
-            // tslint:disable-next-line:no-console
-            //console.log("REFS", collectionRefs);
-            const { objPath, parentPath, proxyInfo } = proxy;
-            const dataSource = await this.getProxy(proxyInfo);
-            if (dataSource && dataSource[methodName]) {
-                // tslint:disable-next-line:no-return-await
-                return await dataSource.dispatch(methodName, { itemPath: objPath, schema, value, parentPath, params: proxyInfo.params });
-            }
-        };
-        
         if ((~['set', 'push', 'del'].indexOf(methodName))) {
             //console.log(methodName, itemPath, schema, value)
-            await this.eachRemoteField({ itemPath, schema, value }, (remote, $data) => {
+            await this.eachRemoteField(options, (remote, $data) => {
                 const refSchema = remote.schema;
                 const refObject = remote.value;
                 const refPath = remote.itemPath;
@@ -171,12 +193,12 @@ export class Dispatcher extends AbstractDispatcher {
 
                 if (refSchema?.type === 'array') {
                     //console.log("removing from", refObject[$data.remoteField], itemPath)
-                    refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter( ref => !itemPath.startsWith(ref) );
+                    refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter( ref => !options.itemPath.startsWith(ref) );
                     return this.set({ itemPath: refPath, value: refObject});    
                 } else {
                     //refPath = [refPath, $data.remoteField].join('/');
                     //refObject = '';
-                    if (itemPath.startsWith(refObject[$data.remoteField])) {
+                    if (options.itemPath.startsWith(refObject[$data.remoteField])) {
                         refObject[$data.remoteField] = '';
                         return this.set({ itemPath: refPath, value: refObject});    
                     }
@@ -186,22 +208,39 @@ export class Dispatcher extends AbstractDispatcher {
             });
         }
 
-        // tslint:disable-next-line:no-return-await
-        const result = await this.dataSource.dispatch(methodName, { itemPath, schema, value });
+        let result;
+        const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
+        if (dataSource instanceof AbstractDispatcher) {
+            //console.log("CALL DELEGATED JSON DISPATCH", {
+            //    ...options,
+            //    itemPath: entryPointInfo?.objPath, 
+            //    parentPath: entryPointInfo?.parentPath, 
+            //    params: entryPointInfo?.proxyInfo?.params
+            //})
+            result = await dataSource.getDataSource(this).dispatch(methodName, entryPointInfo? {
+                ...options,
+                itemPath: entryPointInfo?.objPath, 
+                parentPath: entryPointInfo?.parentPath, 
+                params: entryPointInfo?.proxyInfo?.params
+            } : options);
+        } else {
+            console.log("CALL DEFAULT JSON DISPATCH", options)
+            result = await this.getDataSource(this).dispatch(methodName, options);    
+        }
 
         if ((~['set', 'push'].indexOf(methodName))) {
-            await this.eachRemoteField({ itemPath, schema, value }, (remote, $data) => {
+            await this.eachRemoteField(options, (remote, $data) => {
                 const refSchema = remote.schema;
                 const refObject = remote.value;
                 const refPath = remote.itemPath;
                 //console.log("called from dispatch", refPath, refSchema, refObject);
                 if (refSchema?.type === 'array') {
                     refObject[$data.remoteField] = refObject[$data.remoteField] || [];
-                    refObject[$data.remoteField].push(absolute('..', itemPath));
+                    refObject[$data.remoteField].push(absolute('..', options.itemPath));
                     return this.set({ itemPath: refPath, value: refObject });    
                 } else {
                     //refPath = [refPath, $data.remoteField].join('/');
-                    refObject[$data.remoteField] = absolute('..', itemPath);
+                    refObject[$data.remoteField] = absolute('..', options.itemPath);
                     //console.log(refPath, refSchema, refObject);
                     return this.set({ itemPath: refPath, value: refObject });    
                 }
@@ -258,7 +297,7 @@ export class Dispatcher extends AbstractDispatcher {
                 paths[p] = schema.$proxy;
             }
             try {
-                return { ...paths, ...this.findEntryPoints('(\\d+|[a-f0-9-]{24})', schema.items) };
+                return { ...paths, ...this.findEntryPoints('(#|\\d+|[a-f0-9-]{24})', schema.items) };
             } catch {
                 // RangeError: Maximum call stack size exceeded
             }
@@ -291,8 +330,8 @@ export class Dispatcher extends AbstractDispatcher {
     private getProxyWithinPath(itemPath?: string): IProxyInfo[] {
         const schemaPath = itemPath !== undefined ? itemPath : '';
         // tslint:disable-next-line:prefer-template
-        const comparisonPath = schemaPath.replace(/(\d+|[a-f0-9-]{24})\//g, '(\\d+|[a-f0-9-]{24})/')
-            .replace(/(\d+|[a-f0-9-]{24})$/g, '(\\d+|[a-f0-9-]{24})') //.replace('/', '\\/')
+        const comparisonPath = schemaPath.replace(/(#|\d+|[a-f0-9-]{24})\//g, '(#|\\d+|[a-f0-9-]{24})/')
+            .replace(/(#|\d+|[a-f0-9-]{24})$/g, '(#|\\d+|[a-f0-9-]{24})') //.replace('/', '\\/')
 
         //console.log(`DISPATCH getProxyWithinPath(itemPath?: ${itemPath})`, schemaPath, comparisonPath)        
         return Object.keys(this.entryPoints).filter((k: string) => {
@@ -302,7 +341,7 @@ export class Dispatcher extends AbstractDispatcher {
         });
     }
 
-    private async getProxy(proxyInfo: IProxyInfo): Promise<AbstractDispatcher> {
+    private async getProxy(proxyInfo: IProxyInfo): Promise<AbstractDataSource> {
         //console.log(`DISPATCH getProxy(proxyInfo: ${proxyInfo})`)
 
         const proxy = this.proxies.find((p: IProxy) => p.name === proxyInfo.proxyName);

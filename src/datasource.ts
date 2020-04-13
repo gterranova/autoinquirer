@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+
 import { IProperty, IDispatchOptions } from './interfaces';
 import { isObject } from 'lodash';
 
@@ -60,8 +62,72 @@ export abstract class AbstractDataSource {
 
 export abstract class AbstractDispatcher extends AbstractDataSource {
     // tslint:disable-next-line:no-reserved-keywords
-    public async abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDataSource): Promise<IProperty>;
-    
+    public async abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDispatcher): Promise<IProperty>;
+    public abstract getDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
+    public abstract getSchemaDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
+
+    public async convertPathToUri(path: string) {
+        //console.log("Fixing", path);
+        const pathParts = path.split('/');
+        let nextIsArrayItem = false;
+        const result = []; let idx = 0;
+        for (let key of pathParts) {
+            const itemPath = pathParts.slice(0, ++idx).join('/');
+            //console.log("--", key, nextIsArrayItem);
+            if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
+                const model = await this.getDataSource(this).dispatch('get', { itemPath });
+                if (!model) {
+                    //console.log("Interrupted", result.concat(pathParts.slice(idx-1)).join('/'))
+                    return result.concat(pathParts.slice(idx-1)).join('/')
+                }
+                nextIsArrayItem = false;
+                key = model._id;
+            }             
+            const schema = await this.getSchema({ itemPath });
+            nextIsArrayItem = (schema?.type === 'array' && schema?.items?.type === 'object');
+            result.push(key);
+        }
+        //console.log("converted", path, "into", result.filter(p => p).join('/'));
+        return result.filter(p => p).join('/');
+    }
+
+    protected isMethodAllowed(methodName: string, schema: IProperty) {
+        // tslint:disable-next-line:no-bitwise
+        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
+            return false;
+        } else if (schema.writeOnly === true && methodName === 'get') {
+            return false;
+        }
+        return true;     
+    }
+
+    public requestHasWildcards(options?: IDispatchOptions, wildcard = '#') : boolean {
+        return (options?.itemPath && options.itemPath.indexOf(wildcard) != -1);
+    }
+
+    public async processWildcards(methodName: string, options: IDispatchOptions, wildcard = '#'): Promise<any> {
+        //console.log("path with wildcards", options);
+        const base = options.itemPath.split(wildcard, 1)[0];
+        const remaining = options.itemPath.slice(base.length+1);
+        const baseItems = (await this.dispatch('get', { ...options, itemPath: base.replace( /\/$/, '') })) || [];
+        const result = await Promise.all(baseItems.map( async (baseItem, idx) => {
+            let _fullPath = [base, remaining].join(baseItem._id || `${idx}`);
+            if (remaining.indexOf(wildcard) == -1) {
+                if (options?.schema?.$data?.remoteField) {
+                    _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
+                }
+                const item = await this.dispatch(methodName, { ...options, itemPath: _fullPath });
+                //console.log("BULK", `${methodName} on ${_fullPath} (value: ${options.value})`)
+                if ((options?.schema?.items || options.schema).type === 'object') {
+                    return { _fullPath, ...item };
+                }
+                return item;
+            }
+            return await this.dispatch(methodName, { ...options, itemPath: [base, remaining].join(baseItem._id || `${idx}`)});
+        } ));
+        //console.log(result);
+        return _.flatten(result);
+    }
 }
 
 export interface IDataRenderer {

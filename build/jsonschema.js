@@ -8,8 +8,8 @@ const _ = tslib_1.__importStar(require("lodash"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
 const defaultTypeValue = {
-    'object': (value) => _.isObject(value) ? value : {},
-    'array': (value) => _.isArray(value) ? value : [],
+    'object': (value) => value !== undefined && _.isObject(value) ? value : {},
+    'array': (value) => value !== undefined && _.isArray(value) ? value : [],
     'string': (value) => _.toString(value),
     'number': (value) => parseFloat(value) || 0,
     'integer': (value) => parseFloat(value) || 0,

@@ -9,6 +9,15 @@
           "uri": {
             "type": "string"
           },
+          "foo": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bar": { "type": "object", "properties": { "baz": { "type":"string"}}}
+              }
+            }
+          },
           "another": {
             "type": "object",
             "properties": {
@@ -35,21 +44,21 @@
             "type": "array",
             "items": {
               "type": "string",
-              "$data": "../myObjArray"
+              "$data": { "path": "../myObjArray" }
             }
           },
           "myNumberLinkedArray": {
             "type": "array",
             "items": {
               "type": "number",
-              "$data": "../myObjArray"
+              "$data": { "path": "../myObjArray"}
             }
           },
           "myUndefinedLinkedArray": {
             "type": "array",
             "items": {
               "type": "number",
-              "$data": "../isNotDefined"
+              "$data": { "path": "../isNotDefined" }
             }
           },
           "myDataProxy": {

@@ -28,11 +28,17 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
             }
         });
     }
-    getSchema(options, schemaSource) {
+    getSchemaDataSource(parentDispatcher) {
+        return parentDispatcher.getSchemaDataSource();
+    }
+    getDataSource(_parentDispatcher) {
+        return this;
+    }
+    getSchema(options, parentDispatcher) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { parentPath, itemPath } = options;
             const newPath = [parentPath, itemPath].filter(p => { var _a; return (_a = p) === null || _a === void 0 ? void 0 : _a.length; }).join('/');
-            return yield schemaSource.get({ itemPath: newPath });
+            return yield this.getSchemaDataSource(parentDispatcher).get({ itemPath: newPath });
         });
     }
     get(options) {
@@ -43,23 +49,6 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     return this.jsonDocument ? [this.jsonDocument] : [];
                 }
                 return this.jsonDocument;
-            }
-            if (options.itemPath.indexOf('#') != -1) {
-                const base = options.itemPath.split('#', 1)[0];
-                const remaining = options.itemPath.slice(base.length + 1);
-                const baseItems = object_path_1.default.get(this.jsonDocument, (yield this.convertObjIDToIndex(base)).split('/').filter(p => p != '')) || [];
-                const result = yield Promise.all(baseItems.map((baseItem) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    var _d, _e;
-                    let _fullPath = [base, remaining].join(baseItem._id);
-                    if (remaining.indexOf('#') == -1) {
-                        if ((_e = (_d = options.schema) === null || _d === void 0 ? void 0 : _d.$data) === null || _e === void 0 ? void 0 : _e.remoteField) {
-                            _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
-                        }
-                        return Object.assign({ _fullPath }, yield this.get({ itemPath: _fullPath, schema: options.schema }));
-                    }
-                    return yield this.get({ itemPath: [base, remaining].join(baseItem._id), schema: options.schema });
-                })));
-                return _.flatten(result);
             }
             const schemaPath = yield this.convertObjIDToIndex(options.itemPath);
             return object_path_1.default.get(this.jsonDocument, schemaPath.split('/'));
@@ -136,6 +125,9 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!this[methodName]) {
                 throw new Error(`Method ${methodName} not implemented`);
+            }
+            if (this.requestHasWildcards(options)) {
+                return yield this.processWildcards(methodName, options);
             }
             return yield this[methodName].call(this, options);
         });
