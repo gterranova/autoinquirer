@@ -56,25 +56,6 @@ export class JsonDataSource extends AbstractDispatcher {
             } 
             return this.jsonDocument; 
         }
-        /*
-        if (options.itemPath.indexOf('#') != -1) {
-            const base = options.itemPath.split('#', 1)[0];
-            const remaining = options.itemPath.slice(base.length+1);
-            const baseItems = objectPath.get(this.jsonDocument, (await this.convertObjIDToIndex(base)).split('/').filter( p => p != '')) || [];
-            const result = await Promise.all(baseItems.map( async baseItem => {
-                let _fullPath = [base, remaining].join(baseItem._id);
-                if (remaining.indexOf('#') == -1) {
-                    if (options.schema?.$data?.remoteField) {
-                        _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
-                    }
-                    return { _fullPath, ...await this.get({ itemPath: _fullPath, schema: options.schema }) };
-                }
-                return await this.get({ itemPath: [base, remaining].join(baseItem._id), schema: options.schema});
-            } ));
-            //console.log(result);
-            return _.flatten(result);
-        }
-        */
         const schemaPath = await this.convertObjIDToIndex(options.itemPath);
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
@@ -116,11 +97,11 @@ export class JsonDataSource extends AbstractDispatcher {
         let newValue;
         if (value !== undefined) {
             if (!itemPath) {
-                newValue = this.jsonDocument = { ...this.jsonDocument, ...value };
+                newValue = _.merge(this.jsonDocument, value);
             } else {
                 const schemaPath = await this.convertObjIDToIndex(itemPath);
                 // tslint:disable-next-line:no-parameter-reassignment
-                newValue = { ...objectPath.get(this.jsonDocument, schemaPath.split('/')), ...value };
+                newValue = _.merge(objectPath.get(this.jsonDocument, schemaPath.split('/')), value);
                 objectPath.set(this.jsonDocument, schemaPath.split('/'), newValue);
             }
             this.save();

@@ -92,11 +92,11 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
             let newValue;
             if (value !== undefined) {
                 if (!itemPath) {
-                    newValue = this.jsonDocument = Object.assign(Object.assign({}, this.jsonDocument), value);
+                    newValue = _.merge(this.jsonDocument, value);
                 }
                 else {
                     const schemaPath = yield this.convertObjIDToIndex(itemPath);
-                    newValue = Object.assign(Object.assign({}, object_path_1.default.get(this.jsonDocument, schemaPath.split('/'))), value);
+                    newValue = _.merge(object_path_1.default.get(this.jsonDocument, schemaPath.split('/')), value);
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), newValue);
                 }
                 this.save();
