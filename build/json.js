@@ -84,6 +84,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                 }
                 this.save();
             }
+            return value;
         });
     }
     update(options) {
@@ -100,8 +101,8 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), newValue);
                 }
                 this.save();
-                return newValue;
             }
+            return newValue;
         });
     }
     del({ itemPath }) {

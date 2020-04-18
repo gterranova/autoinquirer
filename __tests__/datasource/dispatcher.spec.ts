@@ -223,8 +223,10 @@ describe('set', () => {
         try { await dispatcher.set({ value: dispatcher.set({ value: { baz: 1}})}) } catch (e) {
             exception = e;
         }
-        expect(exception).toBeDefined();
-        expect(mockWrite).not.toHaveBeenCalled();
+        const value = await dispatcher.get();
+        expect(exception).not.toBeDefined();
+        expect(value).toEqual([]);
+        expect(mockWrite).toHaveBeenCalled();
     });
 });
 

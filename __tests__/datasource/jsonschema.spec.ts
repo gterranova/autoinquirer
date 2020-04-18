@@ -106,32 +106,61 @@ describe('validate', () => {
     it('to validate input or throw error', async () => {
         await defaultSchema.connect();
 
-        expect(()=>defaultSchema.validate({ type: 'object' }, 'a string')).toThrowError();
+        expect(defaultSchema.validate({ type: 'object' }, 'a string')).toEqual({});
+        expect(()=>defaultSchema.validate({ type: 'object' }, 'a string')).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'object' }, { name: 'a string'})).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'array' }, 'a string')).toThrowError();
+
+        expect(defaultSchema.validate({ type: 'array' }, 'a string')).toEqual([]);
+        expect(()=>defaultSchema.validate({ type: 'array' }, 'a string')).not.toThrowError();
+
         expect(()=>defaultSchema.validate({ type: 'array' }, ['a string'])).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'string' }, 'a string')).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'string' }, 1)).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'string' }, false)).not.toThrowError();
         expect(()=>defaultSchema.validate({ type: 'string' }, true)).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'number' }, 'a string')).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'integer' }, 'a string')).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'number' }, '100')).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'number' }, '10.12')).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'number' }, '.12')).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'a string')).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'true')).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'false')).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'yes')).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, '1')).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, 1)).toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'boolean' }, 0)).toThrowError();
 
+        expect(defaultSchema.validate({ type: 'number' }, 'a string')).toEqual(0);
+        expect(()=>defaultSchema.validate({ type: 'number' }, 'a string')).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'integer' }, 'a string')).toEqual(0);
+        expect(()=>defaultSchema.validate({ type: 'integer' }, 'a string')).not.toThrowError();
+        
+        expect(defaultSchema.validate({ type: 'number' }, '100')).toEqual(100);
+        expect(()=>defaultSchema.validate({ type: 'number' }, '100')).not.toThrowError();
+        
+        expect(defaultSchema.validate({ type: 'number' }, '10.12')).toEqual(10.12);
+        expect(()=>defaultSchema.validate({ type: 'number' }, '10.12')).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'number' }, '.12')).toEqual(.12);
+        expect(()=>defaultSchema.validate({ type: 'number' }, '.12')).not.toThrowError();
+        
+        expect(defaultSchema.validate({ type: 'boolean' }, 'a string')).toEqual(false);
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'a string')).not.toThrowError();
+
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'true')).not.toThrowError();
+        
+        expect(defaultSchema.validate({ type: 'boolean' }, 'false')).toEqual(false);
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'false')).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'boolean' }, 'yes')).toEqual(true);
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 'yes')).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'boolean' }, '1')).toEqual(true);
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, '1')).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'boolean' }, 1)).toEqual(true);
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 1)).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'boolean' }, 0)).toEqual(false);
+        expect(()=>defaultSchema.validate({ type: 'boolean' }, 0)).not.toThrowError();
+
+        expect(defaultSchema.validate({ type: 'string' }, undefined)).toEqual("");
         expect(()=>defaultSchema.validate({ type: 'string' }, undefined)).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'number' }, undefined)).toThrowError()
+
+        expect(()=>defaultSchema.validate({ type: 'number' }, undefined)).toThrowError();
         expect(()=>defaultSchema.validate({ type: 'string', default: '' }, undefined)).not.toThrowError();
-        expect(()=>defaultSchema.validate({ type: 'number', default: 0 }, undefined)).not.toThrowError()
-        expect(()=>defaultSchema.validate({ type: 'number', default: '0' }, undefined)).not.toThrowError()
+        expect(()=>defaultSchema.validate({ type: 'number', default: 0 }, undefined)).not.toThrowError();
+        expect(()=>defaultSchema.validate({ type: 'number', default: '0' }, undefined)).not.toThrowError();
 
         expect(()=>defaultSchema.validate(undefined, 1234)).not.toThrowError();
         expect(defaultSchema.validate(undefined, 1234)).not.toBeDefined();

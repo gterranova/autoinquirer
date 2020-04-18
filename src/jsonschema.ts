@@ -5,6 +5,7 @@ import $RefParser from "@apidevtools/json-schema-ref-parser";
 import ajv from 'ajv';
 import path from 'path';
 import * as _ from 'lodash';
+import moment from 'moment';
 
 import { IProperty, IDispatchOptions } from './interfaces';
 import { findUp, loadJSON } from './utils';
@@ -16,7 +17,18 @@ const defaultTypeValue = {
     'string': (value?: any) => _.toString(value),
     'number': (value?: string) => parseFloat(value) || 0,
     'integer': (value?: string) => parseFloat(value) || 0,
-    'boolean': (value?: boolean | string | number) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
+    'boolean': (value?: boolean | string | number) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes'),
+    'date': (value?: any) => {
+        const formats = ['DD/MM/YYYY', 'YYYY-MM-DD', 'DD-MM-YYYY'];
+        const validFormat = _.find(formats, (f) => moment(value, f).isValid());
+        return validFormat? moment(value, validFormat).format("YYYY[-]MM[-]DD"): value;
+    },
+    'date-time': (value?: any) => {
+        const formats = ['DD/MM/YYYY HH:mm', 'YYYY-MM-DD HH:mm', 'DD-MM-YYYY HH:mm'];
+        const validFormat = _.find(formats, (f) => moment(value, f).isValid());
+        return validFormat? moment(value, validFormat).format("YYYY[-]MM[-]DD[T]HH[:]mm[:]SS.000[Z]"): value;
+    },
+    'time': (value?: any) => value
 };
 
 export class JsonSchema extends AbstractDataSource {
@@ -78,7 +90,17 @@ export class JsonSchema extends AbstractDataSource {
     }
 
     public coerce(schema: IProperty, value?: any) {
-        if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
+        if (schema.type === 'string' && (schema.format === 'date' || schema.format === 'date-time')) {
+            //console.log(defaultTypeValue[schema.format](value !== undefined ? value : schema.default));
+            return defaultTypeValue[schema.format](value !== undefined ? value : schema.default);
+        } else if (schema.type === 'object') {
+            _.each( schema.properties || {}, (propSchema, key) => {
+                if (value && value[key]) {
+                    value[key] = this.coerce(propSchema, value[key]);
+                }
+            });
+            return defaultTypeValue['object'](value || {});
+        } else if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
             // tslint:disable-next-line:no-parameter-reassignment
             if (value !== undefined || ((schema.type !== 'number' && schema.type !== 'integer') ||
                 /^(\d+|\d*(\.\d+)?)$/.test(value))) {
@@ -95,15 +117,9 @@ export class JsonSchema extends AbstractDataSource {
         // tslint:disable-next-line:no-parameter-reassignment
         schema = { ...schema, $ref: undefined };
         const value = this.coerce(schema, data !== undefined ? data : schema.default);
-        // tslint:disable-next-line:triple-equals
-        if (value !== schema.default && value !== undefined && (data !== undefined || schema.default !== undefined) && value.toString() !== (data !== undefined ? data : schema.default).toString()) {
-            // tslint:disable-next-line:no-console
-            //console.log(schema, value, data);
-            throw new Error(`Error: expecting an ${schema.type}`);
-        }
         try {
             if (!this.validator.validate(schema, value)) {
-                throw new Error(JSON.stringify(this.validator.errors, null, 2));
+                throw new ajv.ValidationError(this.validator.errors);
             };
         } catch (error) {
             // Recursion maybe

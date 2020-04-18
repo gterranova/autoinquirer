@@ -161,9 +161,14 @@ export class Dispatcher extends AbstractDispatcher {
 
         //console.log("DISPATCH", methodName, `${options.itemPath}`)        
         // tslint:disable-next-line:no-bitwise
-        else if (~['set', 'push'].indexOf(methodName)) {
+        else if (~['set', 'update', 'push'].indexOf(methodName)) {
             // tslint:disable-next-line:no-parameter-reassignment
-            options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
+            try {
+                options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
+            } catch (e) {
+                //console.log(options.value, e.errors);
+                throw e;
+            }
         } else if (methodName === 'del') {
             const promises: Promise<any>[] = [];
             for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {

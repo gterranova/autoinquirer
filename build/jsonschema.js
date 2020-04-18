@@ -5,6 +5,7 @@ const json_schema_ref_parser_1 = tslib_1.__importDefault(require("@apidevtools/j
 const ajv_1 = tslib_1.__importDefault(require("ajv"));
 const path_1 = tslib_1.__importDefault(require("path"));
 const _ = tslib_1.__importStar(require("lodash"));
+const moment_1 = tslib_1.__importDefault(require("moment"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
 const defaultTypeValue = {
@@ -13,7 +14,18 @@ const defaultTypeValue = {
     'string': (value) => _.toString(value),
     'number': (value) => parseFloat(value) || 0,
     'integer': (value) => parseFloat(value) || 0,
-    'boolean': (value) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes')
+    'boolean': (value) => (value === true || value === 'true' || value === 1 || value === '1' || value === 'yes'),
+    'date': (value) => {
+        const formats = ['DD/MM/YYYY', 'YYYY-MM-DD', 'DD-MM-YYYY'];
+        const validFormat = _.find(formats, (f) => moment_1.default(value, f).isValid());
+        return validFormat ? moment_1.default(value, validFormat).format("YYYY[-]MM[-]DD") : value;
+    },
+    'date-time': (value) => {
+        const formats = ['DD/MM/YYYY HH:mm', 'YYYY-MM-DD HH:mm', 'DD-MM-YYYY HH:mm'];
+        const validFormat = _.find(formats, (f) => moment_1.default(value, f).isValid());
+        return validFormat ? moment_1.default(value, validFormat).format("YYYY[-]MM[-]DD[T]HH[:]mm[:]SS.000[Z]") : value;
+    },
+    'time': (value) => value
 };
 class JsonSchema extends datasource_1.AbstractDataSource {
     constructor(data) {
@@ -73,7 +85,18 @@ class JsonSchema extends datasource_1.AbstractDataSource {
         });
     }
     coerce(schema, value) {
-        if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
+        if (schema.type === 'string' && (schema.format === 'date' || schema.format === 'date-time')) {
+            return defaultTypeValue[schema.format](value !== undefined ? value : schema.default);
+        }
+        else if (schema.type === 'object') {
+            _.each(schema.properties || {}, (propSchema, key) => {
+                if (value && value[key]) {
+                    value[key] = this.coerce(propSchema, value[key]);
+                }
+            });
+            return defaultTypeValue['object'](value || {});
+        }
+        else if (schema.type && !Array.isArray(schema.type) && typeof defaultTypeValue[schema.type] === 'function') {
             if (value !== undefined || ((schema.type !== 'number' && schema.type !== 'integer') ||
                 /^(\d+|\d*(\.\d+)?)$/.test(value))) {
                 return defaultTypeValue[schema.type](value !== undefined ? value : schema.default);
@@ -87,12 +110,9 @@ class JsonSchema extends datasource_1.AbstractDataSource {
         }
         schema = Object.assign(Object.assign({}, schema), { $ref: undefined });
         const value = this.coerce(schema, data !== undefined ? data : schema.default);
-        if (value !== schema.default && value !== undefined && (data !== undefined || schema.default !== undefined) && value.toString() !== (data !== undefined ? data : schema.default).toString()) {
-            throw new Error(`Error: expecting an ${schema.type}`);
-        }
         try {
             if (!this.validator.validate(schema, value)) {
-                throw new Error(JSON.stringify(this.validator.errors, null, 2));
+                throw new ajv_1.default.ValidationError(this.validator.errors);
             }
             ;
         }

@@ -89,6 +89,7 @@ export class JsonDataSource extends AbstractDispatcher {
             }
             this.save();
         }
+        return value;
     }
 
     // tslint:disable-next-line:no-reserved-keywords
@@ -105,8 +106,8 @@ export class JsonDataSource extends AbstractDispatcher {
                 objectPath.set(this.jsonDocument, schemaPath.split('/'), newValue);
             }
             this.save();
-            return newValue;
         }
+        return newValue;
     }
 
     public async del({ itemPath }) {

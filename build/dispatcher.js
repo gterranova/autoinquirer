@@ -112,8 +112,13 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             if (this.requestHasWildcards(options)) {
                 return yield this.processWildcards(methodName, options);
             }
-            else if (~['set', 'push'].indexOf(methodName)) {
-                options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
+            else if (~['set', 'update', 'push'].indexOf(methodName)) {
+                try {
+                    options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
+                }
+                catch (e) {
+                    throw e;
+                }
             }
             else if (methodName === 'del') {
                 const promises = [];

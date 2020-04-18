@@ -18,7 +18,7 @@ export declare class JsonDataSource extends AbstractDispatcher {
     set({ itemPath, value }: {
         itemPath: any;
         value: any;
-    }): Promise<void>;
+    }): Promise<any>;
     update(options?: IDispatchOptions): Promise<any>;
     del({ itemPath }: {
         itemPath: any;
