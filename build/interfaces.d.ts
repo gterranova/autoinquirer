@@ -57,7 +57,10 @@ export interface IProperty {
     depends?: string;
     $data?: IRelationship;
     $proxy?: IProxyInfo;
-    $widget?: string;
+    $widget?: {
+        type?: string;
+        wrappers?: string[];
+    };
 }
 export interface IDispatchOptions {
     itemPath?: string;
