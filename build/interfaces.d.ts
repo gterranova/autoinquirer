@@ -53,13 +53,14 @@ export interface IProperty {
     $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
-    typeof?: "function";
-    depends?: string;
     $data?: IRelationship;
     $proxy?: IProxyInfo;
     $widget?: {
         type?: string;
         wrappers?: string[];
+    };
+    $expressionProperties?: {
+        [property: string]: string;
     };
 }
 export interface IDispatchOptions {

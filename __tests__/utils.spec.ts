@@ -1,5 +1,5 @@
 import path from 'path';
-import { absolute, backPath, evalExpr, findUp, loadJSON } from '../src/utils';
+import { absolute, backPath, findUp, loadJSON } from '../src/utils';
 
 const mockWarn = jest.spyOn(global.console, 'warn');
 beforeEach(() => {
@@ -59,28 +59,6 @@ describe('backPath', () => {
     
     expect(backPath('/test/whatever')).toBe('/test');
     expect(backPath('/test/whatever')).toBe(absolute('..', '/test/whatever'));
-  });
-});
-
-describe('evalExpr', () => {
-  it('evals numberic expressions', () => {
-    expect(evalExpr('1+1', {})).toBe(2);
-  });
-  it('evals string expressions', () => {
-    expect(evalExpr('\'1\'+\'1\'', {})).toBe('11');
-  });
-  it('evals against context', () => {
-    expect(evalExpr('this', { type: 'test' })).toEqual({ type: 'test' });
-    expect(evalExpr('this.a + this.b', { a: 1, b: 2 })).toBe(3);
-    expect(evalExpr('this.type === \'test\'', { type: 'test' })).toBe(true);
-    expect(evalExpr('this.type === \'foo\'', { type: 'test' })).toBe(false);
-  });
-  it('returns true on errors', () => {
-    expect(evalExpr('thisIsWrong', {})).toBe(true);
-    expect(evalExpr('thisIsWrong', null)).toBe(true);
-    expect(evalExpr('thisIsWrong', undefined)).toBe(true);
-    expect(mockWarn).toHaveBeenCalledTimes(3);
-    expect(mockWarn.mock.calls[0].toString()).toMatch(/thisIsWrong is not defined/);
   });
 });
 

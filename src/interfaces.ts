@@ -60,11 +60,15 @@ export interface IProperty {
     $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
-    typeof?: "function";
-    depends?: string;
     $data?: IRelationship;
     $proxy?: IProxyInfo;
     $widget?: { type?: string, wrappers?: string[] };
+
+    /**
+     * An object where the key is a property to be set on the main field config and the value is an expression used to assign that property.
+     */
+    $expressionProperties?: { [property: string]: string };
+
 }
 
 export interface IDispatchOptions {

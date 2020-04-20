@@ -13,16 +13,6 @@ exports.backPath = (itemPath) => {
     parts.pop();
     return parts.join('/');
 };
-function evalExpr(expression, context) {
-    try {
-        return (function () { return eval(expression); }).bind(context).call(context);
-    }
-    catch (e) {
-        console.warn('•Expression: {{x \'' + expression + '\'}}\n•JS-Error: ', e, '\n•Context: ', context);
-        return true;
-    }
-}
-exports.evalExpr = evalExpr;
 function loadJSON(fileName) {
     if (fileName && fs_1.default.existsSync(fileName)) {
         const buffer = fs_1.default.readFileSync(fileName);

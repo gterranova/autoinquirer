@@ -12,19 +12,6 @@ export const backPath = (itemPath: string): string => {
     return parts.join('/');
 };
 
-
-export function evalExpr(expression: string, context: any): boolean {
-    try {
-        // tslint:disable-next-line:no-eval no-function-expression
-        return (function () { return eval(expression); }).bind(context).call(context);
-    } catch (e) {
-        // tslint:disable-next-line:prefer-template
-        console.warn('•Expression: {{x \'' + expression + '\'}}\n•JS-Error: ', e, '\n•Context: ', context);
-
-        return true;
-    }
-}
-
 // tslint:disable-next-line:no-any
 export function loadJSON(fileName: string): any {
     if (fileName && fs.existsSync(fileName)) {
