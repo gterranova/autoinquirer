@@ -46,30 +46,33 @@ export class JsonDataSource extends AbstractDispatcher {
         return await this.getSchemaDataSource(parentDispatcher).get({ itemPath: newPath });
     }
 
+    public async isMethodAllowed(_methodName: string, _options?: IDispatchOptions) {
+        return true;     
+    }
+
     // tslint:disable-next-line:no-reserved-keywords
     public async get(options?: IDispatchOptions) {
         if (!options?.itemPath) {
-            //console.log(itemPath, schema?.type, getType(this.jsonDocument), Array.isArray(this.jsonDocument))
             if (options?.schema?.type === 'array' && !Array.isArray(this.jsonDocument)) {
                 //console.log(itemPath, schema.type, typeof this.jsonDocument)
                 return this.jsonDocument? [this.jsonDocument]: [];
             } 
             return this.jsonDocument; 
         }
-        const schemaPath = await this.convertObjIDToIndex(options.itemPath);
+        const { jsonObjectID: schemaPath} = await this.convertObjIDToIndex(options.itemPath);
         return objectPath.get(this.jsonDocument, schemaPath.split('/'));
     }
 
     public async push({ itemPath, value }) {
         if (value !== undefined) {
             if (_.isObject(value)) {
-                value._id = objectId();
+                (<any>value)._id = objectId();
             }
 
             if (!itemPath) {
                 this.jsonDocument.push(value);
             } else {
-                const schemaPath = await this.convertObjIDToIndex(itemPath);
+                const { jsonObjectID: schemaPath} = await this.convertObjIDToIndex(itemPath);
                 objectPath.push(this.jsonDocument, schemaPath.split('/'), value);
             }
             this.save();
@@ -84,7 +87,7 @@ export class JsonDataSource extends AbstractDispatcher {
             if (!itemPath) {
                 this.jsonDocument = value;
             } else {
-                const schemaPath = await this.convertObjIDToIndex(itemPath);
+                const { jsonObjectID: schemaPath} = await this.convertObjIDToIndex(itemPath);
                 objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
             }
             this.save();
@@ -100,7 +103,7 @@ export class JsonDataSource extends AbstractDispatcher {
             if (!itemPath) {
                 newValue = _.merge(this.jsonDocument, value);
             } else {
-                const schemaPath = await this.convertObjIDToIndex(itemPath);
+                const { jsonObjectID: schemaPath} = await this.convertObjIDToIndex(itemPath);
                 // tslint:disable-next-line:no-parameter-reassignment
                 newValue = _.merge(objectPath.get(this.jsonDocument, schemaPath.split('/')), value);
                 objectPath.set(this.jsonDocument, schemaPath.split('/'), newValue);
@@ -117,7 +120,7 @@ export class JsonDataSource extends AbstractDispatcher {
 
             return;
         }
-        const schemaPath = await this.convertObjIDToIndex(itemPath);
+        const { jsonObjectID: schemaPath} = await this.convertObjIDToIndex(itemPath);
         objectPath.del(this.jsonDocument, schemaPath.split('/'));
         this.save();
     }

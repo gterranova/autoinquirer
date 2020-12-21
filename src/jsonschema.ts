@@ -9,7 +9,7 @@ import moment from 'moment';
 
 import { IProperty, IDispatchOptions } from './interfaces';
 import { findUp, loadJSON } from './utils';
-import { AbstractDataSource } from './datasource';
+import { AbstractDataSource, AbstractDispatcher } from './datasource';
 
 const defaultTypeValue = {
     'object': (value?: any) => value !== undefined && _.isObject(value) ? value : {},
@@ -55,6 +55,16 @@ export class JsonSchema extends AbstractDataSource {
         // pass
     }
 
+    public async isMethodAllowed(methodName: string, options?: IDispatchOptions) {
+        const { schema } = options;
+        // tslint:disable-next-line:no-bitwise
+        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
+            return false;
+        } else if (schema.writeOnly === true && methodName === 'get') {
+            return false;
+        }
+        return true;     
+    }    
     // tslint:disable-next-line:no-reserved-keywords cyclomatic-complexity
     public async get(options?: IDispatchOptions) {
         let definition = this.schemaData;
@@ -62,9 +72,12 @@ export class JsonSchema extends AbstractDataSource {
             return definition;
         }
         const parts = options.itemPath.split('/');
+        //let currentPath = '';
 
         while (definition && parts.length) {
             const key = parts.shift();
+            //currentPath += `${currentPath?'/':''}${key}`;
+            const parent = definition;
 
             if (definition.type === 'array' && key === 'items' ||
                 (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) ||
@@ -83,6 +96,9 @@ export class JsonSchema extends AbstractDataSource {
                 }
             } else {
                 definition = definition[key];
+            }
+            if (definition && !definition.$parent) {
+                Object.defineProperty(definition, '$parent', { get: () => parent, configurable: true });
             }
         }
 
@@ -138,4 +154,16 @@ export class JsonSchema extends AbstractDataSource {
         // tslint:disable-next-line:no-return-await
         return await this[methodName].call(this, options);
     }
+
+    public getSchema(_options?: IDispatchOptions, _schemaSource?: AbstractDispatcher): Promise<IProperty> {
+        throw new Error('Method not implemented.');
+    }
+    public getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+        return parentDispatcher.getSchemaDataSource();
+    }
+
+    public getDataSource(_parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+        return this;
+    }
+
 }

@@ -20,8 +20,8 @@ export type Newable<T> = { new (...args: any[]): T; };
 
 interface IProxy {
     name: string;
-    classRef?: Newable<AbstractDispatcher>,
-    dataSource?: AbstractDispatcher
+    classRef?: Newable<AbstractDataSource>,
+    dataSource?: AbstractDataSource
 }
 
 export type IDataSourceInfo<T extends AbstractDataSource> = {
@@ -91,22 +91,32 @@ export class Dispatcher extends AbstractDispatcher {
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty> {
+    public async getSchema(options?: IDispatchOptions, _parentDispatcher?: AbstractDispatcher): Promise<IProperty> {
         //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
         const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
-        if (dataSource instanceof AbstractDispatcher) {
+        //if (dataSource instanceof AbstractDispatcher) {
             //console.log("CALL DELEGATED JSONSCHEMA GET", options)
             return await dataSource.getSchemaDataSource(this).get(entryPointInfo? {
                 itemPath: entryPointInfo?.objPath, 
                 parentPath: entryPointInfo?.parentPath, 
                 params: entryPointInfo?.proxyInfo?.params
             } : options);
-        }
+        //}
         //console.log("CALL DEFAULT JSONSCHEMA GET", options)
-        return await this.getSchemaDataSource(parentDispatcher).get(options);
+        //return await this.getSchemaDataSource(parentDispatcher).get(options);
     }
 
+    public async isMethodAllowed(methodName: string, options?: IDispatchOptions): Promise<Boolean> {
+        for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {
+            const dataSource = await this.getProxy(proxyInfo)
+            if (dataSource && !await dataSource.isMethodAllowed(methodName, options)) {
+                return false;
+            }
+        }
+        return true;
+    }
+        
     // tslint:disable-next-line:no-reserved-keywords
     public async get(options?: IDispatchOptions) {
         // tslint:disable-next-line:no-return-await
@@ -150,8 +160,8 @@ export class Dispatcher extends AbstractDispatcher {
         options.schema = options?.schema || await this.getSchema(options);
         options.value = options?.value;
 
-        if (!this.isMethodAllowed(methodName, options.schema)) {
-            //throw new Error(`Method "${methodName}" not allowed for path "${itemPath}"`);
+        if (!await this.isMethodAllowed(methodName, options)) {
+            throw new Error(`Method "${methodName}" not allowed for path "${options}"`);
             return undefined;
         }
 
@@ -166,7 +176,7 @@ export class Dispatcher extends AbstractDispatcher {
             try {
                 options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
             } catch (e) {
-                //console.log(options.value, e.errors);
+                console.log(options.value, e.errors);
                 throw e;
             }
         } else if (methodName === 'del') {
@@ -215,7 +225,7 @@ export class Dispatcher extends AbstractDispatcher {
 
         let result;
         const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
-        if (dataSource instanceof AbstractDispatcher) {
+        //if (dataSource instanceof AbstractDispatcher) {
             //console.log("CALL DELEGATED JSON DISPATCH", {
             //    ...options,
             //    itemPath: entryPointInfo?.objPath, 
@@ -228,10 +238,10 @@ export class Dispatcher extends AbstractDispatcher {
                 parentPath: entryPointInfo?.parentPath, 
                 params: entryPointInfo?.proxyInfo?.params
             } : options);
-        } else {
-            console.log("CALL DEFAULT JSON DISPATCH", options)
-            result = await this.getDataSource(this).dispatch(methodName, options);    
-        }
+        //} else {
+        //    console.log("CALL DEFAULT JSON DISPATCH", options)
+        //    result = await this.getDataSource(this).dispatch(methodName, options);    
+        //}
 
         if ((~['set', 'push'].indexOf(methodName))) {
             await this.eachRemoteField(options, (remote, $data) => {

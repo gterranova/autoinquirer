@@ -47,22 +47,35 @@ class JsonSchema extends datasource_1.AbstractDataSource {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
         });
     }
+    isMethodAllowed(methodName, options) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { schema } = options;
+            if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
+                return false;
+            }
+            else if (schema.writeOnly === true && methodName === 'get') {
+                return false;
+            }
+            return true;
+        });
+    }
     get(options) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let definition = this.schemaData;
-            if (!((_b = (_a = options) === null || _a === void 0 ? void 0 : _a.itemPath) === null || _b === void 0 ? void 0 : _b.length)) {
+            if (!((_a = options === null || options === void 0 ? void 0 : options.itemPath) === null || _a === void 0 ? void 0 : _a.length)) {
                 return definition;
             }
             const parts = options.itemPath.split('/');
             while (definition && parts.length) {
                 const key = parts.shift();
+                const parent = definition;
                 if (definition.type === 'array' && key === 'items' ||
                     (/^[a-f0-9-]{24}$/.test(key) || /^\d+$/.test(key) || /^#$/.test(key)) ||
-                    ((_d = (_c = definition.items) === null || _c === void 0 ? void 0 : _c.properties) === null || _d === void 0 ? void 0 : _d.slug)) {
+                    ((_c = (_b = definition.items) === null || _b === void 0 ? void 0 : _b.properties) === null || _c === void 0 ? void 0 : _c.slug)) {
                     definition = definition.items;
                 }
-                else if (definition.type === 'object' && ((_e = definition.properties) === null || _e === void 0 ? void 0 : _e[key])) {
+                else if (definition.type === 'object' && ((_d = definition.properties) === null || _d === void 0 ? void 0 : _d[key])) {
                     definition = definition.properties[key];
                 }
                 else if (definition.type === 'object' && key === 'properties') {
@@ -79,6 +92,9 @@ class JsonSchema extends datasource_1.AbstractDataSource {
                 }
                 else {
                     definition = definition[key];
+                }
+                if (definition && !definition.$parent) {
+                    Object.defineProperty(definition, '$parent', { get: () => parent, configurable: true });
                 }
             }
             return definition;
@@ -131,6 +147,15 @@ class JsonSchema extends datasource_1.AbstractDataSource {
             }
             return yield this[methodName].call(this, options);
         });
+    }
+    getSchema(_options, _schemaSource) {
+        throw new Error('Method not implemented.');
+    }
+    getSchemaDataSource(parentDispatcher) {
+        return parentDispatcher.getSchemaDataSource();
+    }
+    getDataSource(_parentDispatcher) {
+        return this;
     }
 }
 exports.JsonSchema = JsonSchema;

@@ -10,6 +10,7 @@ export declare class JsonDataSource extends AbstractDispatcher {
     getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
     getDataSource(_parentDispatcher?: AbstractDispatcher): AbstractDataSource;
     getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty>;
+    isMethodAllowed(_methodName: string, _options?: IDispatchOptions): Promise<boolean>;
     get(options?: IDispatchOptions): Promise<any>;
     push({ itemPath, value }: {
         itemPath: any;

@@ -4,53 +4,8 @@ const tslib_1 = require("tslib");
 const _ = tslib_1.__importStar(require("lodash"));
 const lodash_1 = require("lodash");
 class AbstractDataSource {
-    convertObjIDToIndex(path, basePath = '', obj, ...others) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (!path) {
-                return '';
-            }
-            const parts = typeof path === 'string' ? path.split('/') : path;
-            const converted = [];
-            let currentObj = obj || (yield this.dispatch.call(this, 'get', basePath, ...others));
-            for (const key of parts) {
-                if (Array.isArray(currentObj)) {
-                    let idx = key;
-                    if (/^[a-f0-9-]{24}$/.test(key)) {
-                        const item = currentObj.find((itemObj) => {
-                            return itemObj && itemObj._id === key;
-                        });
-                        if (!item) {
-                            return [...converted, ...parts.slice(converted.length)].join('/');
-                        }
-                        idx = currentObj.indexOf(item).toString();
-                    }
-                    else {
-                        const item = currentObj.find((itemObj) => {
-                            return itemObj && itemObj.slug === key;
-                        });
-                        if (item) {
-                            idx = currentObj.indexOf(item).toString();
-                        }
-                    }
-                    converted.push(idx);
-                    currentObj = currentObj[idx];
-                    continue;
-                }
-                else if (lodash_1.isObject(currentObj) && currentObj[key]) {
-                    converted.push(key);
-                    currentObj = currentObj[key];
-                    continue;
-                }
-                return [...converted, ...parts.slice(converted.length)].join('/');
-            }
-            return converted.join('/');
-        });
-    }
-}
-exports.AbstractDataSource = AbstractDataSource;
-class AbstractDispatcher extends AbstractDataSource {
     convertPathToUri(path) {
-        var _a, _b, _c;
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const pathParts = path.split('/');
             let nextIsArrayItem = false;
@@ -67,24 +22,76 @@ class AbstractDispatcher extends AbstractDataSource {
                     key = model._id;
                 }
                 const schema = yield this.getSchema({ itemPath });
-                nextIsArrayItem = (((_a = schema) === null || _a === void 0 ? void 0 : _a.type) === 'array' && ((_c = (_b = schema) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.type) === 'object');
+                nextIsArrayItem = ((schema === null || schema === void 0 ? void 0 : schema.type) === 'array' && ((_a = schema === null || schema === void 0 ? void 0 : schema.items) === null || _a === void 0 ? void 0 : _a.type) === 'object');
                 result.push(key);
             }
             return result.filter(p => p).join('/');
         });
     }
-    isMethodAllowed(methodName, schema) {
-        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
-            return false;
-        }
-        else if (schema.writeOnly === true && methodName === 'get') {
-            return false;
-        }
-        return true;
-    }
-    requestHasWildcards(options, wildcard = '#') {
+    convertObjIDToIndex(path, basePath = '', obj, ...others) {
         var _a;
-        return (((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath) && options.itemPath.indexOf(wildcard) != -1);
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (!path) {
+                return { jsonObjectID: '' };
+            }
+            const parts = typeof path === 'string' ? path.split('/') : path;
+            const converted = [];
+            let currentObj = obj || (yield this.dispatch.call(this, 'get', Object.assign({ itemPath: basePath }, others)));
+            const cursorData = {};
+            const objResolver = (obj, idx) => obj[idx] && (`${basePath ? basePath + '/' : ''}${[...parts.slice(0, converted.length - 1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
+            for (const key of parts) {
+                cursorData.index = undefined;
+                if (Array.isArray(currentObj)) {
+                    if (/^[a-f0-9-]{24}$/.test(key)) {
+                        const item = currentObj.find((itemObj) => {
+                            return itemObj && (itemObj._id === key);
+                        });
+                        if (!item) {
+                            break;
+                        }
+                        cursorData.index = currentObj.indexOf(item);
+                    }
+                    else {
+                        const item = currentObj.find((itemObj) => {
+                            return itemObj && itemObj.slug === key;
+                        });
+                        if (item) {
+                            cursorData.index = currentObj.indexOf(item);
+                        }
+                    }
+                    converted.push(((_a = cursorData.index) === null || _a === void 0 ? void 0 : _a.toString()) || key);
+                    if (converted.length == parts.length) {
+                        Object.assign(cursorData, {
+                            index: cursorData.index + 1,
+                            total: currentObj.length,
+                            self: objResolver(currentObj, cursorData.index),
+                            first: (cursorData.index > 0 && objResolver(currentObj, 0)) || undefined,
+                            prev: (cursorData.index > 0 && objResolver(currentObj, cursorData.index - 1)) || undefined,
+                            next: (cursorData.index < currentObj.length - 1 && objResolver(currentObj, cursorData.index + 1)) || undefined,
+                            last: (cursorData.index < currentObj.length - 1 && objResolver(currentObj, currentObj.length - 1)) || undefined,
+                        });
+                        currentObj = currentObj[cursorData.index - 1];
+                    }
+                    else {
+                        currentObj = currentObj[cursorData.index];
+                    }
+                    continue;
+                }
+                else if (lodash_1.isObject(currentObj) && currentObj[key]) {
+                    converted.push(key);
+                    currentObj = currentObj[key];
+                    continue;
+                }
+                break;
+            }
+            return Object.assign(Object.assign({}, cursorData), { jsonObjectID: `${basePath ? basePath + '/' : ''}${[...converted, ...parts.slice(converted.length)].join('/')}` });
+        });
+    }
+}
+exports.AbstractDataSource = AbstractDataSource;
+class AbstractDispatcher extends AbstractDataSource {
+    requestHasWildcards(options, wildcard = '#') {
+        return ((options === null || options === void 0 ? void 0 : options.itemPath) && options.itemPath.indexOf(wildcard) != -1);
     }
     processWildcards(methodName, options, wildcard = '#') {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -92,14 +99,14 @@ class AbstractDispatcher extends AbstractDataSource {
             const remaining = options.itemPath.slice(base.length + 1);
             const baseItems = (yield this.dispatch('get', Object.assign(Object.assign({}, options), { itemPath: base.replace(/\/$/, '') }))) || [];
             const result = yield Promise.all(baseItems.map((baseItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                var _a, _b, _c, _d, _e;
+                var _a, _b, _c;
                 let _fullPath = [base, remaining].join(baseItem._id || `${idx}`);
                 if (remaining.indexOf(wildcard) == -1) {
-                    if ((_c = (_b = (_a = options) === null || _a === void 0 ? void 0 : _a.schema) === null || _b === void 0 ? void 0 : _b.$data) === null || _c === void 0 ? void 0 : _c.remoteField) {
+                    if ((_b = (_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.$data) === null || _b === void 0 ? void 0 : _b.remoteField) {
                         _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                     }
                     const item = yield this.dispatch(methodName, Object.assign(Object.assign({}, options), { itemPath: _fullPath }));
-                    if ((((_e = (_d = options) === null || _d === void 0 ? void 0 : _d.schema) === null || _e === void 0 ? void 0 : _e.items) || options.schema).type === 'object') {
+                    if ((((_c = options === null || options === void 0 ? void 0 : options.schema) === null || _c === void 0 ? void 0 : _c.items) || options.schema).type === 'object') {
                         return Object.assign({ _fullPath }, item);
                     }
                     return item;

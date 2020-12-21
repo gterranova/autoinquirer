@@ -1,5 +1,6 @@
+import { AbstractDispatcher } from '../../src/datasource';
 import { DataSource } from '../../src/index';
-import { IDispatchOptions } from '../../src/interfaces';
+import { IDispatchOptions, IProperty } from '../../src/interfaces';
 
 const dummyValue = {
     primitive: 'a string',
@@ -9,12 +10,6 @@ const dummyValue = {
 };
 
 export class DummyDatasource extends DataSource {
-    public connect(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }    
-    public close(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
     // tslint:disable-next-line:no-reserved-keywords no-any
     public async get(options?: IDispatchOptions): Promise<any> {
         const { itemPath } = options || {};
@@ -37,6 +32,26 @@ export class DummyDatasource extends DataSource {
     public async dispatch(methodName: string, options?: IDispatchOptions) {
         // tslint:disable-next-line:no-return-await
         return await this[methodName](options);
+    }
+
+    public getSchema(_options?: IDispatchOptions, _schemaSource?: AbstractDispatcher): Promise<IProperty> {
+        throw new Error('Method not implemented.');
+    }
+    public getDataSource(_parentDataSource?: DataSource): DataSource {
+        throw new Error('Method not implemented.');
+    }
+    public getSchemaDataSource(_parentDataSource?: DataSource): DataSource {
+        throw new Error('Method not implemented.');
+    }
+    public connect(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }    
+    public close(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async isMethodAllowed(_methodName: string, _options: any): Promise<Boolean> {
+        return true;
     }
 }
 

@@ -25,28 +25,25 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                 this.dataSource.dispatch('set', { itemPath: '', schema, value: coercedValue });
             }
             this.entryPoints = this.findEntryPoints('', schema);
-            yield Promise.all(this.proxies.map((proxy) => { var _a, _b; (_b = (_a = proxy) === null || _a === void 0 ? void 0 : _a.dataSource) === null || _b === void 0 ? void 0 : _b.connect(); }));
+            yield Promise.all(this.proxies.map((proxy) => { var _a; (_a = proxy === null || proxy === void 0 ? void 0 : proxy.dataSource) === null || _a === void 0 ? void 0 : _a.connect(); }));
         });
     }
     close() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield this.schemaSource.close();
             yield this.dataSource.close();
-            yield Promise.all(this.proxies.map((proxy) => { var _a, _b; return (_b = (_a = proxy) === null || _a === void 0 ? void 0 : _a.dataSource) === null || _b === void 0 ? void 0 : _b.close(); }));
+            yield Promise.all(this.proxies.map((proxy) => { var _a; return (_a = proxy === null || proxy === void 0 ? void 0 : proxy.dataSource) === null || _a === void 0 ? void 0 : _a.close(); }));
         });
     }
     getSchemaDataSource(parentDispatcher) {
-        var _a;
-        return this.schemaSource || ((_a = parentDispatcher) === null || _a === void 0 ? void 0 : _a.getSchemaDataSource());
+        return this.schemaSource || (parentDispatcher === null || parentDispatcher === void 0 ? void 0 : parentDispatcher.getSchemaDataSource());
     }
     getDataSource(parentDispatcher) {
-        var _a;
-        return this.dataSource || ((_a = parentDispatcher) === null || _a === void 0 ? void 0 : _a.getDataSource());
+        return this.dataSource || (parentDispatcher === null || parentDispatcher === void 0 ? void 0 : parentDispatcher.getDataSource());
     }
     getDataSourceInfo(options) {
-        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            for (const entryPointInfo of this.getProxyForPath((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath).reverse()) {
+            for (const entryPointInfo of this.getProxyForPath(options === null || options === void 0 ? void 0 : options.itemPath).reverse()) {
                 const { proxyInfo } = entryPointInfo;
                 const dataSource = yield this.getProxy(proxyInfo);
                 if (dataSource) {
@@ -57,18 +54,26 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             return { dataSource: this };
         });
     }
-    getSchema(options, parentDispatcher) {
-        var _a, _b, _c, _d;
+    getSchema(options, _parentDispatcher) {
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { dataSource, entryPointInfo } = yield this.getDataSourceInfo(options);
-            if (dataSource instanceof datasource_1.AbstractDispatcher) {
-                return yield dataSource.getSchemaDataSource(this).get(entryPointInfo ? {
-                    itemPath: (_a = entryPointInfo) === null || _a === void 0 ? void 0 : _a.objPath,
-                    parentPath: (_b = entryPointInfo) === null || _b === void 0 ? void 0 : _b.parentPath,
-                    params: (_d = (_c = entryPointInfo) === null || _c === void 0 ? void 0 : _c.proxyInfo) === null || _d === void 0 ? void 0 : _d.params
-                } : options);
+            return yield dataSource.getSchemaDataSource(this).get(entryPointInfo ? {
+                itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath,
+                parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath,
+                params: (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params
+            } : options);
+        });
+    }
+    isMethodAllowed(methodName, options) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {
+                const dataSource = yield this.getProxy(proxyInfo);
+                if (dataSource && !(yield dataSource.isMethodAllowed(methodName, options))) {
+                    return false;
+                }
             }
-            return yield this.getSchemaDataSource(parentDispatcher).get(options);
+            return true;
         });
     }
     get(options) {
@@ -100,13 +105,14 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         this.proxies.push(proxy);
     }
     dispatch(methodName, options) {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             options = options || {};
-            options.itemPath = ((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath) ? yield this.convertPathToUri((_b = options) === null || _b === void 0 ? void 0 : _b.itemPath) : '';
-            options.schema = ((_c = options) === null || _c === void 0 ? void 0 : _c.schema) || (yield this.getSchema(options));
-            options.value = (_d = options) === null || _d === void 0 ? void 0 : _d.value;
-            if (!this.isMethodAllowed(methodName, options.schema)) {
+            options.itemPath = (options === null || options === void 0 ? void 0 : options.itemPath) ? yield this.convertPathToUri(options === null || options === void 0 ? void 0 : options.itemPath) : '';
+            options.schema = (options === null || options === void 0 ? void 0 : options.schema) || (yield this.getSchema(options));
+            options.value = options === null || options === void 0 ? void 0 : options.value;
+            if (!(yield this.isMethodAllowed(methodName, options))) {
+                throw new Error(`Method "${methodName}" not allowed for path "${options}"`);
                 return undefined;
             }
             if (this.requestHasWildcards(options)) {
@@ -117,6 +123,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                     options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
                 }
                 catch (e) {
+                    console.log(options.value, e.errors);
                     throw e;
                 }
             }
@@ -135,11 +142,10 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             }
             if ((~['set', 'push', 'del'].indexOf(methodName))) {
                 yield this.eachRemoteField(options, (remote, $data) => {
-                    var _a;
                     const refSchema = remote.schema;
                     const refObject = remote.value;
                     const refPath = remote.itemPath;
-                    if (((_a = refSchema) === null || _a === void 0 ? void 0 : _a.type) === 'array') {
+                    if ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array') {
                         refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter(ref => !options.itemPath.startsWith(ref));
                         return this.set({ itemPath: refPath, value: refObject });
                     }
@@ -154,20 +160,13 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             }
             let result;
             const { dataSource, entryPointInfo } = yield this.getDataSourceInfo(options);
-            if (dataSource instanceof datasource_1.AbstractDispatcher) {
-                result = yield dataSource.getDataSource(this).dispatch(methodName, entryPointInfo ? Object.assign(Object.assign({}, options), { itemPath: (_e = entryPointInfo) === null || _e === void 0 ? void 0 : _e.objPath, parentPath: (_f = entryPointInfo) === null || _f === void 0 ? void 0 : _f.parentPath, params: (_h = (_g = entryPointInfo) === null || _g === void 0 ? void 0 : _g.proxyInfo) === null || _h === void 0 ? void 0 : _h.params }) : options);
-            }
-            else {
-                console.log("CALL DEFAULT JSON DISPATCH", options);
-                result = yield this.getDataSource(this).dispatch(methodName, options);
-            }
+            result = yield dataSource.getDataSource(this).dispatch(methodName, entryPointInfo ? Object.assign(Object.assign({}, options), { itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath, params: (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params }) : options);
             if ((~['set', 'push'].indexOf(methodName))) {
                 yield this.eachRemoteField(options, (remote, $data) => {
-                    var _a;
                     const refSchema = remote.schema;
                     const refObject = remote.value;
                     const refPath = remote.itemPath;
-                    if (((_a = refSchema) === null || _a === void 0 ? void 0 : _a.type) === 'array') {
+                    if ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array') {
                         refObject[$data.remoteField] = refObject[$data.remoteField] || [];
                         refObject[$data.remoteField].push(utils_1.absolute('..', options.itemPath));
                         return this.set({ itemPath: refPath, value: refObject });
@@ -182,13 +181,13 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     eachRemoteField(options, callback) {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const $data = ((_a = options.schema) === null || _a === void 0 ? void 0 : _a.$data) || ((_c = (_b = options.schema) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.$data);
-            if (((_d = $data) === null || _d === void 0 ? void 0 : _d.path) && $data.remoteField) {
+            if (($data === null || $data === void 0 ? void 0 : $data.path) && $data.remoteField) {
                 const refPath = utils_1.absolute($data.path, options.itemPath);
                 let refSchema = yield this.getSchema({ itemPath: refPath });
-                if ((((_e = refSchema) === null || _e === void 0 ? void 0 : _e.type) === 'array' && ((_g = (_f = refSchema) === null || _f === void 0 ? void 0 : _f.items) === null || _g === void 0 ? void 0 : _g.type) === 'object') || (((_h = refSchema) === null || _h === void 0 ? void 0 : _h.type) === 'object')) {
+                if (((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'array' && ((_d = refSchema === null || refSchema === void 0 ? void 0 : refSchema.items) === null || _d === void 0 ? void 0 : _d.type) === 'object') || ((refSchema === null || refSchema === void 0 ? void 0 : refSchema.type) === 'object')) {
                     refSchema = refSchema.items || refSchema;
                     refSchema = refSchema.properties[$data.remoteField];
                     const refValues = (yield this.get({ itemPath: options.itemPath, schema: refSchema })) || [];
@@ -261,12 +260,11 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     getProxy(proxyInfo) {
-        var _a, _b;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const proxy = this.proxies.find((p) => p.name === proxyInfo.proxyName);
-            if ((_a = proxy) === null || _a === void 0 ? void 0 : _a.dataSource)
+            if (proxy === null || proxy === void 0 ? void 0 : proxy.dataSource)
                 return proxy.dataSource;
-            if ((_b = proxy) === null || _b === void 0 ? void 0 : _b.classRef) {
+            if (proxy === null || proxy === void 0 ? void 0 : proxy.classRef) {
                 const dataSource = (proxy && new proxy.classRef(...(proxyInfo.initParams || [])));
                 if (dataSource) {
                     yield dataSource.connect();

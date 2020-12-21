@@ -11,8 +11,8 @@ export declare type Newable<T> = {
 };
 interface IProxy {
     name: string;
-    classRef?: Newable<AbstractDispatcher>;
-    dataSource?: AbstractDispatcher;
+    classRef?: Newable<AbstractDataSource>;
+    dataSource?: AbstractDataSource;
 }
 export declare type IDataSourceInfo<T extends AbstractDataSource> = {
     dataSource: T;
@@ -29,7 +29,8 @@ export declare class Dispatcher extends AbstractDispatcher {
     getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
     getDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
     getDataSourceInfo(options?: IDispatchOptions): Promise<IDataSourceInfo<AbstractDataSource>>;
-    getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty>;
+    getSchema(options?: IDispatchOptions, _parentDispatcher?: AbstractDispatcher): Promise<IProperty>;
+    isMethodAllowed(methodName: string, options?: IDispatchOptions): Promise<Boolean>;
     get(options?: IDispatchOptions): Promise<any>;
     set(options?: IDispatchOptions): Promise<any>;
     update(options?: IDispatchOptions): Promise<any>;

@@ -37,20 +37,25 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     getSchema(options, parentDispatcher) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { parentPath, itemPath } = options;
-            const newPath = [parentPath, itemPath].filter(p => { var _a; return (_a = p) === null || _a === void 0 ? void 0 : _a.length; }).join('/');
+            const newPath = [parentPath, itemPath].filter(p => p === null || p === void 0 ? void 0 : p.length).join('/');
             return yield this.getSchemaDataSource(parentDispatcher).get({ itemPath: newPath });
         });
     }
-    get(options) {
-        var _a, _b, _c;
+    isMethodAllowed(_methodName, _options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (!((_a = options) === null || _a === void 0 ? void 0 : _a.itemPath)) {
-                if (((_c = (_b = options) === null || _b === void 0 ? void 0 : _b.schema) === null || _c === void 0 ? void 0 : _c.type) === 'array' && !Array.isArray(this.jsonDocument)) {
+            return true;
+        });
+    }
+    get(options) {
+        var _a;
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (!(options === null || options === void 0 ? void 0 : options.itemPath)) {
+                if (((_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.type) === 'array' && !Array.isArray(this.jsonDocument)) {
                     return this.jsonDocument ? [this.jsonDocument] : [];
                 }
                 return this.jsonDocument;
             }
-            const schemaPath = yield this.convertObjIDToIndex(options.itemPath);
+            const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(options.itemPath);
             return object_path_1.default.get(this.jsonDocument, schemaPath.split('/'));
         });
     }
@@ -64,7 +69,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     this.jsonDocument.push(value);
                 }
                 else {
-                    const schemaPath = yield this.convertObjIDToIndex(itemPath);
+                    const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(itemPath);
                     object_path_1.default.push(this.jsonDocument, schemaPath.split('/'), value);
                 }
                 this.save();
@@ -79,7 +84,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     this.jsonDocument = value;
                 }
                 else {
-                    const schemaPath = yield this.convertObjIDToIndex(itemPath);
+                    const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(itemPath);
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
                 }
                 this.save();
@@ -96,7 +101,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     newValue = _.merge(this.jsonDocument, value);
                 }
                 else {
-                    const schemaPath = yield this.convertObjIDToIndex(itemPath);
+                    const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(itemPath);
                     newValue = _.merge(object_path_1.default.get(this.jsonDocument, schemaPath.split('/')), value);
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), newValue);
                 }
@@ -112,7 +117,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                 this.save();
                 return;
             }
-            const schemaPath = yield this.convertObjIDToIndex(itemPath);
+            const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(itemPath);
             object_path_1.default.del(this.jsonDocument, schemaPath.split('/'));
             this.save();
         });

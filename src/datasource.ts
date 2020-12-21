@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { IProperty, IDispatchOptions } from './interfaces';
+import { IProperty, IDispatchOptions, ICursorObject } from './interfaces';
 import { isObject } from 'lodash';
 
 // tslint:disable:no-console
@@ -11,58 +11,16 @@ export declare type Item = any;
 export declare type Param = any;
 
 export abstract class AbstractDataSource {
-    public async abstract connect(): Promise<void>;
-    public async abstract close(): Promise<void>;
+    public abstract connect(): Promise<void>;
+    public abstract close(): Promise<void>;
 
-    public async abstract get(options?: IDispatchOptions): Promise<Item>;
-    public async abstract dispatch(methodName: string, options?: IDispatchOptions);
+    public abstract get(options?: IDispatchOptions): Promise<Item>;
+    public abstract dispatch(methodName: string, options?: IDispatchOptions);
 
-    public async convertObjIDToIndex(path: string | string[], basePath: string = '', obj?: Item, ...others: Param[]): Promise<string> {
-        if (!path) { return ''; }
-        const parts = typeof path === 'string' ? path.split('/') : path;
-        const converted = [];
-        let currentObj = obj || await this.dispatch.call(this, 'get', basePath, ...others);
+    public abstract isMethodAllowed(methodName: string, options?: IDispatchOptions): Promise<Boolean>;
 
-        for (const key of parts) {
-            if (Array.isArray(currentObj)) {
-                let idx = key;
-                if (/^[a-f0-9-]{24}$/.test(key)) {
-                    const item = currentObj.find((itemObj: Item) => {
-                        return itemObj && itemObj._id === key;
-                    });
-                    if (!item) {
-                        return [...converted, ...parts.slice(converted.length)].join('/');
-                    }
-                    idx = currentObj.indexOf(item).toString();
-                } else {
-                    const item = currentObj.find((itemObj: Item) => {
-                        return itemObj && itemObj.slug === key;
-                    });
-                    if (item) {
-                        idx = currentObj.indexOf(item).toString();
-                    }
-                }
-                converted.push(idx);
-                currentObj = currentObj[idx];
-                continue;
-
-            } else if (isObject(currentObj) && currentObj[key]) {
-                converted.push(key);
-                currentObj = currentObj[key];
-                continue;
-            }
-
-            return [...converted, ...parts.slice(converted.length)].join('/');
-        }
-
-        return converted.join('/');
-    }
-
-}
-
-export abstract class AbstractDispatcher extends AbstractDataSource {
     // tslint:disable-next-line:no-reserved-keywords
-    public async abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDispatcher): Promise<IProperty>;
+    public abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDataSource): Promise<IProperty>;
     public abstract getDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
     public abstract getSchemaDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
 
@@ -91,16 +49,66 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
         return result.filter(p => p).join('/');
     }
 
-    protected isMethodAllowed(methodName: string, schema: IProperty) {
-        // tslint:disable-next-line:no-bitwise
-        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
-            return false;
-        } else if (schema.writeOnly === true && methodName === 'get') {
-            return false;
-        }
-        return true;     
-    }
+    public async convertObjIDToIndex(path: string | string[], basePath: string = '', obj?: Item, ...others: Param[]): Promise<ICursorObject> {
+        if (!path) { return { jsonObjectID: '' }; }
+        const parts = typeof path === 'string' ? path.split('/') : path;
+        const converted = [];
+        let currentObj = obj || await this.dispatch.call(this, 'get', { itemPath: basePath, ...others });
+        const cursorData: Partial<ICursorObject> = {};
 
+        const objResolver = (obj, idx) => obj[idx] && (`${basePath?basePath+'/':''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
+
+        for (const key of parts) {
+            cursorData.index = undefined;
+            if (Array.isArray(currentObj)) {
+                if (/^[a-f0-9-]{24}$/.test(key)) {
+                    const item = currentObj.find((itemObj: Item) => {
+                        return itemObj && (itemObj._id === key);
+                    });
+                    if (!item) {
+                        break;
+                    }
+                    cursorData.index = currentObj.indexOf(item);
+                } else {
+                    const item = currentObj.find((itemObj: Item) => {
+                        return itemObj && itemObj.slug === key;
+                    });
+                    if (item) {
+                        cursorData.index = currentObj.indexOf(item);
+                    }
+                }
+                converted.push(cursorData.index?.toString() || key);
+                if (converted.length==parts.length) {
+                    Object.assign(cursorData, {
+                        index: cursorData.index+1,
+                        total: currentObj.length,
+                        self: objResolver(currentObj, cursorData.index),
+                        first: (cursorData.index > 0 && objResolver(currentObj, 0)) || undefined,
+                        prev: (cursorData.index > 0 && objResolver(currentObj, cursorData.index-1)) || undefined,
+                        next: (cursorData.index < currentObj.length-1 && objResolver(currentObj, cursorData.index+1)) || undefined,
+                        last: (cursorData.index < currentObj.length-1 && objResolver(currentObj, currentObj.length-1)) || undefined,
+                    });
+                    currentObj = currentObj[cursorData.index-1];
+                } else {
+                    currentObj = currentObj[cursorData.index];
+                }
+                continue;
+            } else if (isObject(currentObj) && currentObj[key]) {
+                converted.push(key);
+                currentObj = currentObj[key];
+                continue;
+            } 
+            break;
+        }
+        return { 
+            ...cursorData,
+            jsonObjectID: `${basePath?basePath+'/':''}${[...converted, ...parts.slice(converted.length)].join('/')}`,
+        };
+}
+
+}
+
+export abstract class AbstractDispatcher extends AbstractDataSource {
     public requestHasWildcards(options?: IDispatchOptions, wildcard = '#') : boolean {
         return (options?.itemPath && options.itemPath.indexOf(wildcard) != -1);
     }

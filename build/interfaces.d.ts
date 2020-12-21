@@ -17,6 +17,9 @@ export interface IProxyInfo {
 export interface IRelationship {
     path: string;
     remoteField?: string;
+    groupBy: string;
+    filterBy: string;
+    orderBy: string[];
 }
 export interface IProperty {
     $ref?: string;
@@ -40,7 +43,7 @@ export interface IProperty {
     enum?: PrimitiveType[] | IProperty[];
     default?: PrimitiveType | Object;
     additionalProperties?: IProperty | boolean;
-    required?: string[];
+    required?: boolean | string[];
     propertyOrder?: string[];
     properties?: {
         [key: string]: IProperty;
@@ -50,14 +53,17 @@ export interface IProperty {
     };
     defaultProperties?: string[];
     pattern?: string;
+    $parent?: IProperty;
     $title?: string;
     readOnly?: boolean;
     writeOnly?: boolean;
+    $visible?: boolean;
     $data?: IRelationship;
     $proxy?: IProxyInfo;
     $widget?: {
         type?: string;
         wrappers?: string[];
+        [property: string]: any;
     };
     $expressionProperties?: {
         [property: string]: string;
@@ -69,5 +75,16 @@ export interface IDispatchOptions {
     value?: any;
     parentPath?: string;
     params?: any;
+    user?: any;
+}
+export interface ICursorObject {
+    jsonObjectID: string;
+    self?: string;
+    index?: number;
+    total?: number;
+    prev?: string;
+    next?: string;
+    first?: string;
+    last?: string;
 }
 //# sourceMappingURL=interfaces.d.ts.map
