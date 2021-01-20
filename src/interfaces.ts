@@ -82,6 +82,7 @@ export interface IDispatchOptions {
     value?: any, 
     parentPath?: string, 
     params?: any,
+    query?: any,
     user?: any,
 }
 
