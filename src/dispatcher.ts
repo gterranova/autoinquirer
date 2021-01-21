@@ -1,5 +1,6 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
+import * as _ from 'lodash';
 import { IProperty, IProxyInfo, IDispatchOptions } from './interfaces';
 import { absolute } from './utils';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
@@ -95,16 +96,30 @@ export class Dispatcher extends AbstractDispatcher {
         //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
         const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
-        //if (dataSource instanceof AbstractDispatcher) {
-            //console.log("CALL DELEGATED JSONSCHEMA GET", options)
-            return await dataSource.getSchemaDataSource(this).get(entryPointInfo? {
-                itemPath: entryPointInfo?.objPath, 
-                parentPath: entryPointInfo?.parentPath, 
-                params: entryPointInfo?.proxyInfo?.params
-            } : options);
-        //}
-        //console.log("CALL DEFAULT JSONSCHEMA GET", options)
-        //return await this.getSchemaDataSource(parentDispatcher).get(options);
+
+        const schema = await dataSource.getSchemaDataSource(this).get(entryPointInfo? {
+            itemPath: entryPointInfo?.objPath, 
+            parentPath: entryPointInfo?.parentPath, 
+            params: entryPointInfo?.proxyInfo?.params
+        } : options);
+        if (!schema?.type) {
+            console.error("Something wrong with", entryPointInfo?.objPath, options);
+        }
+        if (schema?.type === 'object') {
+            const subSchemas = await Promise.all(_.chain(schema.properties||[]).keys()
+            .filter( p => !!schema.properties[p].$proxy)
+            .map( async proxiedProp => {
+                const { dataSource, entryPointInfo } = await this.getDataSourceInfo({ itemPath: `${options.itemPath}/${proxiedProp}`});
+                const subSchema = await dataSource.getSchemaDataSource(this).get({
+                    itemPath: entryPointInfo?.objPath, 
+                    parentPath: entryPointInfo?.parentPath, 
+                    params: entryPointInfo?.proxyInfo?.params
+                });
+                return [proxiedProp, { ...schema.properties[proxiedProp], ...subSchema}];
+            }).value());
+            return {...schema, properties: {...schema.properties, ..._.fromPairs(subSchemas)}};
+        }
+        return schema;
     }
 
     public async isMethodAllowed(methodName: string, options?: IDispatchOptions): Promise<Boolean> {
@@ -238,6 +253,25 @@ export class Dispatcher extends AbstractDispatcher {
                 parentPath: entryPointInfo?.parentPath, 
                 params: entryPointInfo?.proxyInfo?.params
             } : options);
+
+            if (options.schema?.type === 'object' && !_.isArray(result)) {
+                const subValues = await Promise.all(_.chain(options.schema.properties||[]).keys()
+                .filter( p => !!options.schema.properties[p].$proxy)
+                .map( async proxiedProp => {
+                    const { dataSource, entryPointInfo } = await this.getDataSourceInfo({ itemPath: `${options.itemPath}/${proxiedProp}`});
+                    const subValue = await dataSource.getDataSource(this).dispatch(methodName, {
+                        ...options,
+                        itemPath: entryPointInfo?.objPath, 
+                        parentPath: entryPointInfo?.parentPath, 
+                        params: entryPointInfo?.proxyInfo?.params
+                    });
+                    return [proxiedProp, subValue];
+                }).value());
+                //console.log(_.chain(options.schema.properties||[]).keys()
+                //.filter( p => !!options.schema.properties[p].$proxy).value(), _.fromPairs(subValues));
+                result = {...result, ..._.fromPairs(subValues)};
+            }            
+    
         //} else {
         //    console.log("CALL DEFAULT JSON DISPATCH", options)
         //    result = await this.getDataSource(this).dispatch(methodName, options);    

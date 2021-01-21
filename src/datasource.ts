@@ -25,7 +25,6 @@ export abstract class AbstractDataSource {
     public abstract getSchemaDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
 
     public async convertPathToUri(path: string) {
-        //console.log("Fixing", path);
         const pathParts = path.split('/');
         let nextIsArrayItem = false;
         const result = []; let idx = 0;
@@ -117,21 +116,24 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
         //console.log("path with wildcards", options);
         const base = options.itemPath.split(wildcard, 1)[0];
         const remaining = options.itemPath.slice(base.length+1);
-        const baseItems = (await this.dispatch('get', { ...options, itemPath: base.replace( /\/$/, '') })) || [];
+        const baseOptions = { ...options, schema: { type: 'array', items: options.schema }};
+        let baseItems = (await this.dispatch('get', { ...baseOptions, itemPath: base.replace( /\/$/, '') })) || [];
+        //console.log(baseItems)
+        //if (typeof baseItems === 'object') baseItems = [baseItems];
         const result = await Promise.all(baseItems.map( async (baseItem, idx) => {
             let _fullPath = [base, remaining].join(baseItem._id || `${idx}`);
             if (remaining.indexOf(wildcard) == -1) {
                 if (options?.schema?.$data?.remoteField) {
                     _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                 }
-                const item = await this.dispatch(methodName, { ...options, itemPath: _fullPath });
+                const item = await this.dispatch(methodName, { /* ...options, */ itemPath: _fullPath });
                 //console.log("BULK", `${methodName} on ${_fullPath} (value: ${options.value})`)
                 if ((options?.schema?.items || options.schema).type === 'object') {
                     return { _fullPath, ...item };
                 }
                 return item;
             }
-            return await this.dispatch(methodName, { ...options, itemPath: [base, remaining].join(baseItem._id || `${idx}`)});
+            return await this.dispatch(methodName, { /* ...options, */ itemPath: [base, remaining].join(baseItem._id || `${idx}`)});
         } ));
         //console.log(result);
         return _.flatten(result);
