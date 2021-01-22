@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const fs_1 = tslib_1.__importDefault(require("fs"));
+const path_1 = require("path");
 const _ = tslib_1.__importStar(require("lodash"));
 const object_path_1 = tslib_1.__importDefault(require("object-path"));
 const utils_1 = require("./utils");
@@ -9,7 +10,7 @@ const datasource_1 = require("./datasource");
 class JsonDataSource extends datasource_1.AbstractDispatcher {
     constructor(data) {
         super();
-        this.dataFile = (typeof data === 'string') ? data : undefined;
+        this.dataFile = (typeof data === 'string') ? path_1.resolve(process.cwd(), data) : undefined;
         this.jsonDocument = this.dataFile !== undefined ? utils_1.loadJSON(this.dataFile) : data;
     }
     connect() {

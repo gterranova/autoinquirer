@@ -1,6 +1,7 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 import fs from "fs";
+import { resolve } from 'path';
 import * as _ from 'lodash';
 import objectPath from 'object-path';
 import { IProperty, IDispatchOptions } from './interfaces';
@@ -13,7 +14,7 @@ export class JsonDataSource extends AbstractDispatcher {
 
     constructor(data: any) {
         super();
-        this.dataFile = (typeof data === 'string') ? data : undefined;
+        this.dataFile = (typeof data === 'string') ? resolve(process.cwd(), data) : undefined;
         this.jsonDocument = this.dataFile !== undefined ? loadJSON(this.dataFile) : data;
     }
 

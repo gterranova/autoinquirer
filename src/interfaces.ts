@@ -67,6 +67,8 @@ export interface IProperty {
     $visible?: boolean;
     $data?: IRelationship;
     $proxy?: IProxyInfo;
+    $orderBy?: string[];
+    $groupBy?: string;
     $widget?: { type?: string, wrappers?: string[], [property: string]: any };
 
     /**
