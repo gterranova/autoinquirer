@@ -12,7 +12,7 @@ class AbstractDataSource {
             const result = [];
             let idx = 0;
             for (let key of pathParts) {
-                const itemPath = pathParts.slice(0, ++idx).join('/');
+                const itemPath = pathParts.slice(0, ++idx).join('/').replace(/\/$/, '');
                 if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
                     const model = yield this.getDataSource(this).dispatch('get', { itemPath });
                     if (!model) {
@@ -38,7 +38,7 @@ class AbstractDataSource {
             const converted = [];
             let currentObj = obj || (yield this.dispatch.call(this, 'get', Object.assign({ itemPath: basePath }, others)));
             const cursorData = {};
-            const objResolver = (obj, idx) => obj[idx] && (`${basePath ? basePath + '/' : ''}${[...parts.slice(0, converted.length - 1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
+            const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length - 1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
             for (const key of parts) {
                 cursorData.index = undefined;
                 if (Array.isArray(currentObj)) {
@@ -84,7 +84,7 @@ class AbstractDataSource {
                 }
                 break;
             }
-            return Object.assign(Object.assign({}, cursorData), { jsonObjectID: `${basePath ? basePath + '/' : ''}${[...converted, ...parts.slice(converted.length)].join('/')}` });
+            return Object.assign(Object.assign({}, cursorData), { jsonObjectID: `${basePath || ''}${[...converted, ...parts.slice(converted.length)].join('/')}` });
         });
     }
 }

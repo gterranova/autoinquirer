@@ -29,7 +29,7 @@ export abstract class AbstractDataSource {
         let nextIsArrayItem = false;
         const result = []; let idx = 0;
         for (let key of pathParts) {
-            const itemPath = pathParts.slice(0, ++idx).join('/');
+            const itemPath = pathParts.slice(0, ++idx).join('/').replace(/\/$/, '');
             //console.log("--", key, nextIsArrayItem);
             if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
                 const model = await this.getDataSource(this).dispatch('get', { itemPath });
@@ -55,7 +55,7 @@ export abstract class AbstractDataSource {
         let currentObj = obj || await this.dispatch.call(this, 'get', { itemPath: basePath, ...others });
         const cursorData: Partial<ICursorObject> = {};
 
-        const objResolver = (obj, idx) => obj[idx] && (`${basePath?basePath+'/':''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
+        const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
 
         for (const key of parts) {
             cursorData.index = undefined;
@@ -101,7 +101,7 @@ export abstract class AbstractDataSource {
         }
         return { 
             ...cursorData,
-            jsonObjectID: `${basePath?basePath+'/':''}${[...converted, ...parts.slice(converted.length)].join('/')}`,
+            jsonObjectID: `${basePath || ''}${[...converted, ...parts.slice(converted.length)].join('/')}`,
         };
 }
 
