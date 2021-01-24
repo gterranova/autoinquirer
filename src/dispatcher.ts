@@ -116,7 +116,9 @@ export class Dispatcher extends AbstractDispatcher {
             const subSchemas = await Promise.all(_.chain(schema.properties||[]).keys()
             .filter( p => !!schema.properties[p].$proxy)
             .map( async proxiedProp => {
-                const { dataSource, entryPointInfo } = await this.getDataSourceInfo({ itemPath: `${options.itemPath}/${proxiedProp}`});
+                const { dataSource, entryPointInfo } = await this.getDataSourceInfo({ 
+                    itemPath: _.compact([options.itemPath, proxiedProp]).join('/')
+                });
                 const subSchema = await dataSource.getSchemaDataSource(this).get({
                     itemPath: entryPointInfo?.objPath, 
                     parentPath: entryPointInfo?.parentPath, 
@@ -269,7 +271,9 @@ export class Dispatcher extends AbstractDispatcher {
                 const subValues = await Promise.all(_.chain(options.schema.properties||[]).keys()
                 .filter( p => !!options.schema.properties[p].$proxy)
                 .map( async proxiedProp => {
-                    const { dataSource, entryPointInfo } = await this.getDataSourceInfo({ itemPath: `${options.itemPath}/${proxiedProp}`});
+                    const { dataSource, entryPointInfo } = await this.getDataSourceInfo({ 
+                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/')
+                    });
                     const subValue = await dataSource.getDataSource(this).dispatch(methodName, {
                         ...options,
                         itemPath: entryPointInfo?.objPath, 
@@ -380,10 +384,10 @@ export class Dispatcher extends AbstractDispatcher {
         return Object.keys(this.entryPoints).filter((k: string) => {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey: string) => {
-            const objPath = schemaPath.replace(RegExp(foundKey), '');
+            const objPath = schemaPath.replace(RegExp(foundKey), '').replace(/^\/+/g, '');
             const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1).replace(/\/$/, '');
 
-            return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath: objPath.replace(/^\//, '') };
+            return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath };
         });
     }
 
