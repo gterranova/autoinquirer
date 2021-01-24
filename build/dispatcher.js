@@ -126,6 +126,9 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     registerProxy(proxy) {
         this.proxies.push(proxy);
     }
+    registerProxies(proxies) {
+        proxies.map(p => this.registerProxy(p));
+    }
     dispatch(methodName, options) {
         var _a, _b;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -313,6 +316,11 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     registerTransformer({ name, fn }) {
         this.transformers[name] = fn.bind(this);
+    }
+    registerTransformers(transformers) {
+        transformers.map(t => {
+            this.transformers[t.name] = t.fn.bind(this);
+        });
     }
     getTransformer(name) {
         return this.transformers[name];

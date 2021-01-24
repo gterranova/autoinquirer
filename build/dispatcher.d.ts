@@ -43,6 +43,7 @@ export declare class Dispatcher extends AbstractDispatcher {
     push(options?: IDispatchOptions): Promise<any>;
     del(options?: IDispatchOptions): Promise<any>;
     registerProxy(proxy: IProxy): void;
+    registerProxies(proxies: Array<IProxy>): void;
     dispatch(methodName: string, options?: IDispatchOptions): Promise<any>;
     private eachRemoteField;
     private findEntryPoints;
@@ -50,6 +51,7 @@ export declare class Dispatcher extends AbstractDispatcher {
     private getProxyWithinPath;
     private getProxy;
     registerTransformer({ name, fn }: renderOptions): void;
+    registerTransformers(transformers: Array<renderOptions>): void;
     getTransformer(name: string): renderFunction;
 }
 export {};

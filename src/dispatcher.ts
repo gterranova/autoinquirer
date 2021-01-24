@@ -173,6 +173,10 @@ export class Dispatcher extends AbstractDispatcher {
         this.proxies.push(proxy);
     }
 
+    public registerProxies(proxies: Array<IProxy>) {
+        proxies.map( p => this.registerProxy(p));
+    }
+
     // tslint:disable-next-line:cyclomatic-complexity
     public async dispatch(methodName: string, options?: IDispatchOptions): Promise<any> {
         // tslint:disable-next-line:no-parameter-reassignment
@@ -419,6 +423,12 @@ export class Dispatcher extends AbstractDispatcher {
 
     public registerTransformer({ name, fn }: renderOptions) {
         this.transformers[name] = fn.bind(this);
+    }
+
+    public registerTransformers(transformers: Array<renderOptions>) {
+        transformers.map(t => {
+            this.transformers[t.name] = t.fn.bind(this);
+        })
     }
 
     public getTransformer(name: string): renderFunction {
