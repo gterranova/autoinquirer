@@ -30,11 +30,18 @@ export type IDataSourceInfo<T extends AbstractDataSource> = {
     entryPointInfo?: IEntryPointInfo
 };
 
+declare type renderFunction = (_methodName: string, options?: IDispatchOptions) => Promise<any>;
+declare interface renderOptions {
+    name: string,
+    fn: renderFunction
+};
+
 export class Dispatcher extends AbstractDispatcher {
     private entryPoints: IEntryPoints = {};
     private proxies: IProxy[] = [];
     private schemaSource: JsonSchema;
     private dataSource: AbstractDataSource;
+    private transformers: { [key: string]: renderFunction} = {};
 
     constructor(schema: string | JsonSchema, data: string | AbstractDispatcher) {
         super();
@@ -408,6 +415,14 @@ export class Dispatcher extends AbstractDispatcher {
             return dataSource
         };
         return undefined;
+    }
+
+    public registerTransformer({ name, fn }: renderOptions) {
+        this.transformers[name] = fn.bind(this);
+    }
+
+    public getTransformer(name: string): renderFunction {
+        return this.transformers[name];
     }
 
 }

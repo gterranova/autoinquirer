@@ -7,11 +7,13 @@ const datasource_1 = require("./datasource");
 const json_1 = require("./json");
 const jsonschema_1 = require("./jsonschema");
 ;
+;
 class Dispatcher extends datasource_1.AbstractDispatcher {
     constructor(schema, data) {
         super();
         this.entryPoints = {};
         this.proxies = [];
+        this.transformers = {};
         this.schemaSource = (typeof schema === 'string') ? new jsonschema_1.JsonSchema(schema) : schema;
         this.dataSource = (typeof data === 'string') ? new json_1.JsonDataSource(data) : data;
     }
@@ -308,6 +310,12 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             ;
             return undefined;
         });
+    }
+    registerTransformer({ name, fn }) {
+        this.transformers[name] = fn.bind(this);
+    }
+    getTransformer(name) {
+        return this.transformers[name];
     }
 }
 exports.Dispatcher = Dispatcher;
