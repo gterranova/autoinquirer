@@ -384,8 +384,9 @@ export class Dispatcher extends AbstractDispatcher {
         return Object.keys(this.entryPoints).filter((k: string) => {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey: string) => {
-            const objPath = schemaPath.replace(RegExp(foundKey), '').replace(/^\/+/g, '');
-            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1).replace(/\/$/, '');
+            const objPath = schemaPath.replace(RegExp("([/]?"+foundKey+"[/]?)"), '');
+            const parentPath = objPath? schemaPath.split(objPath)[0].replace(/\/$/, ''): '';
+            //console.log(`"${schemaPath}", "${foundKey}", "${objPath}", "${parentPath}"`)
 
             return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath };
         });

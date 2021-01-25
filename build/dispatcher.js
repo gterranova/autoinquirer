@@ -284,8 +284,8 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         return Object.keys(this.entryPoints).filter((k) => {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey) => {
-            const objPath = schemaPath.replace(RegExp(foundKey), '').replace(/^\/+/g, '');
-            const parentPath = schemaPath.slice(0, schemaPath.length - objPath.length + 1).replace(/\/$/, '');
+            const objPath = schemaPath.replace(RegExp("([/]?" + foundKey + "[/]?)"), '');
+            const parentPath = objPath ? schemaPath.split(objPath)[0].replace(/\/$/, '') : '';
             return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath };
         });
     }

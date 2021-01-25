@@ -38,7 +38,7 @@ export abstract class AbstractDataSource {
                     return result.concat(pathParts.slice(idx-1)).join('/')
                 }
                 nextIsArrayItem = false;
-                key = model._id;
+                key = model._id || model.slug; // slug to be tested
             }             
             const schema = await this.getSchema({ itemPath });
             nextIsArrayItem = (schema?.type === 'array' && schema?.items?.type === 'object');
@@ -114,14 +114,12 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
 
     public async processWildcards(methodName: string, options: IDispatchOptions, wildcard = '#'): Promise<any> {
         //console.log("path with wildcards", options);
-        const base = options.itemPath.split(wildcard, 1)[0];
-        const remaining = options.itemPath.slice(base.length+1);
+        const [base, remaining] = options.itemPath.split(wildcard, 2)[0];
         const baseOptions = { ...options, schema: { type: 'array', items: options.schema }};
         let baseItems = (await this.dispatch('get', { ...baseOptions, itemPath: base.replace( /\/$/, '') })) || [];
-        //console.log(baseItems)
         //if (typeof baseItems === 'object') baseItems = [baseItems];
         const result = await Promise.all(baseItems.map( async (baseItem, idx) => {
-            let _fullPath = [base, remaining].join(baseItem._id || `${idx}`);
+            let _fullPath = [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`);
             if (remaining.indexOf(wildcard) == -1) {
                 if (options?.schema?.$data?.remoteField) {
                     _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
@@ -133,7 +131,7 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
                 }
                 return item;
             }
-            return await this.dispatch(methodName, { /* ...options, */ itemPath: [base, remaining].join(baseItem._id || `${idx}`)});
+            return await this.dispatch(methodName, { /* ...options, */ itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`)});
         } ));
         //console.log(result);
         return _.flatten(result);

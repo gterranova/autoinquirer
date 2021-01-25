@@ -19,7 +19,7 @@ class AbstractDataSource {
                         return result.concat(pathParts.slice(idx - 1)).join('/');
                     }
                     nextIsArrayItem = false;
-                    key = model._id;
+                    key = model._id || model.slug;
                 }
                 const schema = yield this.getSchema({ itemPath });
                 nextIsArrayItem = ((schema === null || schema === void 0 ? void 0 : schema.type) === 'array' && ((_a = schema === null || schema === void 0 ? void 0 : schema.items) === null || _a === void 0 ? void 0 : _a.type) === 'object');
@@ -95,13 +95,12 @@ class AbstractDispatcher extends AbstractDataSource {
     }
     processWildcards(methodName, options, wildcard = '#') {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const base = options.itemPath.split(wildcard, 1)[0];
-            const remaining = options.itemPath.slice(base.length + 1);
+            const [base, remaining] = options.itemPath.split(wildcard, 2)[0];
             const baseOptions = Object.assign(Object.assign({}, options), { schema: { type: 'array', items: options.schema } });
             let baseItems = (yield this.dispatch('get', Object.assign(Object.assign({}, baseOptions), { itemPath: base.replace(/\/$/, '') }))) || [];
             const result = yield Promise.all(baseItems.map((baseItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 var _a, _b, _c;
-                let _fullPath = [base, remaining].join(baseItem._id || `${idx}`);
+                let _fullPath = [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`);
                 if (remaining.indexOf(wildcard) == -1) {
                     if ((_b = (_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.$data) === null || _b === void 0 ? void 0 : _b.remoteField) {
                         _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
@@ -112,7 +111,7 @@ class AbstractDispatcher extends AbstractDataSource {
                     }
                     return item;
                 }
-                return yield this.dispatch(methodName, { itemPath: [base, remaining].join(baseItem._id || `${idx}`) });
+                return yield this.dispatch(methodName, { itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`) });
             })));
             return _.flatten(result);
         });

@@ -39,13 +39,17 @@ export class JsonSchema extends AbstractDataSource {
     constructor(data: IProperty | string) {
         super();
         this.validator = new ajv({ coerceTypes: true });
-        this.schemaData = (typeof data === 'string') ? loadJSON(data) : data;
-        this.basePath = (typeof data === 'string') ? path.resolve(path.dirname(data)) : path.resolve(path.dirname(findUp('package.json', process.cwd())));
+        // JSONSCHEMA data relative to package dir
+        const pkgDir = path.dirname(findUp('package.json', process.cwd()));
+        const filename = typeof data === 'string' && path.resolve(pkgDir, data);
+        //console.log("LOAD", filename, "from", data, pkgDir)
+        this.schemaData = (typeof data === 'string') ? loadJSON(filename) : data;
+        this.basePath = (filename && path.dirname(filename)) || process.cwd();
     }
 
     public async connect() {
         const parser = new $RefParser();
-        const currentPath = path.resolve(path.dirname(findUp('package.json', process.cwd())));
+        const currentPath = process.cwd();
         process.chdir(this.basePath);
         this.schemaData = await parser.dereference(this.schemaData);
         process.chdir(currentPath);
