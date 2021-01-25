@@ -37,7 +37,7 @@ class JsonSchema extends datasource_1.AbstractDataSource {
     connect() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const parser = new json_schema_ref_parser_1.default();
-            const currentPath = path_1.default.resolve(path_1.default.dirname(utils_1.findUp('package.json', process.cwd())));
+            const currentPath = process.cwd();
             process.chdir(this.basePath);
             this.schemaData = yield parser.dereference(this.schemaData);
             process.chdir(currentPath);
