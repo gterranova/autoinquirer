@@ -68,6 +68,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             } : options);
             if (!(schema === null || schema === void 0 ? void 0 : schema.type)) {
                 console.error("Something wrong with", entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, options);
+                return null;
             }
             if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
                 const subSchemas = yield Promise.all(_.chain(schema.properties || []).keys()

@@ -113,8 +113,9 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
     }
 
     public async processWildcards(methodName: string, options: IDispatchOptions, wildcard = '#'): Promise<any> {
-        //console.log("path with wildcards", options);
-        const [base, remaining] = options.itemPath.split(wildcard, 2)[0];
+        //console.log("processWildcards", { methodName, options});
+        const parts = options.itemPath.split(wildcard);
+        const [base, remaining] = [parts[0], parts.slice(1).join(wildcard)];
         const baseOptions = { ...options, schema: { type: 'array', items: options.schema }};
         let baseItems = (await this.dispatch('get', { ...baseOptions, itemPath: base.replace( /\/$/, '') })) || [];
         //if (typeof baseItems === 'object') baseItems = [baseItems];

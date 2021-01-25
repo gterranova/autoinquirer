@@ -111,6 +111,7 @@ export class Dispatcher extends AbstractDispatcher {
         } : options);
         if (!schema?.type) {
             console.error("Something wrong with", entryPointInfo?.objPath, options);
+            return null;
         }
         if (schema?.type === 'object') {
             const subSchemas = await Promise.all(_.chain(schema.properties||[]).keys()

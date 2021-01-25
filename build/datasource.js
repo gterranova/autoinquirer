@@ -95,7 +95,8 @@ class AbstractDispatcher extends AbstractDataSource {
     }
     processWildcards(methodName, options, wildcard = '#') {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const [base, remaining] = options.itemPath.split(wildcard, 2)[0];
+            const parts = options.itemPath.split(wildcard);
+            const [base, remaining] = [parts[0], parts.slice(1).join(wildcard)];
             const baseOptions = Object.assign(Object.assign({}, options), { schema: { type: 'array', items: options.schema } });
             let baseItems = (yield this.dispatch('get', Object.assign(Object.assign({}, baseOptions), { itemPath: base.replace(/\/$/, '') }))) || [];
             const result = yield Promise.all(baseItems.map((baseItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
