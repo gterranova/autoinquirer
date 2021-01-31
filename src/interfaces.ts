@@ -85,6 +85,7 @@ export interface IDispatchOptions {
     parentPath?: string, 
     params?: any,
     query?: any,
+    files?: any,
     user?: any,
 }
 
