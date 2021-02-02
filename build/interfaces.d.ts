@@ -17,9 +17,10 @@ export interface IProxyInfo {
 export interface IRelationship {
     path: string;
     remoteField?: string;
-    groupBy: string;
-    filterBy: string;
-    orderBy: string[];
+    groupBy?: string;
+    filterBy?: string;
+    orderBy?: string[];
+    actions?: string[];
 }
 export interface IProperty {
     $ref?: string;
@@ -65,6 +66,7 @@ export interface IProperty {
     $widget?: {
         type?: string;
         wrappers?: string[];
+        actions?: string[];
         [property: string]: any;
     };
     $expressionProperties?: {

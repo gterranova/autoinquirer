@@ -22,9 +22,10 @@ export interface IProxyInfo {
 export interface IRelationship {
     path: string;
     remoteField?: string;
-    groupBy: string;
-    filterBy: string;
-    orderBy: string[];
+    groupBy?: string;
+    filterBy?: string;
+    orderBy?: string[];
+    actions?: string[];
 }
 
 export interface IProperty {
@@ -69,7 +70,7 @@ export interface IProperty {
     $proxy?: IProxyInfo;
     $orderBy?: string[];
     $groupBy?: string;
-    $widget?: { type?: string, wrappers?: string[], [property: string]: any };
+    $widget?: { type?: string, wrappers?: string[], actions?: string[], [property: string]: any };
 
     /**
      * An object where the key is a property to be set on the main field config and the value is an expression used to assign that property.
