@@ -5,7 +5,7 @@ export declare const enum Action {
     PUSH = "push",
     SET = "set",
     UPDATE = "update",
-    DEL = "del"
+    DELETE = "delete"
 }
 export declare type PrimitiveType = number | boolean | string | null;
 export interface IProxyInfo {
