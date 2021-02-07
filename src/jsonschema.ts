@@ -7,7 +7,7 @@ import path from 'path';
 import * as _ from 'lodash';
 import moment from 'moment';
 
-import { IProperty, IDispatchOptions } from './interfaces';
+import { IProperty, IDispatchOptions, Action } from './interfaces';
 import { findUp, loadJSON } from './utils';
 import { AbstractDataSource, AbstractDispatcher } from './datasource';
 
@@ -55,12 +55,12 @@ export class JsonSchema extends AbstractDataSource {
         // pass
     }
 
-    public async isMethodAllowed(methodName: string, options?: IDispatchOptions) {
+    public async isMethodAllowed(methodName: Action, options?: IDispatchOptions) {
         const { schema } = options;
         // tslint:disable-next-line:no-bitwise
-        if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
+        if (schema === undefined || (schema.readOnly === true && (~[Action.SET, Action.PUSH, Action.DELETE].indexOf(methodName)))) {
             return false;
-        } else if (schema.writeOnly === true && methodName === 'get') {
+        } else if (schema.writeOnly === true && methodName === Action.GET) {
             return false;
         }
         return true;     

@@ -22,10 +22,10 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             yield this.schemaSource.connect();
             yield this.dataSource.connect();
             const schema = yield this.schemaSource.get();
-            const rootValue = yield this.dataSource.dispatch('get', { itemPath: '' });
+            const rootValue = yield this.dataSource.dispatch("get", { itemPath: '' });
             const coercedValue = this.schemaSource.coerce({ type: schema.type }, rootValue);
             if (typeof rootValue !== typeof coercedValue) {
-                this.dataSource.dispatch('set', { itemPath: '', schema, value: coercedValue });
+                this.dataSource.dispatch("set", { itemPath: '', schema, value: coercedValue });
             }
             this.entryPoints = this.findEntryPoints('', schema);
             yield Promise.all(this.proxies.map((proxy) => { var _a; (_a = proxy === null || proxy === void 0 ? void 0 : proxy.dataSource) === null || _a === void 0 ? void 0 : _a.connect(); }));
@@ -64,28 +64,37 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             const schema = yield dataSource.getSchemaDataSource(this).get(entryPointInfo ? {
                 itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath,
                 parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath,
-                params: (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params
+                params: Object.assign(Object.assign({}, (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params), { parent: this })
             } : options);
             if (!(schema === null || schema === void 0 ? void 0 : schema.type)) {
                 console.error("Something wrong with", entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, options);
                 return null;
             }
+            return yield this.processProxyPropertiesSchema(schema, options);
+        });
+    }
+    processProxyPropertiesSchema(schema, options) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
                 const subSchemas = yield Promise.all(_.chain(schema.properties || []).keys()
                     .filter(p => !!schema.properties[p].$proxy)
                     .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    var _b;
+                    var _a;
                     const { dataSource, entryPointInfo } = yield this.getDataSourceInfo({
-                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/')
+                        itemPath: _.compact([options.parentPath, options.itemPath, proxiedProp]).join('/')
                     });
-                    const subSchema = yield dataSource.getSchemaDataSource(this).get({
+                    const newOptions = {
                         itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath,
                         parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath,
-                        params: (_b = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _b === void 0 ? void 0 : _b.params
-                    });
+                        params: Object.assign(Object.assign({}, (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params), { parent: this })
+                    };
+                    let subSchema = yield dataSource.getSchemaDataSource(this).get(newOptions);
+                    if ((subSchema === null || subSchema === void 0 ? void 0 : subSchema.type) === 'object') {
+                        subSchema = yield this.processProxyPropertiesSchema(subSchema, newOptions);
+                    }
                     return [proxiedProp, Object.assign(Object.assign({}, schema.properties[proxiedProp]), subSchema)];
                 })).value());
-                return Object.assign(Object.assign({}, schema), { properties: Object.assign(Object.assign({}, schema.properties), _.fromPairs(subSchemas)) });
+                schema = Object.assign(Object.assign({}, schema), { properties: Object.assign(Object.assign({}, schema.properties), _.fromPairs(subSchemas)) });
             }
             return schema;
         });
@@ -103,27 +112,27 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     get(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return yield this.dispatch('get', options);
+            return yield this.dispatch("get", options);
         });
     }
     set(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return yield this.dispatch('set', options);
+            return yield this.dispatch("set", options);
         });
     }
     update(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return yield this.dispatch('update', options);
+            return yield this.dispatch("update", options);
         });
     }
     push(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return yield this.dispatch('push', options);
+            return yield this.dispatch("push", options);
         });
     }
-    del(options) {
+    delete(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return yield this.dispatch('del', options);
+            return yield this.dispatch("delete", options);
         });
     }
     registerProxy(proxy) {
@@ -133,7 +142,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         proxies.map(p => this.registerProxy(p));
     }
     dispatch(methodName, options) {
-        var _a, _b;
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             options = options || {};
             options.itemPath = (options === null || options === void 0 ? void 0 : options.itemPath) ? yield this.convertPathToUri(options === null || options === void 0 ? void 0 : options.itemPath) : '';
@@ -146,29 +155,29 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             if (this.requestHasWildcards(options)) {
                 return yield this.processWildcards(methodName, options);
             }
-            else if (~['set', 'update', 'push'].indexOf(methodName)) {
+            else if (~["set", "update", "push"].indexOf(methodName)) {
                 try {
-                    options.value = this.schemaSource.validate(methodName === 'push' ? options.schema.items : options.schema, options.value);
+                    options.value = this.schemaSource.validate(methodName === "push" ? options.schema.items : options.schema, options.value);
                 }
                 catch (e) {
                     console.log(options.value, e.errors);
                     throw e;
                 }
             }
-            else if (methodName === 'del') {
+            else if (methodName === "delete") {
                 const promises = [];
                 for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {
                     const dataSource = yield this.getProxy(proxyInfo);
-                    if (dataSource && dataSource['delCascade'] !== undefined) {
-                        promises.push(dataSource.dispatch('delCascade', { itemPath: options.itemPath, params: proxyInfo.params }));
+                    if (dataSource && dataSource["delCascade"] !== undefined) {
+                        promises.push(dataSource.dispatch("delCascade", { itemPath: options.itemPath, params: proxyInfo.params }));
                     }
                 }
-                if (this.dataSource['delCascade'] !== undefined) {
-                    promises.push(this.dataSource.dispatch('delCascade', { itemPath: options.itemPath }));
+                if (this.dataSource["delCascade"] !== undefined) {
+                    promises.push(this.dataSource.dispatch("delCascade", { itemPath: options.itemPath }));
                 }
                 yield Promise.all(promises);
             }
-            if ((~['set', 'push', 'del'].indexOf(methodName))) {
+            if ((~["set", "push", "delete"].indexOf(methodName))) {
                 yield this.eachRemoteField(options, (remote, $data) => {
                     const refSchema = remote.schema;
                     const refObject = remote.value;
@@ -188,21 +197,9 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             }
             let result;
             const { dataSource, entryPointInfo } = yield this.getDataSourceInfo(options);
-            result = yield dataSource.getDataSource(this).dispatch(methodName, entryPointInfo ? Object.assign(Object.assign({}, options), { itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath, params: (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params }) : options);
-            if (((_b = options.schema) === null || _b === void 0 ? void 0 : _b.type) === 'object' && !_.isArray(result)) {
-                const subValues = yield Promise.all(_.chain(options.schema.properties || []).keys()
-                    .filter(p => !!options.schema.properties[p].$proxy)
-                    .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    var _c;
-                    const { dataSource, entryPointInfo } = yield this.getDataSourceInfo({
-                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/')
-                    });
-                    const subValue = yield dataSource.getDataSource(this).dispatch(methodName, Object.assign(Object.assign({}, options), { itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath, params: (_c = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _c === void 0 ? void 0 : _c.params }));
-                    return [proxiedProp, subValue];
-                })).value());
-                result = Object.assign(Object.assign({}, result), _.fromPairs(subValues));
-            }
-            if ((~['set', 'push'].indexOf(methodName))) {
+            result = yield dataSource.getDataSource(this).dispatch(methodName, entryPointInfo ? Object.assign(Object.assign({}, options), { itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath, params: Object.assign(Object.assign({}, (_a = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _a === void 0 ? void 0 : _a.params), { parent: this }) }) : options);
+            result = yield this.processProxyPropertiesValues(result, options);
+            if ((~["set", "push"].indexOf(methodName))) {
                 yield this.eachRemoteField(options, (remote, $data) => {
                     const refSchema = remote.schema;
                     const refObject = remote.value;
@@ -217,6 +214,29 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                         return this.set({ itemPath: refPath, value: refObject });
                     }
                 });
+            }
+            return result;
+        });
+    }
+    processProxyPropertiesValues(result, options) {
+        var _a;
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (((_a = options.schema) === null || _a === void 0 ? void 0 : _a.type) === 'object' && !_.isArray(result)) {
+                const subValues = yield Promise.all(_.chain(options.schema.properties || []).keys()
+                    .filter(p => !!options.schema.properties[p].$proxy)
+                    .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    var _b, _c;
+                    const { dataSource, entryPointInfo } = yield this.getDataSourceInfo({
+                        itemPath: _.compact([options.parentPath, options.itemPath, proxiedProp]).join('/')
+                    });
+                    const newOptions = Object.assign(Object.assign({}, options), { itemPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.objPath, parentPath: entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.parentPath, schema: options.schema.properties[proxiedProp], params: Object.assign(Object.assign({}, (_b = entryPointInfo === null || entryPointInfo === void 0 ? void 0 : entryPointInfo.proxyInfo) === null || _b === void 0 ? void 0 : _b.params), { parent: this }) });
+                    let subValue = yield dataSource.getDataSource(this).dispatch("get", newOptions);
+                    if (((_c = newOptions.schema) === null || _c === void 0 ? void 0 : _c.type) === 'object' && !_.isArray(subValue)) {
+                        subValue = yield this.processProxyPropertiesValues(subValue, newOptions);
+                    }
+                    return [proxiedProp, subValue];
+                })).value());
+                result = Object.assign(Object.assign({}, result), _.fromPairs(subValues));
             }
             return result;
         });
@@ -286,7 +306,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey) => {
             const objPath = schemaPath.replace(RegExp("([/]?" + foundKey + "[/]?)"), '');
-            const parentPath = objPath ? schemaPath.split(objPath)[0].replace(/\/$/, '') : '';
+            const parentPath = objPath ? schemaPath.split(objPath)[0].replace(/\/$/, '') : schemaPath.replace(/\/$/, '');
             return { proxyInfo: this.entryPoints[foundKey], parentPath, objPath };
         });
     }

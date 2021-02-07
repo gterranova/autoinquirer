@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { IProperty, IDispatchOptions, ICursorObject } from './interfaces';
+import { IProperty, IDispatchOptions, ICursorObject, Action, AutoinquirerGet } from './interfaces';
 import { isObject } from 'lodash';
 
 // tslint:disable:no-console
@@ -10,14 +10,14 @@ export declare type Item = any;
 // tslint:disable-next-line:no-any
 export declare type Param = any;
 
-export abstract class AbstractDataSource {
+export abstract class AbstractDataSource implements AutoinquirerGet {
     public abstract connect(): Promise<void>;
     public abstract close(): Promise<void>;
 
     public abstract get(options?: IDispatchOptions): Promise<Item>;
-    public abstract dispatch(methodName: string, options?: IDispatchOptions);
+    public abstract dispatch(methodName: Action, options?: IDispatchOptions);
 
-    public abstract isMethodAllowed(methodName: string, options?: IDispatchOptions): Promise<Boolean>;
+    public abstract isMethodAllowed(methodName: Action, options?: IDispatchOptions): Promise<Boolean>;
 
     // tslint:disable-next-line:no-reserved-keywords
     public abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDataSource): Promise<IProperty>;
@@ -32,7 +32,7 @@ export abstract class AbstractDataSource {
             const itemPath = pathParts.slice(0, ++idx).join('/').replace(/\/$/, '');
             //console.log("--", key, nextIsArrayItem);
             if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
-                const model = await this.getDataSource(this).dispatch('get', { itemPath });
+                const model = await this.getDataSource(this).dispatch(Action.GET, { itemPath });
                 if (!model) {
                     //console.log("Interrupted", result.concat(pathParts.slice(idx-1)).join('/'))
                     return result.concat(pathParts.slice(idx-1)).join('/')
@@ -48,11 +48,11 @@ export abstract class AbstractDataSource {
         return result.filter(p => p).join('/');
     }
 
-    public async convertObjIDToIndex(path: string | string[], basePath: string = '', obj?: Item, ...others: Param[]): Promise<ICursorObject> {
+    public async convertObjIDToIndex(path: string | string[], basePath: string = '', obj?: Item, options?: IDispatchOptions): Promise<ICursorObject> {
         if (!path) { return { jsonObjectID: '' }; }
         const parts = typeof path === 'string' ? path.split('/') : path;
         const converted = [];
-        let currentObj = obj || await this.dispatch.call(this, 'get', { itemPath: basePath, ...others });
+        let currentObj = obj || await this.dispatch.call(this, Action.GET, { ...options, itemPath: basePath });
         const cursorData: Partial<ICursorObject> = {};
 
         const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
@@ -112,12 +112,12 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
         return (options?.itemPath && options.itemPath.indexOf(wildcard) != -1);
     }
 
-    public async processWildcards(methodName: string, options: IDispatchOptions, wildcard = '#'): Promise<any> {
+    public async processWildcards(methodName: Action, options: IDispatchOptions, wildcard = '#'): Promise<any> {
         //console.log("processWildcards", { methodName, options});
         const parts = options.itemPath.split(wildcard);
         const [base, remaining] = [parts[0], parts.slice(1).join(wildcard)];
         const baseOptions = { ...options, schema: { type: 'array', items: options.schema }};
-        let baseItems = (await this.dispatch('get', { ...baseOptions, itemPath: base.replace( /\/$/, '') })) || [];
+        let baseItems = (await this.dispatch(Action.GET, { ...baseOptions, itemPath: base.replace( /\/$/, '') })) || [];
         //if (typeof baseItems === 'object') baseItems = [baseItems];
         const result = await Promise.all(baseItems.map( async (baseItem, idx) => {
             let _fullPath = [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`);
@@ -140,6 +140,6 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
 }
 
 export interface IDataRenderer {
-    render: (methodName: string, options?: IDispatchOptions) => any;
+    render: (methodName: Action, options?: IDispatchOptions) => any;
 }
 

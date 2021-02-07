@@ -111,7 +111,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
             return newValue;
         });
     }
-    del({ itemPath }) {
+    delete({ itemPath }) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!itemPath) {
                 this.jsonDocument = undefined;

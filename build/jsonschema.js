@@ -50,10 +50,10 @@ class JsonSchema extends datasource_1.AbstractDataSource {
     isMethodAllowed(methodName, options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { schema } = options;
-            if (schema === undefined || (schema.readOnly === true && (~['set', 'push', 'del'].indexOf(methodName)))) {
+            if (schema === undefined || (schema.readOnly === true && (~["set", "push", "delete"].indexOf(methodName)))) {
                 return false;
             }
-            else if (schema.writeOnly === true && methodName === 'get') {
+            else if (schema.writeOnly === true && methodName === "get") {
                 return false;
             }
             return true;

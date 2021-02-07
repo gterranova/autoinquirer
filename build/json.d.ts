@@ -1,4 +1,4 @@
-import { IProperty, IDispatchOptions } from './interfaces';
+import { IProperty, IDispatchOptions, Action } from './interfaces';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
 export declare class JsonDataSource extends AbstractDispatcher {
     private jsonDocument;
@@ -21,12 +21,12 @@ export declare class JsonDataSource extends AbstractDispatcher {
         value: any;
     }): Promise<any>;
     update(options?: IDispatchOptions): Promise<any>;
-    del({ itemPath }: {
+    delete({ itemPath }: {
         itemPath: any;
     }): Promise<void>;
     delCascade({ itemPath }: {
         itemPath: any;
     }): Promise<void>;
-    dispatch(methodName: string, options?: IDispatchOptions): Promise<any>;
+    dispatch(methodName: Action, options?: IDispatchOptions): Promise<any>;
 }
 //# sourceMappingURL=json.d.ts.map

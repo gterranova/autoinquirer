@@ -14,7 +14,7 @@ class AbstractDataSource {
             for (let key of pathParts) {
                 const itemPath = pathParts.slice(0, ++idx).join('/').replace(/\/$/, '');
                 if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
-                    const model = yield this.getDataSource(this).dispatch('get', { itemPath });
+                    const model = yield this.getDataSource(this).dispatch("get", { itemPath });
                     if (!model) {
                         return result.concat(pathParts.slice(idx - 1)).join('/');
                     }
@@ -28,7 +28,7 @@ class AbstractDataSource {
             return result.filter(p => p).join('/');
         });
     }
-    convertObjIDToIndex(path, basePath = '', obj, ...others) {
+    convertObjIDToIndex(path, basePath = '', obj, options) {
         var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!path) {
@@ -36,7 +36,7 @@ class AbstractDataSource {
             }
             const parts = typeof path === 'string' ? path.split('/') : path;
             const converted = [];
-            let currentObj = obj || (yield this.dispatch.call(this, 'get', Object.assign({ itemPath: basePath }, others)));
+            let currentObj = obj || (yield this.dispatch.call(this, "get", Object.assign(Object.assign({}, options), { itemPath: basePath })));
             const cursorData = {};
             const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length - 1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
             for (const key of parts) {
@@ -98,7 +98,7 @@ class AbstractDispatcher extends AbstractDataSource {
             const parts = options.itemPath.split(wildcard);
             const [base, remaining] = [parts[0], parts.slice(1).join(wildcard)];
             const baseOptions = Object.assign(Object.assign({}, options), { schema: { type: 'array', items: options.schema } });
-            let baseItems = (yield this.dispatch('get', Object.assign(Object.assign({}, baseOptions), { itemPath: base.replace(/\/$/, '') }))) || [];
+            let baseItems = (yield this.dispatch("get", Object.assign(Object.assign({}, baseOptions), { itemPath: base.replace(/\/$/, '') }))) || [];
             const result = yield Promise.all(baseItems.map((baseItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 var _a, _b, _c;
                 let _fullPath = [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`);

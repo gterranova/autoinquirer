@@ -7,7 +7,30 @@ export const enum Action {
     PUSH = 'push',
     SET = 'set',
     UPDATE = 'update',
-    DELETE = 'delete'
+    DELETE = 'delete',
+    DELETE_CASCADE = 'delCascade',
+}
+
+export declare type DispatchAction = (options?: IDispatchOptions) => any;
+
+export interface AutoinquirerGet {
+  [Action.GET]: DispatchAction
+}
+
+export interface AutoinquirerPush {
+    [Action.PUSH]: DispatchAction
+}
+
+export interface AutoinquirerUpdate {
+    [Action.UPDATE]: DispatchAction
+}
+
+export interface AutoinquirerSet {
+    [Action.SET]: DispatchAction
+}
+
+export interface AutoinquirerDelete {
+    [Action.DELETE]: DispatchAction
 }
 
 export declare type PrimitiveType = number | boolean | string | null;

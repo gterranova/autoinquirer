@@ -4,7 +4,7 @@ import fs from "fs";
 import { resolve } from 'path';
 import * as _ from 'lodash';
 import objectPath from 'object-path';
-import { IProperty, IDispatchOptions } from './interfaces';
+import { IProperty, IDispatchOptions, Action } from './interfaces';
 import { loadJSON, objectId } from './utils';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
 
@@ -114,7 +114,7 @@ export class JsonDataSource extends AbstractDispatcher {
         return newValue;
     }
 
-    public async del({ itemPath }) {
+    public async delete({ itemPath }) {
         if (!itemPath) {
             this.jsonDocument = undefined;
             this.save();
@@ -131,7 +131,7 @@ export class JsonDataSource extends AbstractDispatcher {
         itemPath;
     }
 
-    public async dispatch(methodName: string, options?: IDispatchOptions) {
+    public async dispatch(methodName: Action, options?: IDispatchOptions) {
         if (!this[methodName]) {
             throw new Error(`Method ${methodName} not implemented`);
         }

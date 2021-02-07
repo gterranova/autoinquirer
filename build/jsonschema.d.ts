@@ -1,4 +1,4 @@
-import { IProperty, IDispatchOptions } from './interfaces';
+import { IProperty, IDispatchOptions, Action } from './interfaces';
 import { AbstractDataSource, AbstractDispatcher } from './datasource';
 export declare class JsonSchema extends AbstractDataSource {
     private validator;
@@ -7,7 +7,7 @@ export declare class JsonSchema extends AbstractDataSource {
     constructor(data: IProperty | string);
     connect(): Promise<void>;
     close(): Promise<void>;
-    isMethodAllowed(methodName: string, options?: IDispatchOptions): Promise<boolean>;
+    isMethodAllowed(methodName: Action, options?: IDispatchOptions): Promise<boolean>;
     get(options?: IDispatchOptions): Promise<IProperty>;
     coerce(schema: IProperty, value?: any): any;
     validate(schema?: IProperty, data?: any): any;
