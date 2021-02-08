@@ -2,10 +2,12 @@ import { IProperty, IProxyInfo, IDispatchOptions, Action } from './interfaces';
 import { AutoinquirerPush, AutoinquirerUpdate, AutoinquirerSet, AutoinquirerDelete } from './interfaces';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
 import { JsonSchema } from './jsonschema';
-interface IEntryPointInfo {
+export interface IEntryPointInfo {
     proxyInfo: IProxyInfo;
     parentPath: string;
-    objPath: string;
+    itemPath: string;
+    parent: AbstractDataSource;
+    params: any;
 }
 export declare type Newable<T> = {
     new (...args: any[]): T;

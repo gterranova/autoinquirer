@@ -126,8 +126,9 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
                     _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                 }
                 const item = await this.dispatch(methodName, { /* ...options, */ itemPath: _fullPath });
+                //console.log("processWildcards item", item);
                 //console.log("BULK", `${methodName} on ${_fullPath} (value: ${options.value})`)
-                if ((options?.schema?.items || options.schema).type === 'object') {
+                if ((options?.schema?.items || options.schema)?.type === 'object') {
                     return { _fullPath, ...item };
                 }
                 return item;

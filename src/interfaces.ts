@@ -1,3 +1,5 @@
+import { AbstractDataSource } from './datasource';
+
 // tslint:disable:no-any
 // tslint:disable:no-reserved-keywords
 export const enum Action {
@@ -111,6 +113,7 @@ export interface IDispatchOptions {
     query?: any,
     files?: any,
     user?: any,
+    parent?: AbstractDataSource
 }
 
 export interface ICursorObject {

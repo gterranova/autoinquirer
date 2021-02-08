@@ -100,14 +100,14 @@ class AbstractDispatcher extends AbstractDataSource {
             const baseOptions = Object.assign(Object.assign({}, options), { schema: { type: 'array', items: options.schema } });
             let baseItems = (yield this.dispatch("get", Object.assign(Object.assign({}, baseOptions), { itemPath: base.replace(/\/$/, '') }))) || [];
             const result = yield Promise.all(baseItems.map((baseItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                var _a, _b, _c;
+                var _a, _b, _c, _d;
                 let _fullPath = [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`);
                 if (remaining.indexOf(wildcard) == -1) {
                     if ((_b = (_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.$data) === null || _b === void 0 ? void 0 : _b.remoteField) {
                         _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                     }
                     const item = yield this.dispatch(methodName, { itemPath: _fullPath });
-                    if ((((_c = options === null || options === void 0 ? void 0 : options.schema) === null || _c === void 0 ? void 0 : _c.items) || options.schema).type === 'object') {
+                    if (((_d = (((_c = options === null || options === void 0 ? void 0 : options.schema) === null || _c === void 0 ? void 0 : _c.items) || options.schema)) === null || _d === void 0 ? void 0 : _d.type) === 'object') {
                         return Object.assign({ _fullPath }, item);
                     }
                     return item;

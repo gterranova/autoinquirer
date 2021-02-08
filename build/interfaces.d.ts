@@ -1,3 +1,4 @@
+import { AbstractDataSource } from './datasource';
 export declare const enum Action {
     BACK = "back",
     EXIT = "exit",
@@ -99,6 +100,7 @@ export interface IDispatchOptions {
     query?: any;
     files?: any;
     user?: any;
+    parent?: AbstractDataSource;
 }
 export interface ICursorObject {
     jsonObjectID: string;
