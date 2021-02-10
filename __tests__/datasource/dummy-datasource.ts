@@ -1,5 +1,5 @@
 import { AbstractDispatcher } from '../../src/datasource';
-import { DataSource } from '../../src/index';
+import { AbstractDataSource } from '../../src/index';
 import { IDispatchOptions, IProperty } from '../../src/interfaces';
 
 const dummyValue = {
@@ -9,7 +9,7 @@ const dummyValue = {
     arrayOfObjects: [{ _id: '0000000000000000000000a0'},{ _id: 'ab0000000000000000000001'}]        
 };
 
-export class DummyDatasource extends DataSource {
+export class DummyDatasource extends AbstractDataSource {
     // tslint:disable-next-line:no-reserved-keywords no-any
     public async get(options?: IDispatchOptions): Promise<any> {
         const { itemPath } = options || {};
@@ -37,10 +37,10 @@ export class DummyDatasource extends DataSource {
     public getSchema(_options?: IDispatchOptions, _schemaSource?: AbstractDispatcher): Promise<IProperty> {
         throw new Error('Method not implemented.');
     }
-    public getDataSource(_parentDataSource?: DataSource): DataSource {
+    public getDataSource(_parentDataSource?: AbstractDataSource): AbstractDataSource {
         throw new Error('Method not implemented.');
     }
-    public getSchemaDataSource(_parentDataSource?: DataSource): DataSource {
+    public getSchemaDataSource(_parentDataSource?: AbstractDataSource): AbstractDataSource {
         throw new Error('Method not implemented.');
     }
     public connect(): Promise<void> {

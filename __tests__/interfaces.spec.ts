@@ -15,6 +15,6 @@ describe('Action enum', () => {
     expect(Action.SET).toBe(`set`);
   });
   it('has DEL', () => {
-    expect(Action.DEL).toBe(`del`);
+    expect(Action.DELETE).toBe(`delete`);
   });
 });

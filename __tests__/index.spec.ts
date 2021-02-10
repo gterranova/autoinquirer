@@ -1,9 +1,9 @@
 // tslint:disable-next-line:no-unused-expression
 import * as Index from '../src/index';
 
-describe('DataSource', () => {
+describe('AbstractDataSource', () => {
     it('to be defined', () => {
-        expect(Index.DataSource).toBeDefined();
+        expect(Index.AbstractDataSource).toBeDefined();
     });
 });
 describe('Dispatcher', () => {

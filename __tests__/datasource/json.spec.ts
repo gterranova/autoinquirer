@@ -178,13 +178,13 @@ describe('push', () => {
 
 describe('del', () => {
     it('delete root if not pah is provided', async () => {
-        await dsValues.del({ itemPath: ''});
+        await dsValues.delete({ itemPath: ''});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         const newValue = await dsValues.get({ itemPath: '0/myArray'});
         expect(newValue).not.toBeDefined();
     });
     it('del a value', async () => {
-        await dsValues.del({ itemPath: '0/myArray/0' });
+        await dsValues.delete({ itemPath: '0/myArray/0' });
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         const newValue = await dsValues.get({ itemPath: '0/myArray'});
@@ -192,7 +192,7 @@ describe('del', () => {
         expect(newValue).toHaveLength(2);
     });
     it('deletes whole element', async () => {
-        await dsValues.del({ itemPath: '0/myArray' });
+        await dsValues.delete({ itemPath: '0/myArray' });
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         const newValue = await dsValues.get({ itemPath: '0/myArray'});

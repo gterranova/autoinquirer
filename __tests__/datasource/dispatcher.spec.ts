@@ -211,11 +211,7 @@ describe('set', () => {
         expect(dispatcher.get()).resolves.toEqual([{ uri: "test2"}]);
     });
     it('set a value (wrong type 1, no additionalProperties)', async () => {
-        let exception;
-        try { await dispatcher.set({ value: [{ baz: 1}]}) } catch (e) {
-            exception = e;
-        }
-        expect(exception).toBeDefined();
+        expect(dispatcher.set({ value: [{ baz: 1}]})).rejects.toThrowError();
         expect(mockWrite).not.toHaveBeenCalled();
     });
     it('set a value (wrong type 2)', async () => {
@@ -258,11 +254,11 @@ describe('push', () => {
         expect(newValue.uri).toBe("another uri");
     });
     it('adds _id to objects', async () => {
-        await dispatcher.push({ itemPath: '0/myObjArray', value: {'baz': 1}});
+        await dispatcher.push({ itemPath: '0/myObjArray', value: {'uri': 'test'}});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         const newValue = await dispatcher.get({ itemPath: '0/myObjArray/0'});
         // tslint:disable-next-line:no-backbone-get-set-outside-model
-        expect(newValue.baz).toBe(1);
+        expect(newValue.uri).toBe('test');
         expect(newValue._id).toBeDefined();
         expect(newValue._id).toHaveLength(24);
     });
@@ -270,7 +266,8 @@ describe('push', () => {
         await dispatcher.push({ itemPath: '0/myObjArray', value: {'name': 'my test', 'slug': 'my-test'}});
         expect(mockWrite).toHaveBeenCalledTimes(1);
         expect(dispatcher.convertObjIDToIndex('0/myObjArray/my-test'))
-            .resolves.toBe('0/myObjArray/0');
+            .resolves.toHaveProperty('jsonObjectID', '0/myObjArray/0');
+
         const newValue = await dispatcher.get({ itemPath: '0/myObjArray/my-test'});
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         expect(newValue.name).toBe('my test');
@@ -279,9 +276,9 @@ describe('push', () => {
     });
 });
 
-describe('del', () => {
+describe('delete', () => {
     it('delete root if no path is provided', async () => {
-        await dispatcher.del();
+        await dispatcher.delete();
         expect(mockWrite).toHaveBeenCalledTimes(1);
         const newValue = await dispatcher.get({ itemPath: '0/myArray'});
         expect(newValue).not.toBeDefined();
@@ -292,7 +289,7 @@ describe('del', () => {
         dispatcher.dataSource.delCascade = jest.fn();
         dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
         await dispatcher.connect();
-        await dispatcher.del();
+        await dispatcher.delete();
         expect(mockWrite).toHaveBeenCalledTimes(1);
         expect(proxyDs.delCascade).toHaveBeenCalledTimes(1);
         expect(dispatcher.dataSource.delCascade).toHaveBeenCalledTimes(1);
@@ -300,7 +297,7 @@ describe('del', () => {
         expect(newValue).not.toBeDefined();
     });
     it('del a value', async () => {
-        await dispatcher.del({ itemPath: '0/myArray/0' });
+        await dispatcher.delete({ itemPath: '0/myArray/0' });
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         const newValue = await dispatcher.get({ itemPath: '0/myArray'});
@@ -308,7 +305,7 @@ describe('del', () => {
         expect(newValue).toHaveLength(2);
     });
     it('deletes whole element', async () => {
-        await dispatcher.del({ itemPath: '0/myArray' });
+        await dispatcher.delete({ itemPath: '0/myArray' });
         expect(mockWrite).toHaveBeenCalledTimes(1);
         // tslint:disable-next-line:no-backbone-get-set-outside-model
         const newValue = await dispatcher.get({ itemPath: '0/myArray'});
