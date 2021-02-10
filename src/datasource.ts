@@ -68,6 +68,8 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
                         break;
                     }
                     cursorData.index = currentObj.indexOf(item);
+                } else if (/^\d+$/.test(key)) {
+                    cursorData.index = parseInt(key);
                 } else {
                     const item = currentObj.find((itemObj: Item) => {
                         return itemObj && itemObj.slug === key;
@@ -125,15 +127,15 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
                 if (options?.schema?.$data?.remoteField) {
                     _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                 }
-                const item = await this.dispatch(methodName, { /* ...options, */ itemPath: _fullPath });
+                const item = await this.dispatch(methodName, { itemPath: _fullPath, value: options.value });
                 //console.log("processWildcards item", item);
-                //console.log("BULK", `${methodName} on ${_fullPath} (value: ${options.value})`)
+                //console.log("BULK", `${methodName} on ${_fullPath} (value: ${JSON.stringify(options.value)})`)
                 if ((options?.schema?.items || options.schema)?.type === 'object') {
                     return { _fullPath, ...item };
                 }
                 return item;
             }
-            return await this.dispatch(methodName, { /* ...options, */ itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`)});
+            return await this.dispatch(methodName, { value: options.value, itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`)});
         } ));
         //console.log(result);
         return _.flatten(result);

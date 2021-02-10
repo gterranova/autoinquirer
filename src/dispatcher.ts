@@ -208,12 +208,12 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         // tslint:disable-next-line:no-bitwise
         else if (~[Action.SET, Action.UPDATE, Action.PUSH].indexOf(methodName)) {
             // tslint:disable-next-line:no-parameter-reassignment
-            try {
+            //try {
                 options.value = this.schemaSource.validate(methodName === Action.PUSH ? options.schema.items : options.schema, options.value);
-            } catch (e) {
-                console.log(options.value, e.errors);
-                throw e;
-            }
+            //} catch (e) {
+                //console.log('Validation Error', { value: options.value, errors: e.errors});
+                //throw e;
+            //}
         } else if (methodName === Action.DELETE) {
             const promises: Promise<any>[] = [];
             for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {
