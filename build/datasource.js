@@ -51,6 +51,9 @@ class AbstractDataSource {
                         }
                         cursorData.index = currentObj.indexOf(item);
                     }
+                    else if (/^\d+$/.test(key)) {
+                        cursorData.index = parseInt(key);
+                    }
                     else {
                         const item = currentObj.find((itemObj) => {
                             return itemObj && itemObj.slug === key;
@@ -106,13 +109,13 @@ class AbstractDispatcher extends AbstractDataSource {
                     if ((_b = (_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.$data) === null || _b === void 0 ? void 0 : _b.remoteField) {
                         _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                     }
-                    const item = yield this.dispatch(methodName, { itemPath: _fullPath });
+                    const item = yield this.dispatch(methodName, { itemPath: _fullPath, value: options.value });
                     if (((_d = (((_c = options === null || options === void 0 ? void 0 : options.schema) === null || _c === void 0 ? void 0 : _c.items) || options.schema)) === null || _d === void 0 ? void 0 : _d.type) === 'object') {
                         return Object.assign({ _fullPath }, item);
                     }
                     return item;
                 }
-                return yield this.dispatch(methodName, { itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`) });
+                return yield this.dispatch(methodName, { value: options.value, itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`) });
             })));
             return _.flatten(result);
         });
