@@ -34,20 +34,20 @@ export class DummyDatasource extends AbstractDataSource {
         return await this[methodName](options);
     }
 
-    public getSchema(_options?: IDispatchOptions, _schemaSource?: AbstractDispatcher): Promise<IProperty> {
-        throw new Error('Method not implemented.');
+    public async getSchema(_options?: IDispatchOptions, _schemaSource?: AbstractDispatcher): Promise<IProperty> {
+        //throw new Error('Method not implemented.');
+        return {};
     }
-    public getDataSource(_parentDataSource?: AbstractDataSource): AbstractDataSource {
-        throw new Error('Method not implemented.');
+    public getDataSource(): AbstractDataSource {
+        return this;
     }
     public getSchemaDataSource(_parentDataSource?: AbstractDataSource): AbstractDataSource {
-        throw new Error('Method not implemented.');
+        return {...this, get: (o) => this.getSchema(o) };
     }
-    public connect(): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async connect(parent): Promise<void> {
+        this.setParent(parent);
     }    
-    public close(): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async close(): Promise<void> {
     }
 
     public async isMethodAllowed(_methodName: string, _options: any): Promise<Boolean> {

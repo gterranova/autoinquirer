@@ -54,11 +54,12 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
         return result.filter(p => p).join('/');
     }
 
-    public async convertObjIDToIndex(path: string | string[], basePath: string = '', obj?: Item, options?: IDispatchOptions): Promise<ICursorObject> {
-        if (!path) { return { jsonObjectID: '' }; }
-        const parts = typeof path === 'string' ? path.split('/') : path;
+    public async convertObjIDToIndex(options?: IDispatchOptions, basePath: string = ''): Promise<ICursorObject> {
+        if (!options?.itemPath) { return { jsonObjectID: '' }; }
+        const { itemPath: path } = options;
+        const parts = path.split('/');
         const converted = [];
-        let currentObj = obj || await this.dispatch.call(this, Action.GET, { ...options, itemPath: basePath });
+        let currentObj = await this.getDataSource().dispatch(Action.GET, { itemPath: basePath });
         const cursorData: Partial<ICursorObject> = {};
 
         const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
@@ -68,7 +69,7 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
             if (Array.isArray(currentObj)) {
                 if (/^[a-f0-9-]{24}$/.test(key)) {
                     const item = currentObj.find((itemObj: Item) => {
-                        return itemObj && (itemObj._id === key);
+                        return itemObj?._id === key;
                     });
                     if (!item) {
                         break;
@@ -78,7 +79,7 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
                     cursorData.index = parseInt(key);
                 } else {
                     const item = currentObj.find((itemObj: Item) => {
-                        return itemObj && itemObj.slug === key;
+                        return itemObj?.slug === key;
                     });
                     if (item) {
                         cursorData.index = currentObj.indexOf(item);
@@ -86,14 +87,26 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
                 }
                 converted.push(cursorData.index?.toString() || key);
                 if (converted.length==parts.length) {
+                    const schema = await this.getSchemaDataSource().get({ itemPath: parts.slice(0, parts.length-1).join('/') });
+                    const $order = schema.$orderBy || [];
+                    let orderedMap = (new Array(currentObj.length)).map( (_o, idx) => idx);
+                    if ($order.length) {
+                        const order = _.zip(...$order.map( o => /^!/.test(o)? [o.slice(1), 'desc'] : [o, 'asc']));
+                        const orderedValues = _.orderBy(currentObj, ...order);    
+                        orderedMap = _.map(orderedValues, i => _.indexOf(_.map(currentObj, o => o._id), i._id));
+                        //if (currentObj[0].name) {
+                        //    console.log(_.map(orderedMap, (o, idx) => `${idx} = ${o} ${currentObj[o].name} ${cursorData.index==o? 'CURRENT': ''}`).join('\n')+'\n');
+                        //    console.log(`PREV ${orderedMap[orderedMap.indexOf(cursorData.index)-1]} CURR ${orderedMap[cursorData.index]} NEXT ${orderedMap[cursorData.index+1]}`);    
+                        //}
+                    } 
                     Object.assign(cursorData, {
                         index: cursorData.index+1,
                         total: currentObj.length,
                         self: objResolver(currentObj, cursorData.index),
-                        first: (cursorData.index > 0 && objResolver(currentObj, 0)) || undefined,
-                        prev: (cursorData.index > 0 && objResolver(currentObj, cursorData.index-1)) || undefined,
-                        next: (cursorData.index < currentObj.length-1 && objResolver(currentObj, cursorData.index+1)) || undefined,
-                        last: (cursorData.index < currentObj.length-1 && objResolver(currentObj, currentObj.length-1)) || undefined,
+                        first: (orderedMap.indexOf(cursorData.index) > 0 && objResolver(currentObj, orderedMap[0])) || undefined,
+                        prev: (orderedMap[cursorData.index] > 0 && objResolver(currentObj, orderedMap[orderedMap.indexOf(cursorData.index)-1])) || undefined,
+                        next: (orderedMap[cursorData.index] < currentObj.length-1 && objResolver(currentObj, orderedMap[orderedMap.indexOf(cursorData.index)+1])) || undefined,
+                        last: (orderedMap.indexOf(cursorData.index) < currentObj.length-1 && objResolver(currentObj, orderedMap[currentObj.length-1])) || undefined,
                     });
                     currentObj = currentObj[cursorData.index-1];
                 } else {

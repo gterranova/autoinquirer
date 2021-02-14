@@ -7,7 +7,7 @@ const mockWrite = jest.spyOn(fs, 'writeFileSync');
 let dispatcher;
 beforeEach(async () => {
     dispatcher = new Dispatcher(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'), path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
-    await dispatcher.connect();
+    await dispatcher.connect(null);
     mockWrite.mockReset();
 });
 
@@ -265,7 +265,7 @@ describe('push', () => {
     it('resolves slugs', async () => {
         await dispatcher.push({ itemPath: '0/myObjArray', value: {'name': 'my test', 'slug': 'my-test'}});
         expect(mockWrite).toHaveBeenCalledTimes(1);
-        expect(dispatcher.convertObjIDToIndex('0/myObjArray/my-test'))
+        expect(dispatcher.convertObjIDToIndex({ itemPath: '0/myObjArray/my-test'}))
             .resolves.toHaveProperty('jsonObjectID', '0/myObjArray/0');
 
         const newValue = await dispatcher.get({ itemPath: '0/myObjArray/my-test'});

@@ -13,7 +13,7 @@ export declare abstract class AbstractDataSource implements AutoinquirerGet {
     abstract getSchemaDataSource(): AbstractDataSource;
     setParent(parentDispatcher: AbstractDispatcher): void;
     convertPathToUri(path: string): Promise<string>;
-    convertObjIDToIndex(path: string | string[], basePath?: string, obj?: Item, options?: IDispatchOptions): Promise<ICursorObject>;
+    convertObjIDToIndex(options?: IDispatchOptions, basePath?: string): Promise<ICursorObject>;
 }
 export declare abstract class AbstractDispatcher extends AbstractDataSource {
     getDataSourceInfo(options?: IDispatchOptions): Promise<IDataSourceInfo<AbstractDataSource>>;
