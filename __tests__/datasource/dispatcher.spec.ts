@@ -31,7 +31,7 @@ describe('constructor', () => {
             new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json')),
             new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'))
         );
-        await ds.connect()
+        await ds.connect(null)
         const value = await ds.get();
         const schema = await ds.getSchema();
         expect(value).toEqual([{"_id": "5e8bb02edd0d6073701ab174", "ABC": true, "another": {"foo": "bar"}, "myArray": ["A", "B", "C"], "myObjArray": [], "uri": "test"}]);
@@ -84,7 +84,7 @@ describe('connect', () => {
             new JsonSchema(path.join(process.cwd().replace('\\', '/'), '__tests__', 'datasource', 'arrschema.json')),
             new JsonDataSource({})
         );
-        await ds.connect()
+        await ds.connect(null)
         const value = await ds.get();
         const schema = await ds.getSchema();
         expect(value).toEqual([{}]);
@@ -100,7 +100,7 @@ describe('connect', () => {
         const mockSchemaConnect = jest.spyOn(schema, 'connect');
         const mockDataConnect = jest.spyOn(schema, 'connect');
         const mockProxyConnect = jest.spyOn(proxyDs, 'connect');
-        await ds.connect()
+        await ds.connect(null);
         expect(mockSchemaConnect).toHaveBeenCalled(); 
         expect(mockDataConnect).toHaveBeenCalled(); 
         expect(mockProxyConnect).toHaveBeenCalled(); 
@@ -175,7 +175,7 @@ describe('dispatch', () => {
         const proxyDs = new JsonDataSource({});
         const mockGetListener = jest.spyOn(proxyDs, 'get');
         dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
-        await dispatcher.connect();
+        await dispatcher.connect(null);
         await dispatcher.get({ itemPath: '0/myDataProxy'});
         expect(mockGetListener).toHaveBeenCalledTimes(1);
         expect(mockGetListener.mock.calls[0][0].itemPath).toBe('');
@@ -185,7 +185,7 @@ describe('dispatch', () => {
         const proxyDs = new JsonDataSource({});
         const mockGetListener = jest.spyOn(proxyDs, 'get');
         dispatcher.registerProxy({ name: 'myProxy', dataSource: proxyDs});
-        await dispatcher.connect();
+        await dispatcher.connect(null);
         await dispatcher.get({ itemPath: '0/myLinkedArray'});
         expect(mockGetListener).not.toHaveBeenCalled();
     });

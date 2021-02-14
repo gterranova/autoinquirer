@@ -34,13 +34,14 @@ class JsonSchema extends datasource_1.AbstractDataSource {
         this.schemaData = (typeof data === 'string') ? utils_1.loadJSON(data) : data;
         this.basePath = (typeof data === 'string') ? path_1.default.resolve(path_1.default.dirname(data)) : path_1.default.resolve(path_1.default.dirname(utils_1.findUp('package.json', process.cwd())));
     }
-    connect() {
+    connect(parentDispartcher) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const parser = new json_schema_ref_parser_1.default();
             const currentPath = process.cwd();
             process.chdir(this.basePath);
             this.schemaData = yield parser.dereference(this.schemaData);
             process.chdir(currentPath);
+            this.setParent(parentDispartcher);
         });
     }
     close() {

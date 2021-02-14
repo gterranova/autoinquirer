@@ -18,8 +18,8 @@ export class JsonDataSource extends AbstractDispatcher {
         this.jsonDocument = this.dataFile !== undefined ? loadJSON(this.dataFile) : data;
     }
 
-    public async connect() {
-        // Nothing to do
+    public async connect(parentDispatcher: AbstractDispatcher) {
+        this.setParent(parentDispatcher);
     }
 
     public async close() {
@@ -30,21 +30,24 @@ export class JsonDataSource extends AbstractDispatcher {
         if (this.dataFile) { fs.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2)); }
     }
 
-    public getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
-        return parentDispatcher.getSchemaDataSource();
+    public getSchemaDataSource(): AbstractDataSource {
+        if (!this.parentDispatcher) {
+            throw new Error("JsonDataSource requires a parent dispatcher");
+        }
+        return this.parentDispatcher.getSchemaDataSource();
     }
 
-    public getDataSource(_parentDispatcher?: AbstractDispatcher): AbstractDataSource {
+    public getDataSource(): AbstractDataSource {
         return this;
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty> {
+    public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
         const { parentPath, itemPath} = options;
         //throw new Error("Method not implemented.");
         // Do not raise an error 
         const newPath = [parentPath, itemPath].filter( p => p?.length).join('/');
-        return await this.getSchemaDataSource(parentDispatcher).get({ itemPath: newPath });
+        return await this.parentDispatcher.getSchemaDataSource().get({ itemPath: newPath });
     }
 
     public async isMethodAllowed(_methodName: string, _options?: IDispatchOptions) {

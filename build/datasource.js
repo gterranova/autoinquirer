@@ -4,6 +4,9 @@ const tslib_1 = require("tslib");
 const _ = tslib_1.__importStar(require("lodash"));
 const lodash_1 = require("lodash");
 class AbstractDataSource {
+    setParent(parentDispatcher) {
+        this.parentDispatcher = parentDispatcher;
+    }
     convertPathToUri(path) {
         var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -14,7 +17,7 @@ class AbstractDataSource {
             for (let key of pathParts) {
                 const itemPath = pathParts.slice(0, ++idx).join('/').replace(/\/$/, '');
                 if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
-                    const model = yield this.getDataSource(this).dispatch("get", { itemPath });
+                    const model = yield this.getDataSource().dispatch("get", { itemPath });
                     if (!model) {
                         return result.concat(pathParts.slice(idx - 1)).join('/');
                     }
@@ -93,6 +96,12 @@ class AbstractDataSource {
 }
 exports.AbstractDataSource = AbstractDataSource;
 class AbstractDispatcher extends AbstractDataSource {
+    getDataSourceInfo(options) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return { dataSource: this, entryPointOptions: options };
+        });
+    }
+    ;
     requestHasWildcards(options, wildcard = '#') {
         return ((options === null || options === void 0 ? void 0 : options.itemPath) && options.itemPath.indexOf(wildcard) != -1);
     }

@@ -13,8 +13,9 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         this.dataFile = (typeof data === 'string') ? path_1.resolve(process.cwd(), data) : undefined;
         this.jsonDocument = this.dataFile !== undefined ? utils_1.loadJSON(this.dataFile) : data;
     }
-    connect() {
+    connect(parentDispatcher) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.setParent(parentDispatcher);
         });
     }
     close() {
@@ -29,17 +30,20 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
             }
         });
     }
-    getSchemaDataSource(parentDispatcher) {
-        return parentDispatcher.getSchemaDataSource();
+    getSchemaDataSource() {
+        if (!this.parentDispatcher) {
+            throw new Error("JsonDataSource requires a parent dispatcher");
+        }
+        return this.parentDispatcher.getSchemaDataSource();
     }
-    getDataSource(_parentDispatcher) {
+    getDataSource() {
         return this;
     }
-    getSchema(options, parentDispatcher) {
+    getSchema(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { parentPath, itemPath } = options;
             const newPath = [parentPath, itemPath].filter(p => p === null || p === void 0 ? void 0 : p.length).join('/');
-            return yield this.getSchemaDataSource(parentDispatcher).get({ itemPath: newPath });
+            return yield this.parentDispatcher.getSchemaDataSource().get({ itemPath: newPath });
         });
     }
     isMethodAllowed(_methodName, _options) {

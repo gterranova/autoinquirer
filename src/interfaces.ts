@@ -113,7 +113,7 @@ export interface IDispatchOptions {
     query?: any,
     files?: any,
     user?: any,
-    parent?: AbstractDataSource
+    proxyInfo?: IProxyInfo;
 }
 
 export interface ICursorObject {
@@ -126,3 +126,31 @@ export interface ICursorObject {
     first?: string,
     last?: string
 }
+
+export declare type IEntryPoints = { [key: string]: IProxyInfo };
+
+export interface IEntryPointInfo {
+    proxyInfo: IProxyInfo;
+    parentPath: string;
+    itemPath: string;
+    params?: any;
+};
+
+export type Newable<T> = { new (...args: any[]): T; };
+
+export interface IProxy {
+    name: string;
+    classRef?: Newable<AbstractDataSource>,
+    dataSource?: AbstractDataSource
+}
+
+export type IDataSourceInfo<T extends AbstractDataSource> = {
+    dataSource: T,
+    entryPointOptions?: IDispatchOptions
+};
+
+export declare type renderFunction = (_methodName: string, options?: IDispatchOptions) => Promise<any>;
+export declare interface renderOptions {
+    name: string,
+    fn: renderFunction
+};

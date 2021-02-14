@@ -43,12 +43,13 @@ export class JsonSchema extends AbstractDataSource {
         this.basePath = (typeof data === 'string') ? path.resolve(path.dirname(data)) : path.resolve(path.dirname(findUp('package.json', process.cwd())));
     }
 
-    public async connect() {
+    public async connect(parentDispartcher: AbstractDispatcher) {
         const parser = new $RefParser();
         const currentPath = process.cwd();
         process.chdir(this.basePath);
         this.schemaData = await parser.dereference(this.schemaData);
         process.chdir(currentPath);
+        this.setParent(parentDispartcher);
     }
 
     public async close() {

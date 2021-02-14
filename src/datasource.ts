@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { IProperty, IDispatchOptions, ICursorObject, Action, AutoinquirerGet } from './interfaces';
+import { IProperty, IDispatchOptions, ICursorObject, IDataSourceInfo, Action, AutoinquirerGet } from './interfaces';
 import { isObject } from 'lodash';
 
 // tslint:disable:no-console
@@ -11,7 +11,9 @@ export declare type Item = any;
 export declare type Param = any;
 
 export abstract class AbstractDataSource implements AutoinquirerGet {
-    public abstract connect(): Promise<void>;
+    protected parentDispatcher: AbstractDispatcher;
+
+    public abstract connect(parentDispatcher: AbstractDispatcher): Promise<void>;
     public abstract close(): Promise<void>;
 
     public abstract get(options?: IDispatchOptions): Promise<Item>;
@@ -21,8 +23,12 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
 
     // tslint:disable-next-line:no-reserved-keywords
     public abstract getSchema(options?: IDispatchOptions, schemaSource?: AbstractDataSource): Promise<IProperty>;
-    public abstract getDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
-    public abstract getSchemaDataSource(parentDataSource?: AbstractDataSource): AbstractDataSource;
+    public abstract getDataSource(): AbstractDataSource;
+    public abstract getSchemaDataSource(): AbstractDataSource;
+
+    public setParent(parentDispatcher: AbstractDispatcher) {
+        this.parentDispatcher = parentDispatcher;
+    }
 
     public async convertPathToUri(path: string) {
         const pathParts = path.split('/');
@@ -32,7 +38,7 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
             const itemPath = pathParts.slice(0, ++idx).join('/').replace(/\/$/, '');
             //console.log("--", key, nextIsArrayItem);
             if (nextIsArrayItem && key != '#' && !/^[a-f0-9-]{24}$/.test(key)) {
-                const model = await this.getDataSource(this).dispatch(Action.GET, { itemPath });
+                const model = await this.getDataSource().dispatch(Action.GET, { itemPath });
                 if (!model) {
                     //console.log("Interrupted", result.concat(pathParts.slice(idx-1)).join('/'))
                     return result.concat(pathParts.slice(idx-1)).join('/')
@@ -110,6 +116,11 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
 }
 
 export abstract class AbstractDispatcher extends AbstractDataSource {
+
+    public async getDataSourceInfo(options?: IDispatchOptions): Promise<IDataSourceInfo<AbstractDataSource>> {
+        return { dataSource: <AbstractDataSource>this, entryPointOptions: options }
+    };
+
     public requestHasWildcards(options?: IDispatchOptions, wildcard = '#') : boolean {
         return (options?.itemPath && options.itemPath.indexOf(wildcard) != -1);
     }

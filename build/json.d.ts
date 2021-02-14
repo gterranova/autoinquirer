@@ -4,12 +4,12 @@ export declare class JsonDataSource extends AbstractDispatcher {
     private jsonDocument;
     private dataFile;
     constructor(data: any);
-    connect(): Promise<void>;
+    connect(parentDispatcher: AbstractDispatcher): Promise<void>;
     close(): Promise<void>;
     save(): Promise<void>;
-    getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
-    getDataSource(_parentDispatcher?: AbstractDispatcher): AbstractDataSource;
-    getSchema(options?: IDispatchOptions, parentDispatcher?: AbstractDispatcher): Promise<IProperty>;
+    getSchemaDataSource(): AbstractDataSource;
+    getDataSource(): AbstractDataSource;
+    getSchema(options?: IDispatchOptions): Promise<IProperty>;
     isMethodAllowed(_methodName: string, _options?: IDispatchOptions): Promise<boolean>;
     get(options?: IDispatchOptions): Promise<any>;
     push({ itemPath, value }: {

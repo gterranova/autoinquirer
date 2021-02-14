@@ -1,31 +1,7 @@
-import { IProperty, IProxyInfo, IDispatchOptions, Action } from './interfaces';
+import { IProperty, IDispatchOptions, Action, IProxy, renderFunction, renderOptions, IDataSourceInfo } from './interfaces';
 import { AutoinquirerPush, AutoinquirerUpdate, AutoinquirerSet, AutoinquirerDelete } from './interfaces';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
 import { JsonSchema } from './jsonschema';
-export interface IEntryPointInfo {
-    proxyInfo: IProxyInfo;
-    parentPath: string;
-    itemPath: string;
-    parent: AbstractDataSource;
-    params: any;
-}
-export declare type Newable<T> = {
-    new (...args: any[]): T;
-};
-interface IProxy {
-    name: string;
-    classRef?: Newable<AbstractDataSource>;
-    dataSource?: AbstractDataSource;
-}
-export declare type IDataSourceInfo<T extends AbstractDataSource> = {
-    dataSource: T;
-    entryPointInfo?: IEntryPointInfo;
-};
-declare type renderFunction = (_methodName: string, options?: IDispatchOptions) => Promise<any>;
-declare interface renderOptions {
-    name: string;
-    fn: renderFunction;
-}
 export declare class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, AutoinquirerUpdate, AutoinquirerSet, AutoinquirerDelete {
     private entryPoints;
     private proxies;
@@ -33,12 +9,12 @@ export declare class Dispatcher extends AbstractDispatcher implements Autoinquir
     private dataSource;
     private transformers;
     constructor(schema: string | JsonSchema, data: string | AbstractDispatcher);
-    connect(): Promise<void>;
+    connect(parentDispatcher: AbstractDispatcher): Promise<void>;
     close(): Promise<void>;
-    getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
-    getDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource;
+    getSchemaDataSource(): AbstractDataSource;
+    getDataSource(): AbstractDataSource;
     getDataSourceInfo(options?: IDispatchOptions): Promise<IDataSourceInfo<AbstractDataSource>>;
-    getSchema(options?: IDispatchOptions, _parentDispatcher?: AbstractDispatcher): Promise<IProperty>;
+    getSchema(options?: IDispatchOptions): Promise<IProperty>;
     private processProxyPropertiesSchema;
     isMethodAllowed(methodName: Action, options?: IDispatchOptions): Promise<Boolean>;
     get(options?: IDispatchOptions): Promise<any>;
@@ -59,5 +35,4 @@ export declare class Dispatcher extends AbstractDispatcher implements Autoinquir
     registerTransformers(transformers: Array<renderOptions>): void;
     getTransformer(name: string): renderFunction;
 }
-export {};
 //# sourceMappingURL=dispatcher.d.ts.map

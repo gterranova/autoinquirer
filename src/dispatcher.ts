@@ -1,60 +1,36 @@
 // tslint:disable:no-any
 // tslint:disable-next-line:import-name
 import * as _ from 'lodash';
-import { IProperty, IProxyInfo, IDispatchOptions, Action } from './interfaces';
+import { IProperty, IProxyInfo, IDispatchOptions, Action, IEntryPoints, IProxy, 
+    renderFunction, renderOptions, IDataSourceInfo, IEntryPointInfo } from './interfaces';
 import { AutoinquirerPush, AutoinquirerUpdate, AutoinquirerSet, AutoinquirerDelete } from './interfaces';
 import { absolute } from './utils';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
 import { JsonDataSource } from './json';
 import { JsonSchema } from './jsonschema';
+//import { join } from 'lodash';
 
 //const path = require('path');
 
-declare type IEntryPoints = { [key: string]: IProxyInfo };
-
-export interface IEntryPointInfo {
-    proxyInfo: IProxyInfo;
-    parentPath: string;
-    itemPath: string;
-    parent: AbstractDataSource;
-    params: any;
-};
-
-export type Newable<T> = { new (...args: any[]): T; };
-
-interface IProxy {
-    name: string;
-    classRef?: Newable<AbstractDataSource>,
-    dataSource?: AbstractDataSource
-}
-
-export type IDataSourceInfo<T extends AbstractDataSource> = {
-    dataSource: T,
-    entryPointInfo?: IEntryPointInfo
-};
-
-declare type renderFunction = (_methodName: string, options?: IDispatchOptions) => Promise<any>;
-declare interface renderOptions {
-    name: string,
-    fn: renderFunction
-};
 
 export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, AutoinquirerUpdate, AutoinquirerSet, AutoinquirerDelete{
     private entryPoints: IEntryPoints = {};
     private proxies: IProxy[] = [];
     private schemaSource: JsonSchema;
-    private dataSource: AbstractDataSource;
+    private dataSource: AbstractDispatcher;
     private transformers: { [key: string]: renderFunction} = {};
 
     constructor(schema: string | JsonSchema, data: string | AbstractDispatcher) {
         super();
         this.schemaSource = (typeof schema === 'string') ? new JsonSchema(schema) : schema;
         this.dataSource = (typeof data === 'string') ? new JsonDataSource(data) : data;
+        (typeof data !== 'string') && this.dataSource.setParent(this);
     }
 
-    public async connect() {
-        await this.schemaSource.connect();
-        await this.dataSource.connect();
+    public async connect(parentDispatcher: AbstractDispatcher) {
+        await this.schemaSource.connect(this);
+        await this.dataSource.connect(this);
+        this.setParent(parentDispatcher);
 
         const schema = await this.schemaSource.get();
         const rootValue = await this.dataSource.dispatch(Action.GET, { itemPath: '' });
@@ -67,7 +43,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         this.entryPoints = this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
         //console.log("ENTRY POINTS:", this.entryPoints)
-        await Promise.all(this.proxies.map((proxy: IProxy) => {proxy?.dataSource?.connect()}));
+        await Promise.all(this.proxies.map((proxy: IProxy) => {proxy?.dataSource?.connect(this)}));
     }
 
     public async close() {
@@ -76,12 +52,12 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         await Promise.all(this.proxies.map((proxy: IProxy) => proxy?.dataSource?.close()));
     }
 
-    public getSchemaDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
-        return this.schemaSource || parentDispatcher?.getSchemaDataSource();
+    public getSchemaDataSource(): AbstractDataSource {
+        return this.schemaSource || this.parentDispatcher.getSchemaDataSource();
     }
 
-    public getDataSource(parentDispatcher?: AbstractDispatcher): AbstractDataSource {
-        return this.dataSource || parentDispatcher?.getDataSource();
+    public getDataSource(): AbstractDataSource {
+        return this.dataSource || this.parentDispatcher?.getDataSource();
     }
 
     public async getDataSourceInfo(options?: IDispatchOptions): Promise<IDataSourceInfo<AbstractDataSource>> {
@@ -93,47 +69,68 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
             const { proxyInfo } = entryPointInfo;
             const dataSource = await this.getProxy(proxyInfo);
             if (dataSource) {
-                entryPointInfo.parent = this;
                 // tslint:disable-next-line:no-return-await
                 //console.log(`DISPATCH DELEGATE getSchema(itemPath?: ${objPath})`, await dataSource.getSchema({itemPath: objPath, parentPath, params: proxyInfo.params}, this.schemaSource));
-                return <IDataSourceInfo<AbstractDataSource>>{ dataSource, entryPointInfo: {...options, ...entryPointInfo } };
+                return <IDataSourceInfo<AbstractDataSource>>{ dataSource, entryPointOptions: {...options, ...entryPointInfo } };
             }
         };
-        return { dataSource: <AbstractDataSource>this, entryPointInfo: <IEntryPointInfo>options };
+        return { dataSource: <AbstractDataSource>this, entryPointOptions: options };
     }
 
     // tslint:disable-next-line:no-reserved-keywords
-    public async getSchema(options?: IDispatchOptions, _parentDispatcher?: AbstractDispatcher): Promise<IProperty> {
+    public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
         //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
-        const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
+        const { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
 
-        const schema = await dataSource.getSchemaDataSource(this).get(entryPointInfo);
+        const schema = await dataSource.getSchemaDataSource().get(entryPointOptions);
         if (!schema?.type) {
             //console.error("Something wrong with", entryPointInfo?.itemPath, options);
             return null;
         }
-        return await this.processProxyPropertiesSchema(schema, options);
+        return await this.processProxyPropertiesSchema(schema, options, true);
     }
 
-    private async processProxyPropertiesSchema(schema: any, options: IDispatchOptions) {
+    private async processProxyPropertiesSchema(schema: any, options: IDispatchOptions, _enterProxy = false) {
+        /*
+        const itemPath = _.compact([options.parentPath, options.itemPath]).join('/');
+        //console.log(`processProxyPropertiesSchema ${itemPath}`)
+        if (schema?.$proxy && enterProxy) {
+            const { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
+            //console.log(`processProxy ${schema.$proxy?.proxyName} ${itemPath}`, { entryPointOptions })
+
+            if ((<AbstractDispatcher>dataSource).parent ) {
+                //console.log(dataSource, "has parent")
+                schema = await (<AbstractDispatcher>dataSource).parent.getSchema(entryPointOptions);
+                //return await dataSource.getSchema({ itemPath: '' });
+            } else {
+                //    let { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
+            //    //console.log("DELEGATE Proxy", schema.$proxy.proxyName, dataSource, "for", schema, {...entryPointOptions, parentPath: join(options.parentPath, entryPointOptions.parentPath)})
+                schema = await dataSource.getSchemaDataSource().get(entryPointOptions);
+            //    schema = await this.getSchema(options);
+            }
+
+            
+            //options = {...entryPointOptions, schema, parentPath: join(options.parentPath, entryPointOptions.parentPath)};
+            //console.log("Should eval into", options.itemPath, "props", _.keys(schema.properties))
+        }
+        */
         if (schema?.type === 'object') {
-            const subSchemas = await Promise.all(_.chain(schema.properties || []).keys()
+            const subSchemas = await Promise.all(_.chain(schema.properties || {}).keys()
                 .filter(p => !!schema.properties[p].$proxy)
                 .map(async (proxiedProp) => {
-                    const { dataSource, entryPointInfo } = await this.getDataSourceInfo({
-                        itemPath: _.compact([options.parentPath, options.itemPath, proxiedProp]).join('/')
-                    });
-                    let subSchema = await dataSource.getSchemaDataSource(this).get(entryPointInfo);
-                    if (subSchema?.type === 'object') {
-                        //console.log("Should enter into", subSchema)
-                        subSchema = await this.processProxyPropertiesSchema(subSchema, entryPointInfo);
-                        //console.log("AFTER", subSchema)
-                    }                    
+                    const newOptions = <IDispatchOptions>{
+                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/'),
+                        schema: schema.properties[proxiedProp]
+                    };
+                    let subSchema = await this.getSchema(newOptions);
+                    //console.log("Should enter into", newOptions.itemPath)
+                    //subSchema = await this.processProxyPropertiesSchema(subSchema, newOptions, true);
+                    //if (newOptions.itemPath.startsWith('duediligence')) console.log("AFTER", subSchema)
                     return [proxiedProp, { ...schema.properties[proxiedProp], ...subSchema }];
                 }).value());
-            schema = { ...schema, properties: { ...schema.properties, ..._.fromPairs(subSchemas) } };
-        }
+            schema.properties = { ...schema.properties, ..._.fromPairs(subSchemas) };
+        } 
         return schema;
     }
 
@@ -194,6 +191,8 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         options.schema = options?.schema || await this.getSchema(options);
         options.value = options?.value;
 
+        //console.log("DISPATCH", methodName, `${options.itemPath}`)        
+                
         if (!await this.isMethodAllowed(methodName, options)) {
             throw new Error(`Method "${methodName}" not allowed for path "${options}"`);
             return undefined;
@@ -204,7 +203,6 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
             return await this.processWildcards(methodName, options);
         }
 
-        //console.log("DISPATCH", methodName, `${options.itemPath}`)        
         // tslint:disable-next-line:no-bitwise
         else if (~[Action.SET, Action.UPDATE, Action.PUSH].indexOf(methodName)) {
             // tslint:disable-next-line:no-parameter-reassignment
@@ -240,9 +238,10 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
                 const refObject = remote.value;
                 const refPath = remote.itemPath;
                 //console.log("called from dispatch", refPath, refSchema, refObject);
+                if (!refObject?.[$data.remoteField]) return null;
 
                 if (refSchema?.type === 'array') {
-                    //console.log("removing from", refObject[$data.remoteField], itemPath)
+                    //console.log("removing from", refObject[$data.remoteField], refPath)
                     refObject[$data.remoteField] = (refObject[$data.remoteField] || []).filter( ref => !options.itemPath.startsWith(ref) );
                     return this.set({ itemPath: refPath, value: refObject});    
                 } else {
@@ -259,22 +258,9 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         }
 
         let result;
-        const { dataSource, entryPointInfo } = await this.getDataSourceInfo(options);
-        //if (dataSource instanceof AbstractDispatcher) {
-            //console.log("CALL DELEGATED JSON DISPATCH", {
-            //    ...options,
-            //    itemPath: entryPointInfo?.objPath, 
-            //    parentPath: entryPointInfo?.parentPath, 
-            //    params: entryPointInfo?.proxyInfo?.params
-            //})
-            result = await dataSource.getDataSource(this).dispatch(methodName, entryPointInfo? entryPointInfo : options);
-            
-            result = await this.processProxyPropertiesValues(result, options);            
-    
-        //} else {
-        //    console.log("CALL DEFAULT JSON DISPATCH", options)
-        //    result = await this.getDataSource(this).dispatch(methodName, options);    
-        //}
+        const { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
+        result = await dataSource.getDataSource().dispatch(methodName, entryPointOptions);            
+        result = await this.processProxyPropertiesValues(result, options, true);            
 
         if ((~[Action.SET, Action.PUSH].indexOf(methodName))) {
             await this.eachRemoteField(options, (remote, $data) => {
@@ -298,24 +284,30 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         return result;
     }
 
-    private async processProxyPropertiesValues(result: any, options: IDispatchOptions) {
+    private async processProxyPropertiesValues(result: any, options: IDispatchOptions, _enterProxy = false) {
+        /*
+        if (options.schema.$proxy && enterProxy) {
+            const { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
+            const schema = {...(await dataSource.getSchema({ itemPath: entryPointOptions.itemPath})) };
+            options = {...entryPointOptions, schema, parentPath: join(options.parentPath, entryPointOptions.parentPath)};
+            //console.log({...entryPointOptions, parentPath: join(options.parentPath, entryPointOptions.parentPath)})
+            if (schema.$proxy?.proxyName === 'Dispatcher') {
+                return await (<Dispatcher>dataSource).processProxyPropertiesValues(schema, options);
+            }
+
+            //console.log("Should eval into", entryPointOptions, "props", _.keys(schema.properties))    
+        }
+        */
+
         if (options.schema?.type === 'object' && !_.isArray(result)) {
             const subValues = await Promise.all(_.chain(options.schema.properties || []).keys()
                 .filter(p => !!options.schema.properties[p].$proxy)
                 .map(async (proxiedProp) => {
-                    const { dataSource, entryPointInfo } = await this.getDataSourceInfo({
-                        itemPath: _.compact([options.parentPath, options.itemPath, proxiedProp]).join('/')
+                    const { dataSource, entryPointOptions } = await this.getDataSourceInfo({
+                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/'),
+                        schema: options.schema.properties[proxiedProp]
                     });
-                    const newOptions = {
-                        ...entryPointInfo,
-                        schema: options.schema.properties[proxiedProp],
-                    };
-                    let subValue = await dataSource.getDataSource(this).dispatch(Action.GET, newOptions);
-                    if (newOptions.schema?.type === 'object' && !_.isArray(subValue)) {
-                        //console.log("Should enter into", subValue)
-                        subValue = await this.processProxyPropertiesValues(subValue, newOptions);
-                        //console.log("AFTER", subValue)
-                    }
+                    let subValue = await dataSource.getDataSource().dispatch(Action.GET, entryPointOptions);
                     return [proxiedProp, subValue];
                 }).value());
             //console.log(_.chain(options.schema.properties||[]).keys()
@@ -335,10 +327,11 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
                 refSchema = refSchema.items || refSchema;
                 refSchema = refSchema.properties[$data.remoteField];
                 
-                const refValues = await this.get({ itemPath: options.itemPath, schema: refSchema }) || [];
+                const defaultValue = refSchema.type === 'object'? {} : [];
+                const refValues = await this.get({ itemPath: options.itemPath, schema: refSchema }) || defaultValue;
                 const refPaths = Array.isArray(refValues) ? refValues: [refValues];
                 return await Promise.all(refPaths.map( async refPath => {
-                    let refObject = await this.get({ itemPath: refPath, schema: refSchema}) || [];
+                    let refObject = await this.get({ itemPath: refPath, schema: refSchema}) || defaultValue;
                     return callback({ itemPath: refObject._fullPath || refPath, schema: refSchema, value: refObject }, $data);
                 }))
             }
@@ -391,7 +384,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
     private getProxyForPath(itemPath?: string): IEntryPointInfo[] {
         //console.log(`DISPATCH getProxyForPath(itemPath?: ${itemPath})`)
         const schemaPath = itemPath !== undefined && itemPath !== null ? itemPath : '';
-        const parent = this;
+        //console.log(this.entryPoints)
         return Object.keys(this.entryPoints).filter((k: string) => {
             return k.length ? RegExp(k).test(schemaPath) : true;
         }).map((foundKey: string) => {
@@ -400,7 +393,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
             const params = this.entryPoints[foundKey].params;
             //console.log(`"${schemaPath}", "${foundKey}", "${itemPath}", "${parentPath}"`)
 
-            return { proxyInfo: this.entryPoints[foundKey], parentPath, itemPath, parent, params };
+            return { proxyInfo: this.entryPoints[foundKey], parentPath, itemPath, params };
         });
     }
 
@@ -427,7 +420,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
             //console.log("Instantiating",proxy?.classRef, proxyInfo.initParams);
             const dataSource = (proxy && new proxy.classRef(...(proxyInfo.initParams || [])));
             if (dataSource) {
-                await dataSource.connect();
+                await dataSource.connect(this);
                 if (proxyInfo.singleton !== false) {
                     proxy.dataSource = dataSource;
                 }

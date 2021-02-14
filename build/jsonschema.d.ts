@@ -5,7 +5,7 @@ export declare class JsonSchema extends AbstractDataSource {
     private schemaData;
     private basePath;
     constructor(data: IProperty | string);
-    connect(): Promise<void>;
+    connect(parentDispartcher: AbstractDispatcher): Promise<void>;
     close(): Promise<void>;
     isMethodAllowed(methodName: Action, options?: IDispatchOptions): Promise<boolean>;
     get(options?: IDispatchOptions): Promise<IProperty>;
