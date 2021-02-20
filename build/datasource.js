@@ -70,7 +70,7 @@ class AbstractDataSource {
                     if (converted.length == parts.length) {
                         const schema = yield this.getSchemaDataSource().get({ itemPath: parts.slice(0, parts.length - 1).join('/') });
                         const $order = schema.$orderBy || [];
-                        let orderedMap = (new Array(currentObj.length)).map((_o, idx) => idx);
+                        let orderedMap = Array.from({ length: currentObj.length }).map((_o, idx) => idx);
                         if ($order.length) {
                             const order = _.zip(...$order.map(o => /^!/.test(o) ? [o.slice(1), 'desc'] : [o, 'asc']));
                             const orderedValues = _.orderBy(currentObj, ...order);
