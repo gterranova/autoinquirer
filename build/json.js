@@ -7,6 +7,35 @@ const _ = tslib_1.__importStar(require("lodash"));
 const object_path_1 = tslib_1.__importDefault(require("object-path"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
+function mergeDeep(...objects) {
+    const isObject = obj => obj && typeof obj === 'object';
+    return objects.reduce((prev, obj) => {
+        Object.keys(obj).forEach(key => {
+            const pVal = prev[key];
+            const oVal = obj[key];
+            if (Array.isArray(pVal) && Array.isArray(oVal)) {
+                _.each(oVal, v => {
+                    const pArrayItem = _.find(pVal, { _id: v._id });
+                    if (pArrayItem) {
+                        const pIdx = pVal.indexOf(pArrayItem);
+                        prev[key][pIdx] = mergeDeep(pArrayItem, v);
+                    }
+                    else {
+                        if (!pVal.includes(v))
+                            prev[key].push(v);
+                    }
+                });
+            }
+            else if (isObject(pVal) && isObject(oVal)) {
+                prev[key] = mergeDeep(pVal, oVal);
+            }
+            else {
+                prev[key] = oVal;
+            }
+        });
+        return prev;
+    }, {});
+}
 class JsonDataSource extends datasource_1.AbstractDispatcher {
     constructor(data) {
         super();
@@ -31,10 +60,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     getSchemaDataSource() {
-        if (!this.parentDispatcher) {
-            return Object.assign(Object.assign({}, this), { get: (o) => this.getSchema(o) });
-        }
-        return this.parentDispatcher.getSchemaDataSource();
+        return Object.assign(Object.assign({}, this), { get: (o) => this.getSchema(o) });
     }
     getDataSource() {
         return this;
@@ -57,11 +83,13 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     get(options) {
         var _a, _b;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { archived } = (options.params || {});
+            const jsonDocument = archived ? utils_1.loadJSON(this.dataFile.replace('.json', '.archive.json')) : this.jsonDocument;
             if (!(options === null || options === void 0 ? void 0 : options.itemPath)) {
-                if (((_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.type) === 'array' && !Array.isArray(this.jsonDocument)) {
-                    return this.jsonDocument ? [this.jsonDocument] : [];
+                if (((_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.type) === 'array' && !Array.isArray(jsonDocument)) {
+                    return jsonDocument ? [jsonDocument] : [];
                 }
-                return this.jsonDocument;
+                return jsonDocument;
             }
             const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(options);
             let schema = yield this.getSchemaDataSource().get({ itemPath: options.itemPath });
@@ -73,7 +101,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                 schema = (_b = schema === null || schema === void 0 ? void 0 : schema.properties) === null || _b === void 0 ? void 0 : _b[path_1.basename(options.itemPath)];
                 $order = (schema === null || schema === void 0 ? void 0 : schema.$orderBy) || [];
             }
-            let value = object_path_1.default.get(this.jsonDocument, schemaPath.split('/'));
+            let value = object_path_1.default.get(jsonDocument, schemaPath.split('/'));
             if ($order.length) {
                 const order = _.zip(...$order.map(o => /^!/.test(o) ? [o.slice(1), 'desc'] : [o, 'asc']));
                 value = _.orderBy(value, ...order);
@@ -83,9 +111,16 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     }
     push(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const { itemPath, value } = options;
+            const { itemPath, schema } = options;
+            let value = options.value;
             if (value !== undefined) {
-                if (_.isObject(value)) {
+                if (schema.type === 'array' && schema.items.type === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
+                    value = this.prepareValue(Object.assign(Object.assign({}, options), { schema: schema.items }), { [value._id]: utils_1.objectId() }, true);
+                }
+                else if (schema.type === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
+                    throw new Error("Pushing to an object");
+                }
+                else if (_.isObject(value)) {
                     value._id = utils_1.objectId();
                 }
                 if (!itemPath) {
@@ -100,14 +135,47 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
             }
         });
     }
+    prepareValue(options, idsMap = {}, firstCall = false) {
+        const { schema } = options;
+        let value = options.value;
+        if (schema.type === 'object') {
+            if (value === null || value === void 0 ? void 0 : value._id) {
+                value._id = idsMap[value._id] = idsMap[value._id] ? idsMap[value._id] : utils_1.objectId();
+                if (firstCall && value.slug)
+                    value.slug = value._id;
+                _.keys(schema.properties).map(prop => {
+                    if (prop == 'slug' && value.slug) {
+                        value.slug = value._id;
+                    }
+                    else if (~['object', 'array'].indexOf(schema.properties[prop].type)) {
+                        value[prop] = this.prepareValue(Object.assign(Object.assign({}, options), { schema: schema.properties[prop], value: value[prop] }), idsMap);
+                    }
+                });
+            }
+        }
+        else if (schema.type === 'array' && _.isArray(value)) {
+            value = value.map(item => this.prepareValue(Object.assign(Object.assign({}, options), { schema: schema.items, value: item }), idsMap));
+        }
+        if (firstCall) {
+            value = value && JSON.parse(_.reduce(_.keys(idsMap), (acc, oldId) => {
+                return acc.replace(RegExp(oldId, 'g'), idsMap[oldId]);
+            }, JSON.stringify(value)));
+        }
+        return value;
+    }
     set(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const { itemPath, value } = options;
+            const { itemPath, schema } = options;
+            let value = options.value;
             if (value !== undefined) {
                 if (!itemPath) {
                     this.jsonDocument = value;
                 }
                 else {
+                    if (schema.type === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
+                        const oldValue = (yield this.dispatch("get", options));
+                        value = this.prepareValue(options, { [value._id]: oldValue._id }, true);
+                    }
                     const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(options);
                     object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
                 }
@@ -147,13 +215,55 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
             this.save();
         });
     }
+    prepareArchiveValue(schemaPathArray, value) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const currentValue = schemaPathArray.length ? object_path_1.default.get(this.jsonDocument, schemaPathArray) : this.jsonDocument;
+            if (!value) {
+                value = currentValue;
+            }
+            if (!schemaPathArray.length) {
+                return value;
+            }
+            const schema = yield this.getSchema({ itemPath: schemaPathArray.join('/') });
+            const prop = schemaPathArray.pop();
+            if (schema.type === 'array') {
+                return this.prepareArchiveValue(schemaPathArray, { [prop]: _.isArray(value) ? value : [value] });
+            }
+            else if (schema.type === 'object') {
+                if (/^[0-9]+$/.test(prop)) {
+                    return this.prepareArchiveValue(schemaPathArray, [Object.assign(Object.assign({}, value), { _id: value._id || currentValue._id })]);
+                }
+                return this.prepareArchiveValue(schemaPathArray, { [prop]: Object.assign(Object.assign({}, value), { _id: value._id || currentValue._id }) });
+            }
+            return value;
+        });
+    }
+    archive(options) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (!this.dataFile)
+                return {};
+            const archiveFile = this.dataFile.replace('.json', '.archive.json');
+            let archive = utils_1.loadJSON(archiveFile);
+            const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(options);
+            const value = yield this.prepareArchiveValue(schemaPath.length ? schemaPath.split('/') : []);
+            fs_1.default.writeFileSync(archiveFile, JSON.stringify(mergeDeep(archive, value), null, 2));
+            return { message: "ok", value };
+        });
+    }
     delCascade({ itemPath }) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             itemPath;
         });
     }
     dispatch(methodName, options) {
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (/^archived\/?/.test(options.itemPath)) {
+                options.itemPath = options.itemPath.replace(/^archived\/?/, '');
+                options.params = Object.assign(Object.assign({}, options.params), { archived: true });
+            }
+            if (((_a = options.params) === null || _a === void 0 ? void 0 : _a.archived) && methodName !== "get")
+                throw new Error(`Method ${methodName} not implemented for archived items`);
             if (!this[methodName]) {
                 throw new Error(`Method ${methodName} not implemented`);
             }

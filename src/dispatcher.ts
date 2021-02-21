@@ -79,6 +79,10 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
 
     // tslint:disable-next-line:no-reserved-keywords
     public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
+        if (/^archived\/?/.test(options.itemPath)) {
+            options.itemPath = options.itemPath.replace(/^archived\/?/, '');
+            options.params = {...options.params, archived: true };
+        }
         //console.log(`DISPATCH getSchema(itemPath?: ${options?.itemPath})`);
         // tslint:disable-next-line:no-unnecessary-local-variable
         const { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
@@ -120,7 +124,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
                 .filter(p => !!schema.properties[p].$proxy)
                 .map(async (proxiedProp) => {
                     const newOptions = <IDispatchOptions>{
-                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/'),
+                        itemPath: _.compact([options.params?.archived && 'archived', options.itemPath, proxiedProp]).join('/'),
                         schema: schema.properties[proxiedProp]
                     };
                     let subSchema = await this.getSchema(newOptions);
@@ -205,6 +209,17 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
 
         // tslint:disable-next-line:no-bitwise
         else if (~[Action.SET, Action.UPDATE, Action.PUSH].indexOf(methodName)) {
+            // Process $refs 
+            if (options.value?.$ref) {
+                const refValue = await this.dispatch(Action.GET, { ...options, itemPath: options.value.$ref });
+                if (options.schema.type==='array' && _.isArray(refValue)) {
+                    return await Promise.all(_.map(refValue, item => {
+                        return this.dispatch(Action.PUSH, {...options, value: _.cloneDeep(item) })
+                    }));
+                }
+                //console.log(`DISPATCH ${methodName} for ${options.value.$ref} value:\n${JSON.stringify(refValue, null, 2)}`);
+                return await this.dispatch(options.schema.type==='object'? Action.SET: Action.PUSH, {...options, value: _.cloneDeep(refValue) });
+            }
             // tslint:disable-next-line:no-parameter-reassignment
             //try {
                 options.value = this.schemaSource.validate(methodName === Action.PUSH ? options.schema.items : options.schema, options.value);
@@ -259,6 +274,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
 
         let result;
         const { dataSource, entryPointOptions } = await this.getDataSourceInfo(options);
+        //console.log("IS ARCHIVED?", options.params?.archived, entryPointOptions.itemPath)
         result = await dataSource.getDataSource().dispatch(methodName, entryPointOptions);            
         result = await this.processProxyPropertiesValues(result, options, true);            
 
@@ -304,8 +320,9 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
                 .filter(p => !!options.schema.properties[p].$proxy)
                 .map(async (proxiedProp) => {
                     const { dataSource, entryPointOptions } = await this.getDataSourceInfo({
-                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/'),
-                        schema: options.schema.properties[proxiedProp]
+                        itemPath: _.compact([options.params?.archived && 'archived', options.itemPath, proxiedProp]).join('/'),
+                        schema: options.schema.properties[proxiedProp], 
+                        params: options.params
                     });
                     let subValue = await dataSource.getDataSource().dispatch(Action.GET, entryPointOptions);
                     return [proxiedProp, subValue];

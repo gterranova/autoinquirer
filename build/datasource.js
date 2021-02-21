@@ -40,7 +40,7 @@ class AbstractDataSource {
             const { itemPath: path } = options;
             const parts = path.split('/');
             const converted = [];
-            let currentObj = yield this.getDataSource().dispatch("get", { itemPath: basePath });
+            let currentObj = yield this.getDataSource().dispatch("get", { itemPath: basePath, params: options.params });
             const cursorData = {};
             const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length - 1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
             for (const key of parts) {
@@ -127,13 +127,13 @@ class AbstractDispatcher extends AbstractDataSource {
                     if ((_b = (_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.$data) === null || _b === void 0 ? void 0 : _b.remoteField) {
                         _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                     }
-                    const item = yield this.dispatch(methodName, { itemPath: _fullPath, value: options.value });
+                    const item = yield this.dispatch(methodName, { itemPath: _fullPath, value: options.value, params: options.params });
                     if (((_d = (((_c = options === null || options === void 0 ? void 0 : options.schema) === null || _c === void 0 ? void 0 : _c.items) || options.schema)) === null || _d === void 0 ? void 0 : _d.type) === 'object') {
                         return Object.assign({ _fullPath }, item);
                     }
                     return item;
                 }
-                return yield this.dispatch(methodName, { value: options.value, itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`) });
+                return yield this.dispatch(methodName, { value: options.value, itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`), params: options.params });
             })));
             return _.flatten(result);
         });

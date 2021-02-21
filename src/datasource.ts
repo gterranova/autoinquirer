@@ -59,7 +59,7 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
         const { itemPath: path } = options;
         const parts = path.split('/');
         const converted = [];
-        let currentObj = await this.getDataSource().dispatch(Action.GET, { itemPath: basePath });
+        let currentObj = await this.getDataSource().dispatch(Action.GET, { itemPath: basePath, params: options.params });
         const cursorData: Partial<ICursorObject> = {};
 
         const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
@@ -151,7 +151,7 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
                 if (options?.schema?.$data?.remoteField) {
                     _fullPath = [_fullPath, options.schema.$data.remoteField].join('/');
                 }
-                const item = await this.dispatch(methodName, { itemPath: _fullPath, value: options.value });
+                const item = await this.dispatch(methodName, { itemPath: _fullPath, value: options.value, params: options.params });
                 //console.log("processWildcards item", item);
                 //console.log("BULK", `${methodName} on ${_fullPath} (value: ${JSON.stringify(options.value)})`)
                 if ((options?.schema?.items || options.schema)?.type === 'object') {
@@ -159,7 +159,7 @@ export abstract class AbstractDispatcher extends AbstractDataSource {
                 }
                 return item;
             }
-            return await this.dispatch(methodName, { value: options.value, itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`)});
+            return await this.dispatch(methodName, { value: options.value, itemPath: [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`), params: options.params});
         } ));
         //console.log(result);
         return _.flatten(result);

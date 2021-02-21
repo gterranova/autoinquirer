@@ -60,6 +60,10 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     getSchema(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (/^archived\/?/.test(options.itemPath)) {
+                options.itemPath = options.itemPath.replace(/^archived\/?/, '');
+                options.params = Object.assign(Object.assign({}, options.params), { archived: true });
+            }
             const { dataSource, entryPointOptions } = yield this.getDataSourceInfo(options);
             const schema = yield dataSource.getSchemaDataSource().get(entryPointOptions);
             if (!(schema === null || schema === void 0 ? void 0 : schema.type)) {
@@ -74,8 +78,9 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                 const subSchemas = yield Promise.all(_.chain(schema.properties || {}).keys()
                     .filter(p => !!schema.properties[p].$proxy)
                     .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    var _a;
                     const newOptions = {
-                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/'),
+                        itemPath: _.compact([((_a = options.params) === null || _a === void 0 ? void 0 : _a.archived) && 'archived', options.itemPath, proxiedProp]).join('/'),
                         schema: schema.properties[proxiedProp]
                     };
                     let subSchema = yield this.getSchema(newOptions);
@@ -129,6 +134,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         proxies.map(p => this.registerProxy(p));
     }
     dispatch(methodName, options) {
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             options = options || {};
             options.itemPath = (options === null || options === void 0 ? void 0 : options.itemPath) ? yield this.convertPathToUri(options === null || options === void 0 ? void 0 : options.itemPath) : '';
@@ -142,6 +148,15 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                 return yield this.processWildcards(methodName, options);
             }
             else if (~["set", "update", "push"].indexOf(methodName)) {
+                if ((_a = options.value) === null || _a === void 0 ? void 0 : _a.$ref) {
+                    const refValue = yield this.dispatch("get", Object.assign(Object.assign({}, options), { itemPath: options.value.$ref }));
+                    if (options.schema.type === 'array' && _.isArray(refValue)) {
+                        return yield Promise.all(_.map(refValue, item => {
+                            return this.dispatch("push", Object.assign(Object.assign({}, options), { value: _.cloneDeep(item) }));
+                        }));
+                    }
+                    return yield this.dispatch(options.schema.type === 'object' ? "set" : "push", Object.assign(Object.assign({}, options), { value: _.cloneDeep(refValue) }));
+                }
                 options.value = this.schemaSource.validate(methodName === "push" ? options.schema.items : options.schema, options.value);
             }
             else if (methodName === "delete") {
@@ -207,9 +222,11 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                 const subValues = yield Promise.all(_.chain(options.schema.properties || []).keys()
                     .filter(p => !!options.schema.properties[p].$proxy)
                     .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    var _b;
                     const { dataSource, entryPointOptions } = yield this.getDataSourceInfo({
-                        itemPath: _.compact([options.itemPath, proxiedProp]).join('/'),
-                        schema: options.schema.properties[proxiedProp]
+                        itemPath: _.compact([((_b = options.params) === null || _b === void 0 ? void 0 : _b.archived) && 'archived', options.itemPath, proxiedProp]).join('/'),
+                        schema: options.schema.properties[proxiedProp],
+                        params: options.params
                     });
                     let subValue = yield dataSource.getDataSource().dispatch("get", entryPointOptions);
                     return [proxiedProp, subValue];

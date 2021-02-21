@@ -13,9 +13,18 @@ export declare class JsonDataSource extends AbstractDispatcher {
     isMethodAllowed(_methodName: string, _options?: IDispatchOptions): Promise<boolean>;
     get(options?: IDispatchOptions): Promise<any>;
     push(options: IDispatchOptions): Promise<any>;
+    private prepareValue;
     set(options: IDispatchOptions): Promise<any>;
     update(options?: IDispatchOptions): Promise<any>;
     delete(options: IDispatchOptions): Promise<void>;
+    private prepareArchiveValue;
+    archive(options: IDispatchOptions): Promise<{
+        message?: undefined;
+        value?: undefined;
+    } | {
+        message: string;
+        value: any;
+    }>;
     delCascade({ itemPath }: {
         itemPath: any;
     }): Promise<void>;
