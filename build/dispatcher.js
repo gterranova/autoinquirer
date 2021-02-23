@@ -134,7 +134,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         proxies.map(p => this.registerProxy(p));
     }
     dispatch(methodName, options) {
-        var _a;
+        var _a, _b;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             options = options || {};
             options.itemPath = (options === null || options === void 0 ? void 0 : options.itemPath) ? yield this.convertPathToUri(options === null || options === void 0 ? void 0 : options.itemPath) : '';
@@ -148,8 +148,8 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                 return yield this.processWildcards(methodName, options);
             }
             else if (~["set", "update", "push"].indexOf(methodName)) {
-                if ((_a = options.value) === null || _a === void 0 ? void 0 : _a.$ref) {
-                    const refValue = yield this.dispatch("get", Object.assign(Object.assign({}, options), { itemPath: options.value.$ref }));
+                if ((_b = (_a = options.value) === null || _a === void 0 ? void 0 : _a.$ref) === null || _b === void 0 ? void 0 : _b.value) {
+                    const refValue = yield this.dispatch("get", Object.assign(Object.assign({}, options), { itemPath: options.value.$ref.value }));
                     if (options.schema.type === 'array' && _.isArray(refValue)) {
                         return yield Promise.all(_.map(refValue, item => {
                             return this.dispatch("push", Object.assign(Object.assign({}, options), { value: _.cloneDeep(item) }));

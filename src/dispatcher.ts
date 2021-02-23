@@ -210,8 +210,8 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         // tslint:disable-next-line:no-bitwise
         else if (~[Action.SET, Action.UPDATE, Action.PUSH].indexOf(methodName)) {
             // Process $refs 
-            if (options.value?.$ref) {
-                const refValue = await this.dispatch(Action.GET, { ...options, itemPath: options.value.$ref });
+            if (options.value?.$ref?.value) {
+                const refValue = await this.dispatch(Action.GET, { ...options, itemPath: options.value.$ref.value });
                 if (options.schema.type==='array' && _.isArray(refValue)) {
                     return await Promise.all(_.map(refValue, item => {
                         return this.dispatch(Action.PUSH, {...options, value: _.cloneDeep(item) })
