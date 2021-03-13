@@ -1,4 +1,4 @@
-import { IProperty, IDispatchOptions, Action, IProxy, renderFunction, renderOptions, IDataSourceInfo } from './interfaces';
+import { IProperty, IProxyInfo, IDispatchOptions, Action, IProxy, renderFunction, renderOptions, IDataSourceInfo } from './interfaces';
 import { AutoinquirerPush, AutoinquirerUpdate, AutoinquirerSet, AutoinquirerDelete } from './interfaces';
 import { AbstractDispatcher, AbstractDataSource } from './datasource';
 import { JsonSchema } from './jsonschema';
@@ -27,10 +27,10 @@ export declare class Dispatcher extends AbstractDispatcher implements Autoinquir
     dispatch(methodName: Action, options?: IDispatchOptions): Promise<any>;
     private processProxyPropertiesValues;
     private eachRemoteField;
-    private findEntryPoints;
+    findEntryPoints(p: string, schema: IProperty): any;
     private getProxyForPath;
     private getProxyWithinPath;
-    private getProxy;
+    getProxy(proxyInfo: IProxyInfo): Promise<AbstractDataSource>;
     registerTransformer({ name, fn }: renderOptions): void;
     registerTransformers(transformers: Array<renderOptions>): void;
     getTransformer(name: string): renderFunction;

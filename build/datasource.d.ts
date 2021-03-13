@@ -2,7 +2,9 @@ import { IProperty, IDispatchOptions, ICursorObject, IDataSourceInfo, Action, Au
 export declare type Item = any;
 export declare type Param = any;
 export declare abstract class AbstractDataSource implements AutoinquirerGet {
+    _id: string;
     protected parentDispatcher: AbstractDispatcher;
+    constructor();
     abstract connect(parentDispatcher: AbstractDispatcher): Promise<void>;
     abstract close(): Promise<void>;
     abstract get(options?: IDispatchOptions): Promise<Item>;

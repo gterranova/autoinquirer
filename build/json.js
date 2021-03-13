@@ -67,6 +67,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     }
     getSchema(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            options = _.defaults(options, { itemPath: '', params: {} });
             if (!this.parentDispatcher) {
                 return {};
             }
@@ -83,7 +84,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     get(options) {
         var _a, _b;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const { archived } = (options.params || {});
+            const { archived } = ((options === null || options === void 0 ? void 0 : options.params) || {});
             const jsonDocument = archived ? utils_1.loadJSON(this.dataFile.replace('.json', '.archive.json')) : this.jsonDocument;
             if (!(options === null || options === void 0 ? void 0 : options.itemPath)) {
                 if (((_a = options === null || options === void 0 ? void 0 : options.schema) === null || _a === void 0 ? void 0 : _a.type) === 'array' && !Array.isArray(jsonDocument)) {
@@ -110,14 +111,15 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     push(options) {
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { itemPath, schema } = options;
             let value = options.value;
             if (value !== undefined) {
-                if (schema.type === 'array' && schema.items.type === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
+                if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'array' && ((_a = schema === null || schema === void 0 ? void 0 : schema.items) === null || _a === void 0 ? void 0 : _a.type) === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
                     value = this.prepareValue(Object.assign(Object.assign({}, options), { schema: schema.items }), { [value._id]: utils_1.objectId() }, true);
                 }
-                else if (schema.type === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
+                else if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
                     throw new Error("Pushing to an object");
                 }
                 else if (_.isObject(value)) {
@@ -172,7 +174,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     this.jsonDocument = value;
                 }
                 else {
-                    if (schema.type === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
+                    if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object' && (value === null || value === void 0 ? void 0 : value._id)) {
                         const oldValue = (yield this.dispatch("get", options));
                         value = this.prepareValue(options, { [value._id]: oldValue._id }, true);
                     }
@@ -258,6 +260,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     dispatch(methodName, options) {
         var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            options = _.defaults(options, { itemPath: '', params: {} });
             if (/^archived\/?/.test(options.itemPath)) {
                 options.itemPath = options.itemPath.replace(/^archived\/?/, '');
                 options.params = Object.assign(Object.assign({}, options.params), { archived: true });

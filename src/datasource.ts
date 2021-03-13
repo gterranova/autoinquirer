@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 
 import { IProperty, IDispatchOptions, ICursorObject, IDataSourceInfo, Action, AutoinquirerGet } from './interfaces';
 import { isObject } from 'lodash';
+import { objectId } from './utils';
 
 // tslint:disable:no-console
 
@@ -11,7 +12,12 @@ export declare type Item = any;
 export declare type Param = any;
 
 export abstract class AbstractDataSource implements AutoinquirerGet {
+    public _id: string;
     protected parentDispatcher: AbstractDispatcher;
+
+    constructor() {
+        this._id = objectId();
+    }
 
     public abstract connect(parentDispatcher: AbstractDispatcher): Promise<void>;
     public abstract close(): Promise<void>;

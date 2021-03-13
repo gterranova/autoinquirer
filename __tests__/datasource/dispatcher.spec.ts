@@ -72,6 +72,15 @@ describe('constructor', () => {
         }
         expect(exception).toBeDefined();
     });
+    it('constructor to set an _id', () => {
+        const ds = new Dispatcher(
+            new JsonSchema(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json')),
+            new JsonDataSource(path.join(process.cwd(), '__tests__', 'datasource', 'values.json'))
+        );
+        expect(ds._id).toBeDefined();
+        expect(dispatcher._id).toBeDefined();
+        expect(dispatcher._id).not.toEqual(ds._id);
+    });
 });
 
 describe('connect', () => {
@@ -370,21 +379,35 @@ describe('proxies', () => {
     });
     it('findEntryPoints retrieves proxyInfos', async () => {
         const schema = await dispatcher.getSchema();
-        const entryPoints = dispatcher.findEntryPoints('', schema);
-        expect(Object.keys(entryPoints)).toHaveLength(3);
+        const entryPoints = await dispatcher.findEntryPoints('', schema);
+        expect(Object.keys(entryPoints)).toHaveLength(4);
         expect(entryPoints['(#|\\d+|[a-f0-9-]{24})/myDataProxy']).toEqual({ proxyName: 'myProxy', params: {} });     
     });
     it('findEntryPoints retrieves proxyInfos relative to provided path', async () => {
         const schema = await dispatcher.getSchema();
-        const entryPoints = dispatcher.findEntryPoints('', schema.items.properties.myDataProxy);
+        const entryPoints = await dispatcher.findEntryPoints('', schema.items.properties.myDataProxy);
         expect(Object.keys(entryPoints)).toHaveLength(1);     
         expect(entryPoints['']).toEqual({ proxyName: 'myProxy', params: {} });     
     });
     it('getProxyWithinPath retrieves proxyInfos within path', async () => {
         const paths = dispatcher.getProxyWithinPath();
-        expect(paths).toHaveLength(3);     
+        expect(paths).toHaveLength(4);     
         expect(paths.map(p => p.proxyName)).toContain('dummyProxy');     
         expect(paths.map(p => p.proxyName)).toContain('myProxy');     
         expect(paths.map(p => p.proxyName)).toContain('myObjProxy');     
+    });
+    it('iterate findEntryPoints', async () => {
+        const myDispatcher: any = new Dispatcher(path.join(process.cwd(), '__tests__', 'datasource', 'schema.json'), path.join(process.cwd(), '__tests__', 'datasource', 'values.json'));
+        myDispatcher.registerProxy({ name: 'myArrayProxy', dataSource: new Dispatcher(path.join(process.cwd(), '__tests__', 'datasource', 'arrschema.json'), new JsonDataSource({}))});
+        await myDispatcher.connect(null);
+        const proxyDs = await myDispatcher.getProxy({ proxyName: 'myArrayProxy'});
+        const schema = await myDispatcher.getSchema();
+        const entryPoints = await myDispatcher.findEntryPoints('', schema);
+        expect(Object.keys(entryPoints)).toHaveLength(6);
+
+        const proxySchema = await proxyDs.getSchema();
+        const proxyEntryPoints = await (<Dispatcher>proxyDs).findEntryPoints('', proxySchema);
+        expect(Object.keys(proxyEntryPoints)).toHaveLength(2);
+        expect(myDispatcher.proxies).toHaveLength(1);     
     });
 });

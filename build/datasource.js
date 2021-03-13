@@ -3,7 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const _ = tslib_1.__importStar(require("lodash"));
 const lodash_1 = require("lodash");
+const utils_1 = require("./utils");
 class AbstractDataSource {
+    constructor() {
+        this._id = utils_1.objectId();
+    }
     setParent(parentDispatcher) {
         this.parentDispatcher = parentDispatcher;
     }

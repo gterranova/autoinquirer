@@ -78,6 +78,7 @@ export class JsonDataSource extends AbstractDispatcher {
 
     // tslint:disable-next-line:no-reserved-keywords
     public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
+        options = _.defaults(options, { itemPath: '', params: {} });
         if (!this.parentDispatcher) {
             return {};
         }
@@ -95,7 +96,7 @@ export class JsonDataSource extends AbstractDispatcher {
 
     // tslint:disable-next-line:no-reserved-keywords
     public async get(options?: IDispatchOptions) {
-        const { archived } = (options.params || {});
+        const { archived } = (options?.params || {});
         const jsonDocument = archived? loadJSON(this.dataFile.replace('.json', '.archive.json')): this.jsonDocument;
         if (!options?.itemPath) {
             if (options?.schema?.type === 'array' && !Array.isArray(jsonDocument)) {
@@ -127,10 +128,10 @@ export class JsonDataSource extends AbstractDispatcher {
         const { itemPath, schema } = options;
         let value = options.value;
         if (value !== undefined) {
-            if (schema.type === 'array' && schema.items.type === 'object' && value?._id) {
+            if (schema?.type === 'array' && schema?.items?.type === 'object' && value?._id) {
                 /* copy&paste op? */
                 value = this.prepareValue({...options, schema: schema.items}, { [value._id]: objectId() }, true);
-            } else if (schema.type === 'object' && value?._id) {
+            } else if (schema?.type === 'object' && value?._id) {
                 throw new Error("Pushing to an object");
             } else if (_.isObject(value)) {
                 (<any>value)._id = objectId();
@@ -186,7 +187,7 @@ export class JsonDataSource extends AbstractDispatcher {
             if (!itemPath) {
                 this.jsonDocument = value;
             } else {
-                if (schema.type === 'object' && value?._id) {
+                if (schema?.type === 'object' && value?._id) {
                     /* copy&paste op? */
                     const oldValue = <any>(await this.dispatch(Action.GET, options));
                     value = this.prepareValue(options, { [value._id]: oldValue._id }, true);
@@ -270,6 +271,7 @@ export class JsonDataSource extends AbstractDispatcher {
     }
 
     public async dispatch(methodName: Action, options?: IDispatchOptions) {
+        options = _.defaults(options, { itemPath: '', params: {} });
         if (/^archived\/?/.test(options.itemPath)) {
             options.itemPath = options.itemPath.replace(/^archived\/?/, '');
             options.params = {...options.params, archived: true };

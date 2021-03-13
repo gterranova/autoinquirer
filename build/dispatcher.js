@@ -25,10 +25,10 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
             const rootValue = yield this.dataSource.dispatch("get", { itemPath: '' });
             const coercedValue = this.schemaSource.coerce({ type: schema.type }, rootValue);
             if (typeof rootValue !== typeof coercedValue) {
-                this.dataSource.dispatch("set", { itemPath: '', schema, value: coercedValue });
+                yield this.dataSource.dispatch("set", { itemPath: '', schema, value: coercedValue });
             }
-            this.entryPoints = this.findEntryPoints('', schema);
             yield Promise.all(this.proxies.map((proxy) => { var _a; (_a = proxy === null || proxy === void 0 ? void 0 : proxy.dataSource) === null || _a === void 0 ? void 0 : _a.connect(this); }));
+            this.entryPoints = yield this.findEntryPoints('', schema);
         });
     }
     close() {
@@ -60,6 +60,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     getSchema(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            options = _.defaults(options, { itemPath: '', params: {} });
             if (/^archived\/?/.test(options.itemPath)) {
                 options.itemPath = options.itemPath.replace(/^archived\/?/, '');
                 options.params = Object.assign(Object.assign({}, options.params), { archived: true });
@@ -128,6 +129,10 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     registerProxy(proxy) {
+        const p = _.find(this.proxies, { name: proxy.name });
+        if (p) {
+            this.proxies.splice(this.proxies.indexOf(p));
+        }
         this.proxies.push(proxy);
     }
     registerProxies(proxies) {
@@ -259,42 +264,56 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     findEntryPoints(p = '', schema) {
-        let paths = {};
-        if (!schema) {
-            return {};
-        }
-        if (schema.type === 'object') {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let paths = {};
+            if (!schema) {
+                return {};
+            }
             if (schema.$proxy) {
-                paths[''] = schema.$proxy;
-            }
-            if (schema.properties) {
-                try {
-                    Object.keys(schema.properties).map((key) => {
-                        paths = Object.assign(Object.assign({}, paths), this.findEntryPoints(key, schema.properties[key]));
-                    });
+                const key = schema.type == 'array' ? p : '';
+                paths[key] = schema.$proxy;
+                const dataSource = yield this.getProxy(schema.$proxy);
+                if (dataSource && dataSource instanceof Dispatcher && this._id !== dataSource._id) {
+                    const proxySchema = yield dataSource.getSchema();
+                    const proxyEntryPoints = yield dataSource.findEntryPoints('', proxySchema);
+                    const subPaths = _.chain(proxyEntryPoints).keys().map(k => [`${key ? key + '/' : ''}${k}`, proxyEntryPoints[k]]).fromPairs().value();
+                    paths = Object.assign(Object.assign({}, paths), subPaths);
                 }
-                catch (_a) {
-                }
             }
-            else {
-                console.warn("Malformed schema: object missing properties:", schema);
+            switch (schema.type) {
+                case 'object':
+                    if (schema.properties) {
+                        try {
+                            yield Promise.all(Object.keys(schema.properties).map((key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                                const ep = yield this.findEntryPoints(key, schema.properties[key]);
+                                paths = Object.assign(Object.assign({}, paths), ep);
+                            })));
+                        }
+                        catch (_a) {
+                            console.error("Maximum call stack size exceeded (1)");
+                        }
+                    }
+                    else {
+                        console.warn("Malformed schema: object missing properties:", schema);
+                    }
+                    break;
+                case 'array':
+                    {
+                        try {
+                            const ep = yield this.findEntryPoints('(#|\\d+|[a-f0-9-]{24})', schema.items);
+                            return Object.assign(Object.assign({}, paths), ep);
+                        }
+                        catch (_b) {
+                            console.error("Maximum call stack size exceeded (2)");
+                        }
+                    }
             }
-        }
-        else if (schema.type === 'array') {
-            if (schema.$proxy) {
-                paths[p] = schema.$proxy;
-            }
-            try {
-                return Object.assign(Object.assign({}, paths), this.findEntryPoints('(#|\\d+|[a-f0-9-]{24})', schema.items));
-            }
-            catch (_b) {
-            }
-        }
-        return Object.keys(paths).reduce((acc, key) => {
-            const fixedObjKey = key.replace(/\/$/, '');
-            acc[`${p}${p ? '/' : ''}${fixedObjKey}`] = paths[key];
-            return acc;
-        }, {});
+            return Object.keys(paths).reduce((acc, key) => {
+                const fixedObjKey = key.replace(/\/$/, '');
+                acc[`${p}${p ? '/' : ''}${fixedObjKey}`] = paths[key];
+                return acc;
+            }, {});
+        });
     }
     getProxyForPath(itemPath) {
         const schemaPath = itemPath !== undefined && itemPath !== null ? itemPath : '';

@@ -28,7 +28,7 @@ export interface AutoinquirerDelete {
 export declare type PrimitiveType = number | boolean | string | null;
 export interface IProxyInfo {
     proxyName: string;
-    params: any;
+    params?: any;
     initParams?: any;
     singleton?: boolean;
 }

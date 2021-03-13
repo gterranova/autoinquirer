@@ -38,12 +38,13 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         if (typeof rootValue !== typeof coercedValue) {
             // tslint:disable-next-line:no-console
             //console.log({ type: schema.type }, rootValue, coercedValue);
-            this.dataSource.dispatch(Action.SET, { itemPath: '', schema, value: coercedValue});
+            await this.dataSource.dispatch(Action.SET, { itemPath: '', schema, value: coercedValue});
         }
-        this.entryPoints = this.findEntryPoints('', schema);
+        await Promise.all(this.proxies.map((proxy: IProxy) => {proxy?.dataSource?.connect(this)}));
+        
+        this.entryPoints = await this.findEntryPoints('', schema);
         // tslint:disable-next-line:no-console
         //console.log("ENTRY POINTS:", this.entryPoints)
-        await Promise.all(this.proxies.map((proxy: IProxy) => {proxy?.dataSource?.connect(this)}));
     }
 
     public async close() {
@@ -79,6 +80,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
 
     // tslint:disable-next-line:no-reserved-keywords
     public async getSchema(options?: IDispatchOptions): Promise<IProperty> {
+        options = _.defaults(options, { itemPath: '', params: {} });
         if (/^archived\/?/.test(options.itemPath)) {
             options.itemPath = options.itemPath.replace(/^archived\/?/, '');
             options.params = {...options.params, archived: true };
@@ -179,6 +181,10 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         //if (!proxy.dataSource && proxy.classRef && args) {
         //    proxy.dataSource = new proxy.classRef(...args);
         //}
+        const p = _.find(this.proxies, { name: proxy.name });
+        if (p) {
+            this.proxies.splice(this.proxies.indexOf(p));
+        }
         this.proxies.push(proxy);
     }
 
@@ -356,36 +362,54 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         return null;        
     }
 
-    private findEntryPoints(p: string = '', schema: IProperty): IEntryPoints {
+    public async findEntryPoints(p: string = '', schema: IProperty) {
         //console.log(`DISPATCH findEntryPoints(p: string = ${p}, schema: ${schema})`)
         let paths: IEntryPoints = {};
         if (!schema) { return {}; }
 
-        if (schema.type === 'object') {
-            if (schema.$proxy) {
-                paths[''] = schema.$proxy;
+        if (schema.$proxy) {
+            const key = schema.type=='array'?p:'';
+            paths[key] = schema.$proxy;
+            const dataSource = await this.getProxy(schema.$proxy);
+            //console.log({dataSource, isDispatcher: dataSource instanceof Dispatcher, same: this._id !== dataSource?._id })
+            if (dataSource && dataSource instanceof Dispatcher && this._id !== dataSource._id) {
+                //console.log("should iterate into", `"${p}"`, schema.$proxy.proxyName, this._id, dataSource._id);
+                const proxySchema = await dataSource.getSchema();
+                const proxyEntryPoints = await dataSource.findEntryPoints('', proxySchema);
+                const subPaths = _.chain(proxyEntryPoints).keys().map( k => [`${key?key+'/':''}${k}`, proxyEntryPoints[k]]).fromPairs().value();
+                paths = {...paths, ...subPaths };
             }
-            if (schema.properties) {
-                try {
-                    Object.keys(schema.properties).map((key: string) => {
-                        paths = { ...paths, ...this.findEntryPoints(key, schema.properties[key]) };
-                    });
-                } catch {
-                    // RangeError: Maximum call stack size exceeded
+        } 
+                
+        switch(schema.type) {
+            case 'object':
+                if (schema.properties) {
+                    try {
+                        await Promise.all(
+                            Object.keys(schema.properties).map( async (key: string) => {
+                                const ep = await this.findEntryPoints(key, schema.properties[key]);
+                                paths = { ...paths, ...ep };
+                            })
+                        );
+                    } catch {
+                        console.error("Maximum call stack size exceeded (1)")
+                        // RangeError: Maximum call stack size exceeded
+                    }
+                } else {
+                    // tslint:disable-next-line:no-console
+                    console.warn("Malformed schema: object missing properties:", schema);
                 }
-            } else {
-                // tslint:disable-next-line:no-console
-                console.warn("Malformed schema: object missing properties:", schema);
-            }
-        } else if (schema.type === 'array') {
-            if (schema.$proxy) {
-                paths[p] = schema.$proxy;
-            }
-            try {
-                return { ...paths, ...this.findEntryPoints('(#|\\d+|[a-f0-9-]{24})', schema.items) };
-            } catch {
-                // RangeError: Maximum call stack size exceeded
-            }
+                break;
+            case 'array':
+                {
+                    try {
+                        const ep = await this.findEntryPoints('(#|\\d+|[a-f0-9-]{24})', schema.items);
+                        return { ...paths, ...ep };
+                    } catch {
+                        console.error("Maximum call stack size exceeded (2)")
+                        // RangeError: Maximum call stack size exceeded
+                    }    
+                }
         }
 
         return Object.keys(paths).reduce((acc: IEntryPoints, key: string) => {
@@ -428,7 +452,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         });
     }
 
-    private async getProxy(proxyInfo: IProxyInfo): Promise<AbstractDataSource> {
+    public async getProxy(proxyInfo: IProxyInfo): Promise<AbstractDataSource> {
         //console.log(`DISPATCH getProxy(proxyInfo: ${proxyInfo})`)
 
         const proxy = this.proxies.find((p: IProxy) => p.name === proxyInfo.proxyName);
