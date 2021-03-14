@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 const fs_1 = tslib_1.__importDefault(require("fs"));
 const path_1 = require("path");
 const _ = tslib_1.__importStar(require("lodash"));
+const moment_1 = tslib_1.__importDefault(require("moment"));
 const object_path_1 = tslib_1.__importDefault(require("object-path"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
@@ -132,6 +133,34 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
                     const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(options);
                     object_path_1.default.push(this.jsonDocument, schemaPath.split('/'), value);
                 }
+                this.save();
+                return value;
+            }
+            else if (options.files) {
+                const { jsonObjectID: schemaPath } = yield this.convertObjIDToIndex(options);
+                const files = _.isArray(options.files.file) ? options.files.file : [options.files.file];
+                const destFolder = path_1.join(path_1.dirname(this.dataFile), '_uploads', itemPath);
+                if (!fs_1.default.existsSync(destFolder)) {
+                    fs_1.default.mkdirSync(destFolder, { recursive: true });
+                }
+                const oldFiles = object_path_1.default.get(this.jsonDocument, schemaPath.split('/'));
+                oldFiles && oldFiles.map(f => { if (fs_1.default.existsSync(f.path))
+                    fs_1.default.unlinkSync(f.path); });
+                value = yield Promise.all(files.map(file => new Promise((resolve, reject) => {
+                    var source = fs_1.default.createReadStream(file.path);
+                    const destFile = path_1.join(destFolder, file.name);
+                    var dest = fs_1.default.createWriteStream(destFile);
+                    source.pipe(dest);
+                    source.on('end', function () {
+                        fs_1.default.unlinkSync(file.path);
+                        resolve(Object.assign(Object.assign({}, _.pick(file, ['name', 'size', 'type'])), { lastModifiedDate: moment_1.default(file.lastModifiedDate).toISOString(), path: destFile }));
+                    });
+                    source.on('error', function () {
+                        console.log(`error copying ${file.path} to ${destFile}`);
+                        reject();
+                    });
+                })));
+                object_path_1.default.set(this.jsonDocument, schemaPath.split('/'), value);
                 this.save();
                 return value;
             }

@@ -39,6 +39,7 @@ export interface IRelationship {
     filterBy?: string;
     orderBy?: string[];
     actions?: string[];
+    params?: any;
 }
 export interface IProperty {
     $ref?: string;

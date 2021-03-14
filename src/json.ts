@@ -1,8 +1,9 @@
 // tslint:disable:no-any
 // tslint:disable:no-console
 import fs from "fs";
-import { basename, resolve } from 'path';
+import { join, dirname, basename, resolve } from 'path';
 import * as _ from 'lodash';
+import moment from 'moment';
 import objectPath from 'object-path';
 import { IProperty, IDispatchOptions, Action } from './interfaces';
 import { loadJSON, objectId } from './utils';
@@ -135,7 +136,7 @@ export class JsonDataSource extends AbstractDispatcher {
                 throw new Error("Pushing to an object");
             } else if (_.isObject(value)) {
                 (<any>value)._id = objectId();
-            }
+            } 
 
             if (!itemPath) {
                 this.jsonDocument.push(value);
@@ -146,6 +147,42 @@ export class JsonDataSource extends AbstractDispatcher {
             this.save();
 
             return value;
+        } else if (options.files) {
+            const { jsonObjectID: schemaPath} = await this.convertObjIDToIndex(options);
+            const files = _.isArray(options.files.file)? options.files.file: [options.files.file];
+            const destFolder = join(dirname(this.dataFile), '_uploads', itemPath);
+
+            // Make upload dir
+            if (!fs.existsSync(destFolder)) {
+                fs.mkdirSync(destFolder, { recursive: true });
+            }
+
+            // Remove old files
+            const oldFiles = objectPath.get(this.jsonDocument, schemaPath.split('/'));
+            oldFiles && oldFiles.map(f => {if (fs.existsSync(f.path)) fs.unlinkSync(f.path)});
+
+            // Upload new files
+            value = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+                var source = fs.createReadStream(file.path);
+                const destFile = join(destFolder,file.name);
+                var dest = fs.createWriteStream(destFile);
+                source.pipe(dest);
+                source.on('end', function() { 
+                    fs.unlinkSync(file.path);
+                    resolve({
+                        ..._.pick(file, ['name', 'size', 'type']), 
+                        lastModifiedDate: moment(file.lastModifiedDate).toISOString(),
+                        path: destFile 
+                    });
+                });
+                source.on('error', function() { 
+                    console.log(`error copying ${file.path} to ${destFile}`); 
+                    reject();
+                });      
+            })));
+            objectPath.set(this.jsonDocument, schemaPath.split('/'), value);
+            this.save();
+            return value;    
         }
     }
 
