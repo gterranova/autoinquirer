@@ -192,7 +192,7 @@ export class JsonDataSource extends AbstractDispatcher {
         //console.log('prepareValue', schema)
         if (schema.type === 'object') {
             /* copy&paste op? */
-            if (value?._id) {
+            if (value?._id && !(schema.$data || schema.items?.$data)) {
                 value._id = idsMap[value._id] = idsMap[value._id]? idsMap[value._id]: objectId();
                 if (firstCall && value.slug) value.slug = value._id;
                 _.keys(schema.properties).map( prop => {

@@ -167,10 +167,11 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     prepareValue(options, idsMap = {}, firstCall = false) {
+        var _a;
         const { schema } = options;
         let value = options.value;
         if (schema.type === 'object') {
-            if (value === null || value === void 0 ? void 0 : value._id) {
+            if ((value === null || value === void 0 ? void 0 : value._id) && !(schema.$data || ((_a = schema.items) === null || _a === void 0 ? void 0 : _a.$data))) {
                 value._id = idsMap[value._id] = idsMap[value._id] ? idsMap[value._id] : utils_1.objectId();
                 if (firstCall && value.slug)
                     value.slug = value._id;
