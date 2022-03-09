@@ -73,7 +73,7 @@ class AbstractDataSource {
                     converted.push(((_a = cursorData.index) === null || _a === void 0 ? void 0 : _a.toString()) || key);
                     if (converted.length == parts.length) {
                         const schema = yield this.getSchemaDataSource().get({ itemPath: parts.slice(0, parts.length - 1).join('/') });
-                        const $order = schema.$orderBy || [];
+                        const $order = (schema === null || schema === void 0 ? void 0 : schema.$orderBy) || [];
                         let orderedMap = Array.from({ length: currentObj.length }).map((_o, idx) => idx);
                         if ($order.length) {
                             const order = _.zip(...$order.map(o => /^!/.test(o) ? [o.slice(1), 'desc'] : [o, 'asc']));

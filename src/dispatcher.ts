@@ -427,7 +427,7 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         const schemaPath = itemPath !== undefined && itemPath !== null ? itemPath : '';
         //console.log(this.entryPoints)
         return Object.keys(this.entryPoints).filter((k: string) => {
-            return k.length ? RegExp(k).test(schemaPath) : true;
+            return k.length ? RegExp(k+"[/]").test(schemaPath)  || RegExp(k+"$").test(schemaPath) : true;
         }).map((foundKey: string) => {
             const itemPath = schemaPath.replace(RegExp("([/]?"+foundKey+"[/]?)"), '');
             const parentPath = itemPath? schemaPath.split(itemPath)[0].replace(/\/$/, ''): schemaPath.replace(/\/$/, '');
