@@ -38,7 +38,8 @@ export interface AutoinquirerDelete {
 export declare type PrimitiveType = number | boolean | string | null;
 
 export interface IProxyInfo {
-    proxyName: string;
+    name: string;
+    proxyClass: string;
     params?: any;
     initParams?: any;
     singleton?: boolean
@@ -140,7 +141,8 @@ export interface IEntryPointInfo {
 export type Newable<T> = { new (...args: any[]): T; };
 
 export interface IProxy {
-    name: string;
+    name?: string;
+    proxyClass: string;
     classRef?: Newable<AbstractDataSource>,
     dataSource?: AbstractDataSource
 }

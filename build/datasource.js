@@ -1,7 +1,22 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
-const _ = tslib_1.__importStar(require("lodash"));
+const _ = __importStar(require("lodash"));
 const lodash_1 = require("lodash");
 const utils_1 = require("./utils");
 class AbstractDataSource {
@@ -11,9 +26,12 @@ class AbstractDataSource {
     setParent(parentDispatcher) {
         this.parentDispatcher = parentDispatcher;
     }
+    canHandle(options) {
+        return !!(options === null || options === void 0 ? void 0 : options.itemPath);
+    }
     convertPathToUri(path) {
         var _a;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const pathParts = path.split('/');
             let nextIsArrayItem = false;
             const result = [];
@@ -37,7 +55,7 @@ class AbstractDataSource {
     }
     convertObjIDToIndex(options, basePath = '') {
         var _a;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             if (!(options === null || options === void 0 ? void 0 : options.itemPath)) {
                 return { jsonObjectID: '' };
             }
@@ -110,7 +128,7 @@ class AbstractDataSource {
 exports.AbstractDataSource = AbstractDataSource;
 class AbstractDispatcher extends AbstractDataSource {
     getDataSourceInfo(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return { dataSource: this, entryPointOptions: options };
         });
     }
@@ -119,12 +137,12 @@ class AbstractDispatcher extends AbstractDataSource {
         return ((options === null || options === void 0 ? void 0 : options.itemPath) && options.itemPath.indexOf(wildcard) != -1);
     }
     processWildcards(methodName, options, wildcard = '#') {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const parts = options.itemPath.split(wildcard);
             const [base, remaining] = [parts[0], parts.slice(1).join(wildcard)];
             const baseOptions = Object.assign(Object.assign({}, options), { schema: { type: 'array', items: options.schema } });
             let baseItems = (yield this.dispatch("get", Object.assign(Object.assign({}, baseOptions), { itemPath: base.replace(/\/$/, '') }))) || [];
-            const result = yield Promise.all(baseItems.map((baseItem, idx) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const result = yield Promise.all(baseItems.map((baseItem, idx) => __awaiter(this, void 0, void 0, function* () {
                 var _a, _b, _c, _d;
                 let _fullPath = [base, remaining].join(baseItem._id || baseItem.slug || `${idx}`);
                 if (remaining.indexOf(wildcard) == -1) {

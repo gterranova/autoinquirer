@@ -1,11 +1,29 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
-const fs_1 = tslib_1.__importDefault(require("fs"));
+const fs_1 = __importDefault(require("fs"));
 const path_1 = require("path");
-const _ = tslib_1.__importStar(require("lodash"));
-const moment_1 = tslib_1.__importDefault(require("moment"));
-const object_path_1 = tslib_1.__importDefault(require("object-path"));
+const _ = __importStar(require("lodash"));
+const moment_1 = __importDefault(require("moment"));
+const object_path_1 = __importDefault(require("object-path"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
 function mergeDeep(...objects) {
@@ -44,17 +62,17 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         this.jsonDocument = this.dataFile !== undefined ? utils_1.loadJSON(this.dataFile) : data;
     }
     connect(parentDispatcher) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             this.setParent(parentDispatcher);
         });
     }
     close() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return this.save();
         });
     }
     save() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             if (this.dataFile) {
                 fs_1.default.writeFileSync(this.dataFile, JSON.stringify(this.jsonDocument, null, 2));
             }
@@ -67,7 +85,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         return this;
     }
     getSchema(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             options = _.defaults(options, { itemPath: '', params: {} });
             if (!this.parentDispatcher) {
                 return {};
@@ -78,13 +96,13 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     isMethodAllowed(_methodName, _options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return true;
         });
     }
     get(options) {
         var _a, _b;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const { archived } = ((options === null || options === void 0 ? void 0 : options.params) || {});
             const jsonDocument = archived ? utils_1.loadJSON(this.dataFile.replace('.json', '.archive.json')) : this.jsonDocument;
             if (!(options === null || options === void 0 ? void 0 : options.itemPath)) {
@@ -113,7 +131,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
     }
     push(options) {
         var _a;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const { itemPath, schema } = options;
             let value = options.value;
             if (value !== undefined) {
@@ -196,7 +214,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         return value;
     }
     set(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const { itemPath, schema } = options;
             let value = options.value;
             if (value !== undefined) {
@@ -217,7 +235,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     update(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const { itemPath, value } = options;
             let newValue;
             if (value !== undefined) {
@@ -235,7 +253,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     delete(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const { itemPath } = options;
             if (!itemPath) {
                 this.jsonDocument = undefined;
@@ -248,7 +266,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     prepareArchiveValue(schemaPathArray, value) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const currentValue = schemaPathArray.length ? object_path_1.default.get(this.jsonDocument, schemaPathArray) : this.jsonDocument;
             if (!value) {
                 value = currentValue;
@@ -271,7 +289,7 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     archive(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             if (!this.dataFile)
                 return {};
             const archiveFile = this.dataFile.replace('.json', '.archive.json');
@@ -283,13 +301,13 @@ class JsonDataSource extends datasource_1.AbstractDispatcher {
         });
     }
     delCascade({ itemPath }) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             itemPath;
         });
     }
     dispatch(methodName, options) {
         var _a;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             options = _.defaults(options, { itemPath: '', params: {} });
             if (/^archived\/?/.test(options.itemPath)) {
                 options.itemPath = options.itemPath.replace(/^archived\/?/, '');

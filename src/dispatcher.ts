@@ -66,9 +66,9 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         // tslint:disable-next-line:no-unnecessary-local-variable
         for (const entryPointInfo of this.getProxyForPath(options?.itemPath).reverse()) {
             // tslint:disable-next-line:no-console
-            //console.log("REFS", collectionRefs);
             const { proxyInfo } = entryPointInfo;
             const dataSource = await this.getProxy(proxyInfo);
+            //console.log(options?.itemPath, this.proxies, JSON.stringify(entryPointInfo));
             if (dataSource) {
                 // tslint:disable-next-line:no-return-await
                 //console.log(`DISPATCH DELEGATE getSchema(itemPath?: ${objPath})`, await dataSource.getSchema({itemPath: objPath, parentPath, params: proxyInfo.params}, this.schemaSource));
@@ -455,7 +455,19 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
     public async getProxy(proxyInfo: IProxyInfo): Promise<AbstractDataSource> {
         //console.log(`DISPATCH getProxy(proxyInfo: ${proxyInfo})`)
 
-        const proxy = this.proxies.find((p: IProxy) => p.name === proxyInfo.proxyName);
+        let proxy = this.proxies.find((p: IProxy) => p.name === proxyInfo.name);
+        if (!proxy) {
+            const uninitializedProxy = this.proxies.find((p: IProxy) => p.proxyClass === proxyInfo.proxyClass);
+            if (uninitializedProxy) {
+                if (!uninitializedProxy.name) {
+                    uninitializedProxy.name = proxyInfo.name;
+                    proxy = uninitializedProxy;
+                } else {
+                    proxy = {...uninitializedProxy, dataSource: null, name: proxyInfo.name };
+                    this.proxies.push(proxy);
+                }
+            }
+        }
         if (proxy?.dataSource) return proxy.dataSource;
         if (proxy?.classRef) {
             //console.log("Instantiating",proxy?.classRef, proxyInfo.initParams);

@@ -14,6 +14,7 @@ export declare abstract class AbstractDataSource implements AutoinquirerGet {
     abstract getDataSource(): AbstractDataSource;
     abstract getSchemaDataSource(): AbstractDataSource;
     setParent(parentDispatcher: AbstractDispatcher): void;
+    canHandle(options: IDispatchOptions): boolean;
     convertPathToUri(path: string): Promise<string>;
     convertObjIDToIndex(options?: IDispatchOptions, basePath?: string): Promise<ICursorObject>;
 }

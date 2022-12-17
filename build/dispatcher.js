@@ -1,7 +1,22 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
-const _ = tslib_1.__importStar(require("lodash"));
+const _ = __importStar(require("lodash"));
 const utils_1 = require("./utils");
 const datasource_1 = require("./datasource");
 const json_1 = require("./json");
@@ -17,7 +32,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         (typeof data !== 'string') && this.dataSource.setParent(this);
     }
     connect(parentDispatcher) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             yield this.schemaSource.connect(this);
             yield this.dataSource.connect(this);
             this.setParent(parentDispatcher);
@@ -32,7 +47,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     close() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             yield this.schemaSource.close();
             yield this.dataSource.close();
             yield Promise.all(this.proxies.map((proxy) => { var _a; return (_a = proxy === null || proxy === void 0 ? void 0 : proxy.dataSource) === null || _a === void 0 ? void 0 : _a.close(); }));
@@ -46,7 +61,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         return this.dataSource || ((_a = this.parentDispatcher) === null || _a === void 0 ? void 0 : _a.getDataSource());
     }
     getDataSourceInfo(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             for (const entryPointInfo of this.getProxyForPath(options === null || options === void 0 ? void 0 : options.itemPath).reverse()) {
                 const { proxyInfo } = entryPointInfo;
                 const dataSource = yield this.getProxy(proxyInfo);
@@ -59,7 +74,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     getSchema(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             options = _.defaults(options, { itemPath: '', params: {} });
             if (/^archived\/?/.test(options.itemPath)) {
                 options.itemPath = options.itemPath.replace(/^archived\/?/, '');
@@ -74,11 +89,11 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     processProxyPropertiesSchema(schema, options, _enterProxy = false) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
                 const subSchemas = yield Promise.all(_.chain(schema.properties || {}).keys()
                     .filter(p => !!schema.properties[p].$proxy)
-                    .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    .map((proxiedProp) => __awaiter(this, void 0, void 0, function* () {
                     var _a;
                     const newOptions = {
                         itemPath: _.compact([((_a = options.params) === null || _a === void 0 ? void 0 : _a.archived) && 'archived', options.itemPath, proxiedProp]).join('/'),
@@ -93,7 +108,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     isMethodAllowed(methodName, options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             for (const proxyInfo of this.getProxyWithinPath(options.itemPath)) {
                 const dataSource = yield this.getProxy(proxyInfo);
                 if (dataSource && !(yield dataSource.isMethodAllowed(methodName, options))) {
@@ -104,27 +119,27 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     get(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return yield this.dispatch("get", options);
         });
     }
     set(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return yield this.dispatch("set", options);
         });
     }
     update(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return yield this.dispatch("update", options);
         });
     }
     push(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return yield this.dispatch("push", options);
         });
     }
     delete(options) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             return yield this.dispatch("delete", options);
         });
     }
@@ -140,7 +155,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     dispatch(methodName, options) {
         var _a, _b;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             options = options || {};
             options.itemPath = (options === null || options === void 0 ? void 0 : options.itemPath) ? yield this.convertPathToUri(options === null || options === void 0 ? void 0 : options.itemPath) : '';
             options.schema = (options === null || options === void 0 ? void 0 : options.schema) || (yield this.getSchema(options));
@@ -222,11 +237,11 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     processProxyPropertiesValues(result, options, _enterProxy = false) {
         var _a;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             if (((_a = options.schema) === null || _a === void 0 ? void 0 : _a.type) === 'object' && !_.isArray(result)) {
                 const subValues = yield Promise.all(_.chain(options.schema.properties || []).keys()
                     .filter(p => !!options.schema.properties[p].$proxy)
-                    .map((proxiedProp) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    .map((proxiedProp) => __awaiter(this, void 0, void 0, function* () {
                     var _b;
                     const { dataSource, entryPointOptions } = yield this.getDataSourceInfo({
                         itemPath: _.compact([((_b = options.params) === null || _b === void 0 ? void 0 : _b.archived) && 'archived', options.itemPath, proxiedProp]).join('/'),
@@ -243,7 +258,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
     }
     eachRemoteField(options, callback) {
         var _a, _b, _c, _d;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             const $data = ((_a = options.schema) === null || _a === void 0 ? void 0 : _a.$data) || ((_c = (_b = options.schema) === null || _b === void 0 ? void 0 : _b.items) === null || _c === void 0 ? void 0 : _c.$data);
             if (($data === null || $data === void 0 ? void 0 : $data.path) && $data.remoteField) {
                 const refPath = utils_1.absolute($data.path, options.itemPath);
@@ -254,7 +269,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                     const defaultValue = refSchema.type === 'object' ? {} : [];
                     const refValues = (yield this.get({ itemPath: options.itemPath, schema: refSchema })) || defaultValue;
                     const refPaths = Array.isArray(refValues) ? refValues : [refValues];
-                    return yield Promise.all(refPaths.map((refPath) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    return yield Promise.all(refPaths.map((refPath) => __awaiter(this, void 0, void 0, function* () {
                         let refObject = (yield this.get({ itemPath: refPath, schema: refSchema })) || defaultValue;
                         return callback({ itemPath: refObject._fullPath || refPath, schema: refSchema, value: refObject }, $data);
                     })));
@@ -264,7 +279,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     findEntryPoints(p = '', schema) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, void 0, function* () {
             let paths = {};
             if (!schema) {
                 return {};
@@ -284,7 +299,7 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
                 case 'object':
                     if (schema.properties) {
                         try {
-                            yield Promise.all(Object.keys(schema.properties).map((key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                            yield Promise.all(Object.keys(schema.properties).map((key) => __awaiter(this, void 0, void 0, function* () {
                                 const ep = yield this.findEntryPoints(key, schema.properties[key]);
                                 paths = Object.assign(Object.assign({}, paths), ep);
                             })));
@@ -337,8 +352,21 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     getProxy(proxyInfo) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const proxy = this.proxies.find((p) => p.name === proxyInfo.proxyName);
+        return __awaiter(this, void 0, void 0, function* () {
+            let proxy = this.proxies.find((p) => p.name === proxyInfo.name);
+            if (!proxy) {
+                const uninitializedProxy = this.proxies.find((p) => p.proxyClass === proxyInfo.proxyClass);
+                if (uninitializedProxy) {
+                    if (!uninitializedProxy.name) {
+                        uninitializedProxy.name = proxyInfo.name;
+                        proxy = uninitializedProxy;
+                    }
+                    else {
+                        proxy = Object.assign(Object.assign({}, uninitializedProxy), { dataSource: null, name: proxyInfo.name });
+                        this.proxies.push(proxy);
+                    }
+                }
+            }
             if (proxy === null || proxy === void 0 ? void 0 : proxy.dataSource)
                 return proxy.dataSource;
             if (proxy === null || proxy === void 0 ? void 0 : proxy.classRef) {

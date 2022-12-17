@@ -36,6 +36,10 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
         this.parentDispatcher = parentDispatcher;
     }
 
+    public canHandle(options: IDispatchOptions) {
+        return !!options?.itemPath;
+    }
+
     public async convertPathToUri(path: string) {
         const pathParts = path.split('/');
         let nextIsArrayItem = false;
