@@ -494,7 +494,8 @@ export class Dispatcher extends AbstractDispatcher implements AutoinquirerPush, 
         })
     }
 
-    public getTransformer(name: string): renderFunction {
+    public getTransformer(name?: string): renderFunction {
+        if (!name) return undefined;
         return this.transformers[name];
     }
 
