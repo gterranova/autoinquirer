@@ -63,19 +63,108 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
         //console.log("converted", path, "into", result.filter(p => p).join('/'));
         return result.filter(p => p).join('/');
     }
-
+/*
     public async convertObjIDToIndex(options?: IDispatchOptions, basePath: string = ''): Promise<ICursorObject> {
         if (!options?.itemPath) { return { jsonObjectID: '' }; }
         const { itemPath: path } = options;
         const parts = path.split('/');
         const converted = [];
-        let currentObj = await this.getDataSource().dispatch(Action.GET, { itemPath: basePath, params: options.params });
+        //let currentObj = await this.getDataSource().dispatch(Action.GET, { itemPath: basePath, params: options.params });
+        // TODO: Understand why the line above creates a mess with $data reference enums
+        //       See fromly getEnumOptions
+        let currentObj = await this.get({ itemPath: basePath, params: options.params });
+        let parentObj;
+        
+        const cursorData: Partial<ICursorObject> = {};
+
+        const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
+
+        for (const key of parts) {
+            parentObj = null;
+            cursorData.index = undefined;
+            if (Array.isArray(currentObj)) {
+                if (/^[a-f0-9-]{24}$/.test(key)) {
+                    const item = currentObj.find((itemObj: Item) => {
+                        return itemObj?._id === key;
+                    });
+                    if (!item)  break;
+                    cursorData.index = currentObj.indexOf(item);
+                    converted.push(cursorData.index.toString());
+                    parentObj = currentObj;
+                    currentObj = item;
+                } else if (/^\d+$/.test(key)) {
+                    cursorData.index = parseInt(key);
+                    converted.push(key);
+                    parentObj = currentObj;
+                    currentObj = currentObj[cursorData.index];
+                } else {
+                    const item = currentObj.find((itemObj: Item) => {
+                        return itemObj?.slug === key;
+                    });
+                    if (!item)  break;
+                    cursorData.index = currentObj.indexOf(item);
+                    converted.push(cursorData.index.toString());
+                    parentObj = currentObj;
+                    currentObj = item;
+                }
+            } else if (isObject(currentObj) && currentObj[key]) {
+                converted.push(key);
+                parentObj = currentObj;
+                currentObj = currentObj[key];
+                break;
+            } else {
+                break;
+            }
+
+        }
+        if (cursorData.index && converted.length==parts.length) {
+            const schema = await this.getSchemaDataSource().get({ itemPath: parts.slice(0, parts.length-1).join('/') });
+            const $order = schema?.$orderBy || [];
+            let orderedMap = Array.from({ length: parentObj.length}).map( (_o, idx) => idx);
+            if ($order.length) {
+                const order = _.zip(...$order.map( o => /^!/.test(o)? [o.slice(1), 'desc'] : [o, 'asc']));
+                const orderedValues = _.orderBy(parentObj, ...order);    
+                orderedMap = _.map(orderedValues, i => _.indexOf(_.map(parentObj, o => o._id), i._id));
+                //if (parentObj[0].name) {
+                //    console.log(_.map(orderedMap, (o, idx) => `${idx} = ${o} ${parentObj[o].name} ${cursorData.index==o? 'CURRENT': ''}`).join('\n')+'\n');
+                //    console.log(`PREV ${orderedMap[orderedMap.indexOf(cursorData.index)-1]} CURR ${orderedMap[cursorData.index]} NEXT ${orderedMap[cursorData.index+1]}`);    
+                //}
+            } 
+            Object.assign(cursorData, {
+                index: cursorData.index+1,
+                total: parentObj.length,
+                self: objResolver(parentObj, cursorData.index),
+                first: (orderedMap.indexOf(cursorData.index) > 0 && objResolver(parentObj, orderedMap[0])) || undefined,
+                prev: (orderedMap[cursorData.index] > 0 && objResolver(parentObj, orderedMap[orderedMap.indexOf(cursorData.index)-1])) || undefined,
+                next: (orderedMap[cursorData.index] < parentObj.length-1 && objResolver(parentObj, orderedMap[orderedMap.indexOf(cursorData.index)+1])) || undefined,
+                last: (orderedMap.indexOf(cursorData.index) < parentObj.length-1 && objResolver(parentObj, orderedMap[parentObj.length-1])) || undefined,
+            });
+        }
+
+        return { 
+            ...cursorData,
+            jsonObjectID: `${basePath || ''}${[...converted, ...parts.slice(converted.length)].join('/')}`,
+        };
+    }
+*/
+    public async convertObjIDToIndex(options?: IDispatchOptions, basePath: string = ''): Promise<ICursorObject> {
+        if (!options?.itemPath) { return { jsonObjectID: '' }; }
+        const { itemPath: path } = options;
+        const parts = path.split('/');
+        const converted = [];
+        //let currentObj = await this.getDataSource().dispatch(Action.GET, { itemPath: basePath, params: options.params });
+        // TODO: Understand why the line above creates a mess with $data reference enums
+        //       See fromly getEnumOptions
+        let currentObj = await this.get({ itemPath: basePath, params: options.params });
+        let parentObj = null;
+        
         const cursorData: Partial<ICursorObject> = {};
 
         const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length-1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
 
         for (const key of parts) {
             cursorData.index = undefined;
+            parentObj = currentObj;
             if (Array.isArray(currentObj)) {
                 if (/^[a-f0-9-]{24}$/.test(key)) {
                     const item = currentObj.find((itemObj: Item) => {
@@ -85,50 +174,48 @@ export abstract class AbstractDataSource implements AutoinquirerGet {
                         break;
                     }
                     cursorData.index = currentObj.indexOf(item);
+                    currentObj = item;
                 } else if (/^\d+$/.test(key)) {
                     cursorData.index = parseInt(key);
+                    currentObj = currentObj[cursorData.index];
                 } else {
                     const item = currentObj.find((itemObj: Item) => {
                         return itemObj?.slug === key;
                     });
-                    if (item) {
-                        cursorData.index = currentObj.indexOf(item);
+                    if (!item) {
+                        break;
                     }
+                    cursorData.index = currentObj.indexOf(item);
+                    currentObj = item;
                 }
                 converted.push(cursorData.index?.toString() || key);
                 if (converted.length==parts.length) {
                     const schema = await this.getSchemaDataSource().get({ itemPath: parts.slice(0, parts.length-1).join('/') });
                     const $order = schema?.$orderBy || [];
-                    let orderedMap = Array.from({ length: currentObj.length}).map( (_o, idx) => idx);
+                    let orderedMap = Array.from({ length: parentObj.length}).map( (_o, idx) => idx);
                     if ($order.length) {
                         const order = _.zip(...$order.map( o => /^!/.test(o)? [o.slice(1), 'desc'] : [o, 'asc']));
-                        const orderedValues = _.orderBy(currentObj, ...order);    
-                        orderedMap = _.map(orderedValues, i => _.indexOf(_.map(currentObj, o => o._id), i._id));
-                        //if (currentObj[0].name) {
-                        //    console.log(_.map(orderedMap, (o, idx) => `${idx} = ${o} ${currentObj[o].name} ${cursorData.index==o? 'CURRENT': ''}`).join('\n')+'\n');
+                        const orderedValues = _.orderBy(parentObj, ...order);    
+                        orderedMap = _.map(orderedValues, i => _.indexOf(_.map(parentObj, o => o._id), i._id));
+                        //if (parentObj[0].name) {
+                        //    console.log(_.map(orderedMap, (o, idx) => `${idx} = ${o} ${parentObj[o].name} ${cursorData.index==o? 'CURRENT': ''}`).join('\n')+'\n');
                         //    console.log(`PREV ${orderedMap[orderedMap.indexOf(cursorData.index)-1]} CURR ${orderedMap[cursorData.index]} NEXT ${orderedMap[cursorData.index+1]}`);    
                         //}
                     } 
                     Object.assign(cursorData, {
                         index: cursorData.index+1,
-                        total: currentObj.length,
-                        self: objResolver(currentObj, cursorData.index),
-                        first: (orderedMap.indexOf(cursorData.index) > 0 && objResolver(currentObj, orderedMap[0])) || undefined,
-                        prev: (orderedMap[cursorData.index] > 0 && objResolver(currentObj, orderedMap[orderedMap.indexOf(cursorData.index)-1])) || undefined,
-                        next: (orderedMap[cursorData.index] < currentObj.length-1 && objResolver(currentObj, orderedMap[orderedMap.indexOf(cursorData.index)+1])) || undefined,
-                        last: (orderedMap.indexOf(cursorData.index) < currentObj.length-1 && objResolver(currentObj, orderedMap[currentObj.length-1])) || undefined,
+                        total: parentObj.length,
+                        self: objResolver(parentObj, cursorData.index),
+                        first: (orderedMap.indexOf(cursorData.index) > 0 && objResolver(parentObj, orderedMap[0])) || undefined,
+                        prev: (orderedMap[cursorData.index] > 0 && objResolver(parentObj, orderedMap[orderedMap.indexOf(cursorData.index)-1])) || undefined,
+                        next: (orderedMap[cursorData.index] < parentObj.length-1 && objResolver(parentObj, orderedMap[orderedMap.indexOf(cursorData.index)+1])) || undefined,
+                        last: (orderedMap.indexOf(cursorData.index) < parentObj.length-1 && objResolver(parentObj, orderedMap[parentObj.length-1])) || undefined,
                     });
-                    currentObj = currentObj[cursorData.index-1];
-                } else {
-                    currentObj = currentObj[cursorData.index];
                 }
-                continue;
             } else if (isObject(currentObj) && currentObj[key]) {
                 converted.push(key);
                 currentObj = currentObj[key];
-                continue;
-            } 
-            break;
+            } else break;
         }
         return { 
             ...cursorData,

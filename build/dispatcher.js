@@ -392,6 +392,8 @@ class Dispatcher extends datasource_1.AbstractDispatcher {
         });
     }
     getTransformer(name) {
+        if (!name)
+            return undefined;
         return this.transformers[name];
     }
 }

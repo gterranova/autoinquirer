@@ -33,6 +33,6 @@ export declare class Dispatcher extends AbstractDispatcher implements Autoinquir
     getProxy(proxyInfo: IProxyInfo): Promise<AbstractDataSource>;
     registerTransformer({ name, fn }: renderOptions): void;
     registerTransformers(transformers: Array<renderOptions>): void;
-    getTransformer(name: string): renderFunction;
+    getTransformer(name?: string): renderFunction;
 }
 //# sourceMappingURL=dispatcher.d.ts.map

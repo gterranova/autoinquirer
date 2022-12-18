@@ -62,11 +62,13 @@ class AbstractDataSource {
             const { itemPath: path } = options;
             const parts = path.split('/');
             const converted = [];
-            let currentObj = yield this.getDataSource().dispatch("get", { itemPath: basePath, params: options.params });
+            let currentObj = yield this.get({ itemPath: basePath, params: options.params });
+            let parentObj = null;
             const cursorData = {};
             const objResolver = (obj, idx) => obj[idx] && (`${basePath || ''}${[...parts.slice(0, converted.length - 1), obj[idx].slug || obj[idx]._id || idx].join('/')}`);
             for (const key of parts) {
                 cursorData.index = undefined;
+                parentObj = currentObj;
                 if (Array.isArray(currentObj)) {
                     if (/^[a-f0-9-]{24}$/.test(key)) {
                         const item = currentObj.find((itemObj) => {
@@ -76,50 +78,49 @@ class AbstractDataSource {
                             break;
                         }
                         cursorData.index = currentObj.indexOf(item);
+                        currentObj = item;
                     }
                     else if (/^\d+$/.test(key)) {
                         cursorData.index = parseInt(key);
+                        currentObj = currentObj[cursorData.index];
                     }
                     else {
                         const item = currentObj.find((itemObj) => {
                             return (itemObj === null || itemObj === void 0 ? void 0 : itemObj.slug) === key;
                         });
-                        if (item) {
-                            cursorData.index = currentObj.indexOf(item);
+                        if (!item) {
+                            break;
                         }
+                        cursorData.index = currentObj.indexOf(item);
+                        currentObj = item;
                     }
                     converted.push(((_a = cursorData.index) === null || _a === void 0 ? void 0 : _a.toString()) || key);
                     if (converted.length == parts.length) {
                         const schema = yield this.getSchemaDataSource().get({ itemPath: parts.slice(0, parts.length - 1).join('/') });
                         const $order = (schema === null || schema === void 0 ? void 0 : schema.$orderBy) || [];
-                        let orderedMap = Array.from({ length: currentObj.length }).map((_o, idx) => idx);
+                        let orderedMap = Array.from({ length: parentObj.length }).map((_o, idx) => idx);
                         if ($order.length) {
                             const order = _.zip(...$order.map(o => /^!/.test(o) ? [o.slice(1), 'desc'] : [o, 'asc']));
-                            const orderedValues = _.orderBy(currentObj, ...order);
-                            orderedMap = _.map(orderedValues, i => _.indexOf(_.map(currentObj, o => o._id), i._id));
+                            const orderedValues = _.orderBy(parentObj, ...order);
+                            orderedMap = _.map(orderedValues, i => _.indexOf(_.map(parentObj, o => o._id), i._id));
                         }
                         Object.assign(cursorData, {
                             index: cursorData.index + 1,
-                            total: currentObj.length,
-                            self: objResolver(currentObj, cursorData.index),
-                            first: (orderedMap.indexOf(cursorData.index) > 0 && objResolver(currentObj, orderedMap[0])) || undefined,
-                            prev: (orderedMap[cursorData.index] > 0 && objResolver(currentObj, orderedMap[orderedMap.indexOf(cursorData.index) - 1])) || undefined,
-                            next: (orderedMap[cursorData.index] < currentObj.length - 1 && objResolver(currentObj, orderedMap[orderedMap.indexOf(cursorData.index) + 1])) || undefined,
-                            last: (orderedMap.indexOf(cursorData.index) < currentObj.length - 1 && objResolver(currentObj, orderedMap[currentObj.length - 1])) || undefined,
+                            total: parentObj.length,
+                            self: objResolver(parentObj, cursorData.index),
+                            first: (orderedMap.indexOf(cursorData.index) > 0 && objResolver(parentObj, orderedMap[0])) || undefined,
+                            prev: (orderedMap[cursorData.index] > 0 && objResolver(parentObj, orderedMap[orderedMap.indexOf(cursorData.index) - 1])) || undefined,
+                            next: (orderedMap[cursorData.index] < parentObj.length - 1 && objResolver(parentObj, orderedMap[orderedMap.indexOf(cursorData.index) + 1])) || undefined,
+                            last: (orderedMap.indexOf(cursorData.index) < parentObj.length - 1 && objResolver(parentObj, orderedMap[parentObj.length - 1])) || undefined,
                         });
-                        currentObj = currentObj[cursorData.index - 1];
                     }
-                    else {
-                        currentObj = currentObj[cursorData.index];
-                    }
-                    continue;
                 }
                 else if (lodash_1.isObject(currentObj) && currentObj[key]) {
                     converted.push(key);
                     currentObj = currentObj[key];
-                    continue;
                 }
-                break;
+                else
+                    break;
             }
             return Object.assign(Object.assign({}, cursorData), { jsonObjectID: `${basePath || ''}${[...converted, ...parts.slice(converted.length)].join('/')}` });
         });
